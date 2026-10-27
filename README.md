@@ -49,3 +49,10 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 - [Agent context reset and verified-commit protocol](prompts/AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md)
 
 Execute these alongside each relevant phase. In particular, a green-grid, cubes-only, image-only or dashboard-led game is a **visual acceptance failure** even if unit tests pass.
+
+## Execute in short, verified sessions
+
+- [Step-by-step Claude Code runbook, copy/paste milestone prompts and reset checkpoints](prompts/CLAUDE_CODE_STEPWISE_RUNBOOK.md)
+- [Context reset and verified evidence rules](prompts/AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md)
+
+For reliable progress, **execute one numbered phase at a time**, commit after its testable milestone, and resume from `docs/CONTINUE_HERE.md` rather than restarting the design. If only prompts exist, no game functionality should be claimed.
