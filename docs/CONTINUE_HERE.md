@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/2 (PR #1 was merged) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/3 (PRs #1 and #2 were merged; #2 merged a minute after it opened, so later commits needed a new PR) · Last verified commit: see `git log -1`.
 
 ## State
 
@@ -41,4 +41,4 @@ headless (`tests/engine/routes.test.ts`) and in the browser (`e2e/victory.spec.t
 - Do not run `pkill -f "<pattern>"` with a pattern that appears in your own command line — it kills the shell.
 - Geometry primitives auto-orient triangles; do not hand-wind faces.
 - The first `npx playwright test` of a session rebuilds `dist`; do not edit `src/` until the preview server is up.
-- PR #1 is merged. If a PR for the working branch is merged again, merge `main` into the branch (a force-push was refused in this environment) and open a new PR.
+- PRs #1 and #2 are merged. Check `git rev-list --left-right --count origin/main...HEAD` before trusting that your branch has an open PR; if its PR was merged, merge `main` into the branch (a force-push was refused in this environment), push, and open a new PR.
