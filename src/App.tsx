@@ -1,35 +1,26 @@
-import { useSyncExternalStore } from 'react';
-import { hasSave } from './game/persist';
+import { useEffect, useState } from 'react';
+import { attachClock, EpochClock } from './game/clock';
 import { store } from './game/store';
-
-/** Subscribe a component to the store; re-renders whenever the version bumps. */
-export function useStore(): typeof store {
-  useSyncExternalStore(store.subscribe, store.getVersion);
-  return store;
-}
+import { GameCanvas } from './render/Scene';
+import { GameHud } from './ui/GameHud';
+import { TitleScreen } from './ui/Title';
+import { useStore } from './ui/useStore';
 
 export function App() {
+  // The title screen shows a real, paused village built by the engine, so the 3D scene is always mounted.
+  useState(() => {
+    if (!store.campaign) store.initDemo();
+    return true;
+  });
   const s = useStore();
-  const canContinue = hasSave();
+  useEffect(() => {
+    const clock = new EpochClock(store);
+    return attachClock(store, clock);
+  }, []);
   return (
-    <main className="title">
-      <h1>EPOCH</h1>
-      <p className="tagline">The 60-Second Civilization</p>
-      <p className="promise">Three ages. One landscape. Every choice survives.</p>
-      <div className="title-actions">
-        <button type="button" onClick={() => s.newGame()}>
-          New Lineage
-        </button>
-        <button type="button" disabled={!canContinue} onClick={() => s.continueGame()}>
-          Continue
-        </button>
-      </div>
-      {s.screen === 'game' && s.campaign && (
-        <p className="status" data-testid="engine-status">
-          Engine running: epoch {s.campaign.epoch + 1}, phase {s.campaign.phase}. The 3D world is being built
-          (phase 03).
-        </p>
-      )}
-    </main>
+    <div className="game-root" data-screen={s.screen}>
+      <GameCanvas />
+      {s.screen === 'title' ? <TitleScreen /> : <GameHud />}
+    </div>
   );
 }

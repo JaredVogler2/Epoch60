@@ -19,6 +19,16 @@ export default tseslint.config(
     },
   },
   {
+    // three.js objects are mutated imperatively inside useFrame/useMemo by design (React Three Fiber), and the
+    // render layer deliberately reads a mutable external store. React-compiler purity rules do not apply here.
+    files: ['src/render/**/*.{ts,tsx}'],
+    rules: { 'react-hooks/immutability': 'off', 'react-hooks/refs': 'off' },
+  },
+  {
+    files: ['**/*.{js,mjs}'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  {
     files: ['src/engine/**/*.ts'],
     rules: {
       'no-restricted-properties': [

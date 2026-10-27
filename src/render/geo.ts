@@ -71,6 +71,43 @@ export class GeoBuilder {
     }
   }
 
+  /**
+   * Emit a triangle whose winding is corrected so its normal faces away from `ref` (a point inside a closed
+   * primitive) or along `dir` (for open surfaces such as roofs). This makes winding mistakes impossible.
+   */
+  private orient(a: V3, b: V3, c: V3, color: RGB, ref: V3 | null, dir: V3 | null, jitter?: number): void {
+    const ux = b[0] - a[0];
+    const uy = b[1] - a[1];
+    const uz = b[2] - a[2];
+    const vx = c[0] - a[0];
+    const vy = c[1] - a[1];
+    const vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    if (nx === 0 && ny === 0 && nz === 0) return; // degenerate
+    let d: V3;
+    if (dir) d = dir;
+    else if (ref)
+      d = [
+        (a[0] + b[0] + c[0]) / 3 - ref[0],
+        (a[1] + b[1] + c[1]) / 3 - ref[1],
+        (a[2] + b[2] + c[2]) / 3 - ref[2],
+      ];
+    else d = [0, 1, 0];
+    if (nx * d[0] + ny * d[1] + nz * d[2] < 0) this.emitTri(a, c, b, color, jitter);
+    else this.emitTri(a, b, c, color, jitter);
+  }
+
+  /** Orientation-corrected triangle/quad entry points. */
+  triO(a: V3, b: V3, c: V3, color: RGB, ref: V3 | null, dir: V3 | null = null): void {
+    this.orient(a, b, c, color, ref, dir);
+  }
+  quadO(a: V3, b: V3, c: V3, d: V3, color: RGB, ref: V3 | null, dir: V3 | null = null): void {
+    this.orient(a, b, c, color, ref, dir);
+    this.orient(a, c, d, color, ref, dir);
+  }
+
   /** Quad with vertices in counter-clockwise order when viewed from the front. */
   quad(a: V3, b: V3, c: V3, d: V3, color: RGB, jitter?: number): void {
     this.emitTri(a, b, c, color, jitter);
@@ -136,11 +173,12 @@ export class GeoBuilder {
     const c = sx1 / 2;
     const d = sz1 / 2;
     const p = (px: number, py: number, pz: number): V3 => this.xf([px, py, pz], cx, cy, cz, rotY);
-    this.quad(p(-c, h, -d), p(-c, h, d), p(c, h, d), p(c, h, -d), color);
-    this.quad(p(-a, 0, b), p(a, 0, b), p(c, h, d), p(-c, h, d), color);
-    this.quad(p(a, 0, -b), p(-a, 0, -b), p(-c, h, -d), p(c, h, -d), color);
-    this.quad(p(a, 0, b), p(a, 0, -b), p(c, h, -d), p(c, h, d), color);
-    this.quad(p(-a, 0, -b), p(-a, 0, b), p(-c, h, d), p(-c, h, -d), color);
+    const ref = p(0, h / 2, 0);
+    this.quadO(p(-c, h, -d), p(-c, h, d), p(c, h, d), p(c, h, -d), color, ref);
+    this.quadO(p(-a, 0, b), p(a, 0, b), p(c, h, d), p(-c, h, d), color, ref);
+    this.quadO(p(a, 0, -b), p(-a, 0, -b), p(-c, h, -d), p(c, h, -d), color, ref);
+    this.quadO(p(a, 0, b), p(a, 0, -b), p(c, h, -d), p(c, h, d), color, ref);
+    this.quadO(p(-a, 0, -b), p(-a, 0, b), p(-c, h, d), p(-c, h, -d), color, ref);
   }
 
   /**
@@ -193,8 +231,7 @@ export class GeoBuilder {
           const b = P(l1, side * (Math.abs(s0) + lip), y0 + jb(l1, s0));
           const c2 = P(l1, side * Math.abs(s1), y1 + jb(l1, s1));
           const d2 = P(l0, side * Math.abs(s1), y1 + jb(l0, s1));
-          if (side === -1) this.quad(b, a, d2, c2, color);
-          else this.quad(a, b, c2, d2, color);
+          this.quadO(a, b, c2, d2, color, null, [0, 1, 0]);
         }
       }
     }
@@ -216,8 +253,8 @@ export class GeoBuilder {
       const a = P(l, -hs, 0);
       const b = P(l, hs, 0);
       const c3 = P(l, 0, h);
-      if (e === 1) this.triangle(b, a, c3, gc);
-      else this.triangle(a, b, c3, gc);
+      const out = this.xf(axisX ? [e, 0, 0] : [0, 0, e], 0, 0, 0, rotY);
+      this.triO(a, b, c3, gc, null, out);
     }
   }
 
@@ -227,10 +264,11 @@ export class GeoBuilder {
     const z = sz / 2;
     const p = (px: number, py: number, pz: number): V3 => this.xf([px, py, pz], cx, cy, cz, rotY);
     const t = p(0, h, 0);
-    this.triangle(p(-x, 0, z), p(x, 0, z), t, color);
-    this.triangle(p(x, 0, -z), p(-x, 0, -z), t, color);
-    this.triangle(p(x, 0, z), p(x, 0, -z), t, color);
-    this.triangle(p(-x, 0, -z), p(-x, 0, z), t, color);
+    const ref = p(0, h * 0.3, 0);
+    this.triO(p(-x, 0, z), p(x, 0, z), t, color, ref);
+    this.triO(p(x, 0, -z), p(-x, 0, -z), t, color, ref);
+    this.triO(p(x, 0, z), p(x, 0, -z), t, color, ref);
+    this.triO(p(-x, 0, -z), p(-x, 0, z), t, color, ref);
   }
 
   /** Cone/cylinder frustum with `seg` sides; cy is the bottom. */
@@ -257,18 +295,22 @@ export class GeoBuilder {
     };
     const b = ring(rBot, 0);
     const t = ring(rTop, h);
+    const ref: V3 = [cx, cy + h / 2, cz];
     for (let i = 0; i < seg; i++) {
       const j = (i + 1) % seg;
-      this.quad(b[i]!, b[j]!, t[j]!, t[i]!, color);
+      if (rTop <= 0) this.triO(b[i]!, b[j]!, [cx, cy + h, cz], color, ref);
+      else if (rBot <= 0) this.triO(t[i]!, t[j]!, [cx, cy, cz], color, ref);
+      else this.quadO(b[i]!, b[j]!, t[j]!, t[i]!, color, ref);
     }
     if (opts.capTop !== false && rTop > 0) {
       const c: V3 = [cx, cy + h, cz];
       const cc = opts.capColor ?? color;
-      for (let i = 0; i < seg; i++) this.triangle(t[(i + 1) % seg]!, t[i]!, c, cc);
+      for (let i = 0; i < seg; i++) this.triO(t[(i + 1) % seg]!, t[i]!, c, cc, null, [0, 1, 0]);
     }
     if (rBot > 0) {
       const c: V3 = [cx, cy, cz];
-      for (let i = 0; i < seg; i++) this.triangle(b[i]!, b[(i + 1) % seg]!, c, shade(color, 0.55));
+      for (let i = 0; i < seg; i++)
+        this.triO(b[i]!, b[(i + 1) % seg]!, c, shade(color, 0.55), null, [0, -1, 0]);
     }
   }
 
@@ -360,8 +402,89 @@ export class GeoBuilder {
       const vc = verts[c]!;
       const up = (va[1] + vb[1] + vc[1]) / 3 - cy;
       const col = opts.topColor ? mix(color, opts.topColor, Math.max(0, Math.min(1, up / ry))) : color;
-      this.triangle(va, vb, vc, col);
+      this.triO(va, vb, vc, col, [cx, cy, cz]);
     }
+  }
+
+  /** Horizontal cylinder (a log) along local X, centred at (cx, cy, cz) where cy is the axis height. */
+  cylH(
+    cx: number,
+    cy: number,
+    cz: number,
+    len: number,
+    r: number,
+    seg: number,
+    color: RGB,
+    rotY = 0,
+    endColor?: RGB,
+  ): void {
+    const ringAt = (x: number): V3[] => {
+      const out: V3[] = [];
+      for (let i = 0; i < seg; i++) {
+        const a = (i / seg) * Math.PI * 2;
+        out.push(this.xf([x, Math.cos(a) * r, Math.sin(a) * r], cx, cy, cz, rotY));
+      }
+      return out;
+    };
+    const a = ringAt(-len / 2);
+    const b = ringAt(len / 2);
+    const mid: V3 = [cx, cy, cz];
+    for (let i = 0; i < seg; i++) {
+      const j = (i + 1) % seg;
+      this.quadO(a[i]!, a[j]!, b[j]!, b[i]!, color, mid);
+    }
+    const ca = this.xf([-len / 2, 0, 0], cx, cy, cz, rotY);
+    const cb = this.xf([len / 2, 0, 0], cx, cy, cz, rotY);
+    const ec = endColor ?? shade(color, 1.25);
+    for (let i = 0; i < seg; i++) {
+      const j = (i + 1) % seg;
+      this.triO(a[j]!, a[i]!, ca, ec, mid);
+      this.triO(b[i]!, b[j]!, cb, ec, mid);
+    }
+  }
+
+  /** Mono-pitch (lean-to) roof sloping along Z: back edge (-z) high, front edge (+z) low. */
+  shed(
+    cx: number,
+    cy: number,
+    cz: number,
+    w: number,
+    d: number,
+    hHigh: number,
+    hLow: number,
+    color: RGB,
+    rotY = 0,
+    bump = 0,
+  ): void {
+    const x = w / 2;
+    const z = d / 2;
+    const p = (px: number, py: number, pz: number): V3 => this.xf([px, py, pz], cx, cy, cz, rotY);
+    const nx = Math.max(1, Math.round(w * 3));
+    const nz = Math.max(1, Math.round(d * 3));
+    for (let i = 0; i < nx; i++) {
+      for (let j = 0; j < nz; j++) {
+        const x0 = -x + (i / nx) * w;
+        const x1 = -x + ((i + 1) / nx) * w;
+        const t0 = j / nz;
+        const t1 = (j + 1) / nz;
+        const y = (t: number, xx: number) =>
+          hHigh +
+          (hLow - hHigh) * t +
+          (bump ? (h01(this.seed, Math.round(xx * 40), Math.round(t * 40)) - 0.5) * bump : 0);
+        this.quad(
+          p(x0, y(t0, x0), -z + t0 * d),
+          p(x0, y(t1, x0), -z + t1 * d),
+          p(x1, y(t1, x1), -z + t1 * d),
+          p(x1, y(t0, x1), -z + t0 * d),
+          color,
+        );
+      }
+    }
+    const side = shade(color, 0.7);
+    const outL = this.xf([-1, 0, 0], 0, 0, 0, rotY);
+    const outR = this.xf([1, 0, 0], 0, 0, 0, rotY);
+    this.triO(p(-x, hHigh, -z), p(-x, hLow, z), p(-x, Math.min(hHigh, hLow), -z), side, null, outL);
+    this.triO(p(x, hHigh, -z), p(x, Math.min(hHigh, hLow), -z), p(x, hLow, z), side, null, outR);
   }
 
   /** Thin flat disc facing up. */
@@ -414,12 +537,13 @@ export class GeoBuilder {
     ];
     const A = [c(-1, -1, a), c(1, -1, a), c(1, 1, a), c(-1, 1, a)];
     const B = [c(-1, -1, b), c(1, -1, b), c(1, 1, b), c(-1, 1, b)];
+    const mid: V3 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
     for (let i = 0; i < 4; i++) {
       const j = (i + 1) % 4;
-      this.quad(A[i]!, A[j]!, B[j]!, B[i]!, color);
+      this.quadO(A[i]!, A[j]!, B[j]!, B[i]!, color, mid);
     }
-    this.quad(B[0]!, B[1]!, B[2]!, B[3]!, color);
-    this.quad(A[3]!, A[2]!, A[1]!, A[0]!, color);
+    this.quadO(B[0]!, B[1]!, B[2]!, B[3]!, color, mid);
+    this.quadO(A[3]!, A[2]!, A[1]!, A[0]!, color, mid);
   }
 
   /** Append another builder's triangles (already in the same space). */

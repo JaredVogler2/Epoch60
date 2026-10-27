@@ -3,13 +3,20 @@
 Status vocabulary: NOT STARTED · IN PROGRESS · IMPLEMENTED UNVERIFIED · VERIFIED · BLOCKED · REOPENED.
 Only claim VERIFIED with executed evidence recorded below.
 
-| Phase                          | Status                                                                                                            | Evidence                                                                                  |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 01 Design bible / rules        | IMPLEMENTED (rules + content executable); route fixtures PROPOSED                                                 | `docs/GAME_RULES.md`, `CONTENT_SPEC.md`, generated tables, `fixtures/greenvale-traces.md` |
-| 02 Economy, actions, tech      | VERIFIED for the implemented subset (9 enabled buildings, 3 techs)                                                | `tests/engine/{economy,hazards,legacy}.test.ts`                                           |
-| 03 Architecture / app scaffold | IN PROGRESS: entry point + title screen build; runtime layer (store/clock/persistence) VERIFIED; 3D scene not yet | `tests/game/clock.test.ts`, `npm run build`                                               |
-| 04 Time engine / epochs        | Engine side VERIFIED (600 ticks, pause, save/load 1/300/599, replay hash); browser controller NOT STARTED         | `tests/engine/{time,replay}.test.ts`                                                      |
-| 05–19                          | NOT STARTED                                                                                                       | —                                                                                         |
+| Phase                          | Status                                                                                                                                                                             | Evidence                                                                                    |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 01 Design bible / rules        | IMPLEMENTED (rules + content executable); route fixtures PROPOSED                                                                                                                  | `docs/GAME_RULES.md`, `CONTENT_SPEC.md`, generated tables, `fixtures/greenvale-traces.md`   |
+| 02 Economy, actions, tech      | VERIFIED for the implemented subset (9 buildings, 3 techs; rest hidden)                                                                                                            | `tests/engine/{economy,hazards,legacy}.test.ts`                                             |
+| 03 Architecture / app scaffold | **VERIFIED (Chromium)**: runnable app, 3D valley, HUD, real build interaction, title→world→build E2E, no duplicate canvases, no console errors. _Not_ verified on WebKit.          | `e2e/journey.spec.ts`, `e2e/persistence.spec.ts`, CI green                                  |
+| 04 Time engine / epochs        | **VERIFIED**: 600-tick exactness, FPS-independent hash, hidden/pause/stall freeze, reload resumes paused at exact tick, save/load 1/300/599, replay hash; browser controller + E2E | `tests/game/clock.test.ts`, `tests/engine/{time,replay}.test.ts`, `e2e/persistence.spec.ts` |
+| 05 Terrain / ecology / world   | PARTIAL: generator + validity + persistent fields + ruins/scars/regrowth exist and render; no per-seed screenshot set, no biome variety yet                                        | `tests/engine/world.test.ts`, `docs/review/`                                                |
+| 06 Premium 3D world            | **IN PROGRESS** — Age I diorama exists; art gate NOT met (no citizens, one era)                                                                                                    | `docs/ART_DIRECTION.md`                                                                     |
+| 07 Desktop / iPhone UX         | PARTIAL: mouse+keyboard+touch placement verified in E2E at 1366×768 and iPhone-13 profile; 320 px and landscape not inspected                                                      | `e2e/*`                                                                                     |
+| 08 Construction / city life    | PARTIAL: construction scaffolds + progress sweep + crops done; **citizens not started**                                                                                            | —                                                                                           |
+| 09 Collapse / inheritance      | PARTIAL: engine complete + debrief/interregnum UI + persistence verified; cinematic collapse not started                                                                           | `tests/engine/legacy.test.ts`, `e2e/campaign.spec.ts`                                       |
+| 10–11 Ages / disasters         | NOT STARTED (flood/quake resolve in engine but have no visuals; later-age buildings are data only)                                                                                 | —                                                                                           |
+| 12 Playable 3-epoch slice      | **IN PROGRESS**: a complete 3-epoch loop to an ending is playable and E2E-tested; **no executed winning trace, balance untuned**                                                   | `e2e/campaign.spec.ts`                                                                      |
+| 13–19                          | NOT STARTED                                                                                                                                                                        | —                                                                                           |
 
 ## Log
 
@@ -38,3 +45,27 @@ point. **Rule from now on:** before every push run exactly `npm run typecheck &&
 
 **Not done / honest gaps:** no browser app yet; no 3D; no UI; Stone House/Levee/Dam/Bridge/Retaining Wall/Forge/Grove and later techs are data only
 (`enabled:false`); no winning trace exists yet (fixtures are proposed); balance untuned (hazards are currently easy for a bot that sites buildings out of the forecast footprint).
+
+### Session 2 — The playable browser loop (phases 03, 04 browser half, parts of 06/07/09/12)
+
+**Built:** `src/game` (store with revisions + cached forecast + placement state machine + autosave; `EpochClock`; persistence), `src/render` (terrain
+mesh with levelled pads, river shader, soil-strata skirt, instanced vegetation, ~10 procedural building models with construction/ruin/damage states,
+decals for forecast/ghost/selection/risk, picking, camera rig for mouse/touch/keyboard), `src/ui` (title over a living engine-built village, HUD,
+tray, placement bar, inspector, research/focus/help, pause, briefing, collapse, debrief, interregnum, ending).
+
+**Commands run (all green):** `npm run typecheck`, `npm run lint` (0 findings), `npm test` (82), `npm run build`, `npx playwright test` (13 passed, 1 skipped), CI green.
+
+**Bugs found and fixed this session (by tests/screenshots):**
+
+- CI: first push failed `build` (missing `src/main.tsx`) — I had not run `build` locally. Gate rule added.
+- Geometry winding: cone/gable normals inverted → grey roofs and hollow-looking huts. Primitives now self-orient.
+- Decal grid used a fractional count for non-integer sizes → stray diagonal strip.
+- `opacity` on cards over a `backdrop-filter` parent composited badly → blocked cards use color/dashed border.
+- Render hitch (first frame after Begin) was misread as a stall and paused the game → stall limit 2.5 s + clock reset on Begin/Resume.
+- Replay desync (non-timed actions logged tick 0) — session 1.
+- `findSpot` searched near the _original_ hearth after relocation; camera did not re-center on the new hearth after founding.
+- Resource rates counted purchases as losses; toast overlapped the Begin button; briefing card covered the village on desktop.
+- UI handlers mutated store fields without emitting (Help button needed a toast hack) → store methods (`togglePanel`, `setInter`, …).
+
+**Honest status:** the loop _plays_ start-to-ending in a real browser, but it is not yet a _good game_: no citizens, one architectural era, balance untuned,
+collapse is a title card, no audio, no WebKit/real-device/FPS evidence. See `docs/KNOWN_ISSUES.md` and the self-assessed art table in `docs/ART_DIRECTION.md`.

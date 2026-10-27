@@ -35,8 +35,8 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 ## Status
 
 - [x] Complete 20-stage (00–19) implementation prompt program committed.
-- [~] Headless deterministic engine (valley, economy, fire/flood/quake, collapse, inheritance, saves, replays) — 70 tests passing. Browser game: **not yet**.
-- [ ] First complete 60-second civilization playtested.
+- [~] Playable browser vertical slice (Chromium-verified): deterministic engine + R3F diorama + HUD + full 3-epoch loop to an ending; 82 unit + 13 Playwright tests. **Not yet a finished, balanced game** — see `docs/PROGRESS.md`.
+- [~] First complete 60-second civilization: automated E2E plays it; no human playtest yet.
 - [ ] 3D art quality acceptance passed.
 - [ ] Deterministic multi-epoch inheritance verified.
 - [ ] iPhone and desktop end-to-end tests passed.

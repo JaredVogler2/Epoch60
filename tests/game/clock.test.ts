@@ -78,8 +78,21 @@ describe('EpochClock', () => {
     expect(computeHash(c)).toBe(snap);
     expect(store.pauseReason).toBe('hidden');
     store.resume();
+    clock.step(900); // the frame straddling resume is discarded: no time is owed for the pause
+    expect(c.tick).toBe(120);
     clock.step(100);
     expect(c.tick).toBe(121);
+  });
+
+  it('a render hitch (under the stall limit) never fast-forwards the simulation', () => {
+    const { store, clock, c } = newStore();
+    plan(store);
+    runFramesTo(clock, c, 30, 16.7);
+    const before = c.tick;
+    const ran = clock.step(2000); // a 2 s hitch
+    expect(ran).toBeLessThanOrEqual(MAX_TICKS_PER_FRAME);
+    expect(c.tick - before).toBeLessThanOrEqual(MAX_TICKS_PER_FRAME);
+    expect(c.paused).toBe(false);
   });
 
   it('a huge frame gap is a stall: it pauses with an explanation instead of fast-forwarding', () => {

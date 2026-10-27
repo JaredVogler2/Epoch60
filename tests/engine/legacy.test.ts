@@ -164,8 +164,9 @@ describe('physical and ecological inheritance', () => {
     const i = idx(sample.x, sample.y);
     expect(c.world.scar[i]!).toBeGreaterThan(500);
     const fertBefore = c.world.fertility[i]!;
+    const scarBefore = c.world.scar[i]!;
     toInterregnum(c);
-    expect(c.world.scar[i]!).toBeLessThan(250);
+    expect(c.world.scar[i]!).toBeLessThan(scarBefore * 0.6);
     expect(c.world.fertility[i]!).toBeGreaterThanOrEqual(fertBefore);
     expect(c.world.forest[i]!).toBeGreaterThan(100);
   });

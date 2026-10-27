@@ -4,9 +4,11 @@ import {
   createCampaign,
   dispatchAction,
   footprint,
+  getCatalog,
   getForecast,
   setPaused,
 } from '../engine';
+import type { CatalogEntry } from '../engine';
 import type {
   Action,
   ActionResult,
@@ -17,6 +19,7 @@ import type {
   PlacementOk,
   ActionError,
 } from '../engine';
+import { createDemoCampaign } from './demo';
 import { explain } from './messages';
 import {
   DEFAULT_SETTINGS,
@@ -30,7 +33,7 @@ import type { Settings } from './persist';
 
 export type PauseReason = 'user' | 'hidden' | 'stalled' | 'reload';
 export type Screen = 'title' | 'game';
-export type Panel = 'research' | 'help' | 'settings' | null;
+export type Panel = 'research' | 'focus' | 'help' | 'settings' | null;
 
 export interface Placing {
   kind: BuildingKind;
@@ -57,6 +60,8 @@ export class GameStore {
   version = 0;
   worldRev = 0;
   structRev = 0;
+  /** Bumped whenever the clock must forget its last frame time (begin, resume, new game). */
+  clockResetSeq = 0;
   selectedId: number | null = null;
   placing: Placing | null = null;
   ghost: { ok: true; info: PlacementOk } | { ok: false; error: ActionError } | null = null;
@@ -69,6 +74,14 @@ export class GameStore {
   focusRequest: { x: number; y: number; zoom?: number; id: number } | null = null;
   /** True once the collapse presentation is allowed to be skipped. */
   skipRequested = false;
+  /** Interregnum selections (site, tradition, ruin under inspection). */
+  inter: { site: number; tradition: string | null; ruin: number | null } = {
+    site: 0,
+    tradition: null,
+    ruin: null,
+  };
+  /** Seconds the collapse presentation has played (read-only, drives animation). */
+  collapseClock = 0;
 
   private listeners = new Set<() => void>();
   private lastWorldSig = 0;
@@ -97,9 +110,18 @@ export class GameStore {
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
     this.campaign = createCampaign(seed, m);
     this.afterReplace();
+    this.clockResetSeq++;
     this.screen = 'game';
     this.autosave(true);
     this.emit();
+  }
+
+  /** Show a living (paused) village behind the title screen. */
+  initDemo(): void {
+    this.campaign = createDemoCampaign();
+    this.afterReplace();
+    this.screen = 'title';
+    this.pauseReason = null;
   }
 
   /** Resume a saved game. An ACTIVE save always comes back paused. */
@@ -145,6 +167,8 @@ export class GameStore {
     this.panel = null;
     this.toast = null;
     this.pauseReason = null;
+    this.inter = { site: 0, tradition: null, ruin: null };
+    this.collapseClock = 0;
     this.forecastKey = '';
     this.lastWorldSig = 0;
     this.lastStructSig = '';
@@ -171,6 +195,7 @@ export class GameStore {
     if (!c || c.phase !== 'ACTIVE') return;
     setPaused(c, false);
     this.pauseReason = null;
+    this.clockResetSeq++;
     this.emit();
   }
 
@@ -246,6 +271,14 @@ export class GameStore {
     const c = this.campaign;
     if (!c) return { ok: false, code: 'wrong_phase', message: 'No game' };
     const r = dispatchAction(c, action);
+    if (r.ok && action.type === 'beginEpoch') this.clockResetSeq++;
+    if (r.ok && action.type === 'found') {
+      // A new age opens framed on its new hearth.
+      const h = [...c.structures]
+        .reverse()
+        .find((st) => st.kind === 'hearth' && (st.status === 'active' || st.status === 'damaged'));
+      if (h) this.focusOn(h.x + h.w / 2, h.y + h.h / 2, 30);
+    }
     if (!r.ok && !opts.quiet) this.showToast(explain(r), 'error');
     this.refreshRevs();
     if (c.phase !== this.lastPhase) this.onPhaseChange(c.phase);
@@ -282,6 +315,29 @@ export class GameStore {
 
   focusOn(x: number, y: number, zoom?: number): void {
     this.focusRequest = { x, y, zoom, id: ++this.focusSeq };
+    this.emit();
+  }
+
+  /** Open a side panel (toggling it off if already open). */
+  togglePanel(p: Exclude<Panel, null>): void {
+    this.panel = this.panel === p ? null : p;
+    this.emit();
+  }
+
+  closePanel(): void {
+    if (this.panel === null) return;
+    this.panel = null;
+    this.emit();
+  }
+
+  toggleForecast(): void {
+    this.showForecast = !this.showForecast;
+    this.emit();
+  }
+
+  /** Update interregnum selections (site, tradition, ruin under inspection). */
+  setInter(patch: Partial<GameStore['inter']>): void {
+    this.inter = { ...this.inter, ...patch };
     this.emit();
   }
 
@@ -352,6 +408,12 @@ export class GameStore {
   }
 
   /* ------------------------------ forecast ------------------------------ */
+
+  /** The build tray, with why each building is or is not available. */
+  catalog(): CatalogEntry[] {
+    const c = this.campaign;
+    return c ? getCatalog(c) : [];
+  }
 
   getForecastCached(): Forecast | null {
     const c = this.campaign;
