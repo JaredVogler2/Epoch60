@@ -2,6 +2,7 @@ import { computeHash, dispatchAction, runTicks } from './engine';
 import { findSpot } from './engine/ai/spots';
 import { store } from './game/store';
 import { cameraApi } from './render/CameraRig';
+import { citizensApi } from './render/Citizens';
 import { perfApi } from './render/perf';
 import { presentation } from './render/presentation';
 
@@ -18,6 +19,8 @@ export function installDebug(): void {
     dispatchAction,
     /** Frame-time and draw-call statistics of the live scene (see scripts/perf-probe.mjs). */
     perf: { reset: () => perfApi.reset(), stats: () => perfApi.stats() },
+    /** The villagers drawn this frame: position, job and whether they are walking. */
+    citizens: () => citizensApi.list(),
     /** Integrity hash of the live campaign, for comparing a browser run with a recorded transcript. */
     hash: () => (store.campaign ? computeHash(store.campaign) : null),
     /**

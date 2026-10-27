@@ -1,6 +1,14 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
-import { Color, InstancedMesh, Matrix4, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import {
+  BufferGeometry,
+  Color,
+  InstancedMesh,
+  Matrix4,
+  MeshStandardMaterial,
+  Quaternion,
+  Vector3,
+} from 'three';
 import { BUILDINGS, GRID_H, GRID_W } from '../engine';
 import type { Structure } from '../engine';
 import { store } from '../game/store';
@@ -9,8 +17,14 @@ import { INF, buildWalkable, distanceField, entranceCell, hearthOf, N8 } from '.
 import { presentation } from './presentation';
 import { groundY } from './world';
 
-type Role = 'builder' | 'farmer' | 'lumberjack' | 'quarryman' | 'scholar' | 'idle';
+export type Role = 'builder' | 'farmer' | 'lumberjack' | 'quarryman' | 'scholar' | 'idle';
 
+/** Where the villagers are and what they do, for tests and captures (read-only; gameplay never uses it). */
+export const citizensApi: { list: () => { x: number; z: number; role: Role; moving: boolean }[] } = {
+  list: () => [],
+};
+
+/** Tunic hue by job; each age dyes it differently (see `tunic`). */
 const ROLE_COLOR: Record<Role, string> = {
   builder: '#e2792f',
   farmer: '#d8c05a',
@@ -19,6 +33,31 @@ const ROLE_COLOR: Record<Role, string> = {
   scholar: '#4f7cc4',
   idle: '#e9dfc4',
 };
+/** Undyed cloth: the first age's tunics are mostly this. */
+const LINEN = new Color('#cbb68c');
+/** Trousers and leggings per age: undyed wool, dyed cloth, dark tailored wool. */
+const TROUSERS = ['#6f5a40', '#55473a', '#34343c'];
+type Hat = 'brim' | 'cap';
+/** What each job wears on its head — the silhouette that tells them apart from a distance. */
+const HEADWEAR: Record<Role, { hat: Hat; color: string; scale: [number, number, number] } | null> = {
+  farmer: { hat: 'brim', color: '#e3c46a', scale: [1.25, 0.85, 1.25] },
+  builder: { hat: 'brim', color: '#8a6440', scale: [0.84, 1, 0.84] },
+  quarryman: { hat: 'brim', color: '#6f665b', scale: [0.74, 0.8, 0.74] },
+  lumberjack: { hat: 'cap', color: '#8e3a2c', scale: [1, 1, 1] },
+  scholar: { hat: 'cap', color: '#2f3d66', scale: [1, 1.2, 1] },
+  idle: null,
+};
+type Tool = 'mallet' | 'axe' | 'pick' | 'hoe' | 'tablet';
+const TOOL_OF: Record<Role, Tool | null> = {
+  builder: 'mallet',
+  lumberjack: 'axe',
+  quarryman: 'pick',
+  farmer: 'hoe',
+  scholar: 'tablet',
+  idle: null,
+};
+const TOOLS: Tool[] = ['mallet', 'axe', 'pick', 'hoe', 'tablet'];
+const HATS: Hat[] = ['brim', 'cap'];
 const SKIN = ['#f1c9a0', '#d9a36f', '#b57a4d', '#8d5a36'];
 const MAX = 40;
 const STILL = typeof location !== 'undefined' && new URLSearchParams(location.search).has('still');
@@ -59,32 +98,73 @@ function roleOf(s: Structure): Role {
 }
 
 function personGeometries() {
+  const white = rgb('#ffffff');
   const torso = new GeoBuilder(11);
   torso.jitter = 0.04;
-  torso.frustum(0, 0, 0, 0.14, 0.09, 0.11, 0.075, 0.17, rgb('#ffffff'));
-  torso.box(-0.075, 0.1, 0, 0.035, 0.08, 0.04, rgb('#ffffff'));
-  torso.box(0.075, 0.1, 0, 0.035, 0.08, 0.04, rgb('#ffffff'));
+  torso.frustum(0, 0, 0, 0.15, 0.1, 0.11, 0.075, 0.17, white);
+  // A sash at the waist: the tunic's own colour, darker.
+  torso.frustum(0, 0.035, 0, 0.142, 0.096, 0.137, 0.093, 0.022, rgb('#8a8278'));
+  torso.box(-0.078, 0.1, 0, 0.035, 0.08, 0.04, white);
+  torso.box(0.078, 0.1, 0, 0.035, 0.08, 0.04, white);
   const head = new GeoBuilder(12);
   head.jitter = 0.03;
-  head.lump(0, 0.23, 0, 0.055, 0.06, 0.055, rgb('#ffffff'), { detail: 0, rough: 0.03 });
-  head.lump(0, 0.255, -0.01, 0.06, 0.04, 0.058, rgb('#3a2a1c'), { detail: 0, rough: 0.03 });
+  head.lump(0, 0.235, 0, 0.061, 0.066, 0.061, white, { detail: 0, rough: 0.03 });
+  head.lump(0, 0.262, -0.012, 0.066, 0.043, 0.064, rgb('#3a2a1c'), { detail: 0, rough: 0.03 });
   const leg = new GeoBuilder(13);
   leg.jitter = 0.04;
-  leg.box(-0.03, -0.15, 0, 0.045, 0.15, 0.055, PAL.timberDark);
+  leg.box(-0.03, -0.15, 0, 0.045, 0.15, 0.055, white);
   const legR = new GeoBuilder(15);
   legR.jitter = 0.04;
-  legR.box(0.03, -0.15, 0, 0.045, 0.15, 0.055, PAL.timberDark);
-  const tool = new GeoBuilder(14);
-  tool.jitter = 0.02;
-  tool.beam([0, 0, 0], [0, -0.17, 0.0], 0.008, PAL.timber);
-  tool.box(0, -0.2, 0, 0.07, 0.035, 0.03, PAL.stoneDark);
+  legR.box(0.03, -0.15, 0, 0.045, 0.15, 0.055, white);
+
+  // Headwear, white so each job can tint it: a brimmed hat (straw, felt or leather) and a soft cap with a tip.
+  const brim = new GeoBuilder(16);
+  brim.cyl(0, 0.272, 0, 0.11, 0.08, 0.014, 10, white);
+  brim.cyl(0, 0.284, 0, 0.058, 0.044, 0.052, 8, white);
+  const cap = new GeoBuilder(17);
+  cap.lump(0, 0.272, -0.006, 0.07, 0.048, 0.069, white, { detail: 0, rough: 0.02 });
+  cap.cyl(0, 0.3, -0.03, 0.03, 0, 0.05, 6, white);
+
+  // Tools hang from the hand along -y and swing about it; colours are baked (wood, iron, stone).
+  const wood = PAL.timber;
+  const iron = rgb('#9aa3ad');
+  const mallet = new GeoBuilder(18);
+  mallet.beam([0, 0, 0], [0, -0.15, 0], 0.008, wood);
+  mallet.box(0, -0.19, 0, 0.065, 0.045, 0.045, PAL.woodLight);
+  const axe = new GeoBuilder(19);
+  axe.beam([0, 0, 0], [0, -0.2, 0], 0.008, wood);
+  axe.box(0, -0.205, 0.028, 0.012, 0.055, 0.05, iron);
+  const pick = new GeoBuilder(20);
+  pick.beam([0, 0, 0], [0, -0.19, 0], 0.008, wood);
+  pick.beam([0, -0.195, -0.06], [0, -0.195, 0.06], 0.011, iron);
+  const hoe = new GeoBuilder(21);
+  hoe.beam([0, 0, 0], [0, -0.25, 0], 0.007, wood);
+  hoe.box(0, -0.255, 0.022, 0.055, 0.012, 0.045, iron);
+  const tablet = new GeoBuilder(22);
+  tablet.box(0, -0.06, 0.035, 0.075, 0.09, 0.014, PAL.clay);
   return {
     torso: torso.build(),
     head: head.build(),
     leg: leg.build(),
     legR: legR.build(),
-    tool: tool.build(),
+    hats: { brim: brim.build(), cap: cap.build() } as Record<Hat, BufferGeometry>,
+    tools: {
+      mallet: mallet.build(),
+      axe: axe.build(),
+      pick: pick.build(),
+      hoe: hoe.build(),
+      tablet: tablet.build(),
+    } as Record<Tool, BufferGeometry>,
   };
+}
+
+/** A tunic's colour: the job's hue, undyed linen in the first age, bright dyes in the second, deep wool in the third. */
+function tunic(out: Color, role: Role, epoch: number, person: number): Color {
+  out.set(ROLE_COLOR[role]);
+  if (epoch <= 0) out.lerp(LINEN, 0.45);
+  else if (epoch === 1) out.lerp(LINEN, 0.12);
+  else out.multiplyScalar(0.8);
+  return out.multiplyScalar(0.94 + h01(person, 9, 2) * 0.12);
 }
 
 const M = new Matrix4();
@@ -96,6 +176,11 @@ const scl = new Vector3(1.3, 1.3, 1.3);
 const tmpColor = new Color();
 const EULER_AXIS_X = new Vector3(1, 0, 0);
 const EULER_AXIS_Y = new Vector3(0, 1, 0);
+/** Parks an instance that has nothing to show (no hat, no tool) at zero scale. */
+const HIDDEN = new Matrix4().makeScale(0, 0, 0);
+const HAT_UP = new Matrix4().makeTranslation(0, 0.272, 0);
+const HAT_DOWN = new Matrix4().makeTranslation(0, -0.272, 0);
+const hatScale = new Matrix4();
 const qx = new Quaternion();
 const qy = new Quaternion();
 
@@ -106,7 +191,8 @@ export function Citizens() {
   const headRef = useRef<InstancedMesh>(null);
   const legLRef = useRef<InstancedMesh>(null);
   const legRRef = useRef<InstancedMesh>(null);
-  const toolRef = useRef<InstancedMesh>(null);
+  const hatRefs = useRef<Partial<Record<Hat, InstancedMesh | null>>>({});
+  const toolRefs = useRef<Partial<Record<Tool, InstancedMesh | null>>>({});
   const agents = useRef<Agent[]>([]);
   const cache = useRef<{
     sig: string;
@@ -117,6 +203,12 @@ export function Citizens() {
     hz: number;
   } | null>(null);
   const lastAssign = useRef(-1);
+  useEffect(() => {
+    citizensApi.list = () => agents.current.map((a) => ({ x: a.x, z: a.z, role: a.role, moving: a.moving }));
+    return () => {
+      citizensApi.list = () => [];
+    };
+  }, []);
 
   useFrame((state, dtRaw) => {
     const c = store.campaign;
@@ -124,12 +216,14 @@ export function Citizens() {
     const head = headRef.current;
     const legL = legLRef.current;
     const legR = legRRef.current;
-    const tool = toolRef.current;
-    if (!c || !torso || !head || !legL || !legR || !tool) return;
+    const hats = HATS.map((h) => hatRefs.current[h]);
+    const tools = TOOLS.map((k) => toolRefs.current[k]);
+    if (!c || !torso || !head || !legL || !legR || hats.some((m) => !m) || tools.some((m) => !m)) return;
+    const extras = [...hats, ...tools] as InstancedMesh[];
     const visible =
       store.screen === 'title' || c.phase === 'PREPARE' || c.phase === 'ACTIVE' || c.phase === 'COLLAPSING';
     if (!visible || (c.civ.pop <= 0 && c.phase !== 'COLLAPSING')) {
-      torso.count = head.count = legL.count = legR.count = tool.count = 0;
+      for (const m of [torso, head, legL, legR, ...extras]) m.count = 0;
       return;
     }
     const frozen = store.screen === 'game' && c.phase === 'ACTIVE' && c.paused;
@@ -211,6 +305,8 @@ export function Citizens() {
         if (s.status !== 'active' && s.status !== 'damaged') continue;
         for (let i = 0; i < s.workers; i++) tasks.push({ site: s.id, role: roleOf(s) });
       }
+      // Idle people spread wider as there are more of them, so a big village does not knot around its hearth.
+      const idleSpread = 2.6 + Math.sqrt(Math.max(0, ag.length - tasks.length)) * 0.55;
       ag.forEach((a, i) => {
         const task = tasks[i];
         if (task) {
@@ -227,7 +323,7 @@ export function Citizens() {
           if (a.wanderBucket !== bucket || a.target < 0) {
             a.wanderBucket = bucket;
             const ang = h01(a.id, bucket, 11) * Math.PI * 2;
-            const r = 1 + h01(a.id, bucket, 12) * 2.6;
+            const r = 1 + h01(a.id, bucket, 12) * idleSpread;
             const hx = Math.floor(cc.hx + Math.cos(ang) * r);
             const hz = Math.floor(cc.hz + Math.sin(ang) * r);
             const k = hz * GRID_W + hx;
@@ -307,8 +403,11 @@ export function Citizens() {
           showTool = true;
         } else if (a.role === 'farmer') {
           tilt = 0.55 + Math.sin(w * 0.5) * 0.15;
+          toolSwing = -0.9 + Math.sin(w * 0.9) * 0.35;
+          showTool = true;
         } else if (a.role === 'scholar') {
           tilt = 0.2;
+          showTool = true;
         } else {
           tilt = Math.sin(w * 0.4) * 0.03;
         }
@@ -328,36 +427,77 @@ export function Citizens() {
       rot.makeRotationX(-swing);
       M.copy(base).multiply(rot);
       legR.setMatrixAt(n, M);
-      // tool at the hand
-      M.copy(base);
-      rot.makeTranslation(0.085, 0.2, 0.02);
-      M.multiply(rot);
-      rot.makeRotationX(toolSwing);
-      M.multiply(rot);
-      if (!showTool) M.scale(new Vector3(0.0001, 0.0001, 0.0001));
-      tool.setMatrixAt(n, M);
-      tmpColor.set(ROLE_COLOR[a.role]);
-      torso.setColorAt(n, tmpColor);
+      // Headwear follows the head; only the job's own hat shape is shown.
+      const wear = HEADWEAR[a.role];
+      HATS.forEach((h, k) => {
+        const m = hats[k]!;
+        if (wear?.hat === h) {
+          // Scaled about the hat's own height, so a wide straw brim stays on the head.
+          hatScale.makeScale(wear.scale[0], wear.scale[1], wear.scale[2]);
+          M.copy(base).multiply(HAT_UP).multiply(hatScale).multiply(HAT_DOWN);
+          m.setMatrixAt(n, M);
+          m.setColorAt(n, tmpColor.set(wear.color));
+        } else m.setMatrixAt(n, HIDDEN);
+      });
+      // The job's tool at the hand, swinging while at work; a scholar holds a tablet up to read.
+      const own = TOOL_OF[a.role];
+      TOOLS.forEach((k, i) => {
+        const m = tools[i]!;
+        if (k !== own || !showTool) {
+          m.setMatrixAt(n, HIDDEN);
+          return;
+        }
+        M.copy(base);
+        rot.makeTranslation(0.085, 0.2, 0.02);
+        M.multiply(rot);
+        rot.makeRotationX(k === 'tablet' ? -1.25 : toolSwing);
+        M.multiply(rot);
+        m.setMatrixAt(n, M);
+      });
+      torso.setColorAt(n, tunic(tmpColor, a.role, c.epoch, a.id));
+      tmpColor.set(TROUSERS[Math.min(2, c.epoch)]!).multiplyScalar(0.92 + h01(a.id, 10, 2) * 0.16);
+      legL.setColorAt(n, tmpColor);
+      legR.setColorAt(n, tmpColor);
       tmpColor.set(SKIN[a.skin]!);
       head.setColorAt(n, tmpColor);
       n++;
     }
-    for (const m of [torso, head, legL, legR, tool]) {
+    for (const m of [torso, head, legL, legR, ...extras]) {
       m.count = n;
       m.instanceMatrix.needsUpdate = true;
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
     }
-    if (torso.instanceColor) torso.instanceColor.needsUpdate = true;
-    if (head.instanceColor) head.instanceColor.needsUpdate = true;
   });
 
   const common = { castShadow: true, receiveShadow: false, frustumCulled: false } as const;
+  // Hats and tools are a few pixels across: their shadows would be invisible, so they skip the shadow pass.
+  const small = { ...common, castShadow: false } as const;
   return (
     <group>
       <instancedMesh ref={torsoRef} args={[geo.torso, mat, MAX]} {...common} />
       <instancedMesh ref={headRef} args={[geo.head, mat, MAX]} {...common} />
       <instancedMesh ref={legLRef} args={[geo.leg, mat, MAX]} {...common} />
       <instancedMesh ref={legRRef} args={[geo.legR, mat, MAX]} {...common} />
-      <instancedMesh ref={toolRef} args={[geo.tool, mat, MAX]} {...common} />
+      {HATS.map((h) => (
+        <instancedMesh
+          key={h}
+          ref={(m) => {
+            hatRefs.current[h] = m;
+          }}
+          args={[geo.hats[h], mat, MAX]}
+          {...small}
+        />
+      ))}
+      {TOOLS.map((k) => (
+        <instancedMesh
+          key={k}
+          ref={(m) => {
+            toolRefs.current[k] = m;
+          }}
+          args={[geo.tools[k], mat, MAX]}
+          {...small}
+        />
+      ))}
     </group>
   );
 }

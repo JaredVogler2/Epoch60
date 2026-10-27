@@ -28,7 +28,7 @@ so. **251 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 13 / 14 / 16:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); citizen outfits per age, Age III skyline, a
+4. **Phase 13 / 14 / 16:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
    then-vs-now slider, more story decisions; meta-progression.
 5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.
