@@ -1,4 +1,4 @@
-// Usage: node scripts/collapse-shots.mjs <hazard: fire|flood|quake> [w] [h]
+// Usage: node scripts/collapse-shots.mjs <hazard: fire|flood|quake|ash> [w] [h]   (ash uses the Ashen Winter scenario)
 // Builds a showcase village in the chosen epoch, runs it to collapse, then captures the cinematic at fixed progress points.
 import { readFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
@@ -6,7 +6,8 @@ import { chromium } from '@playwright/test';
 const hazard = process.argv[2] ?? 'fire';
 const w = Number(process.argv[3] ?? 1366);
 const h = Number(process.argv[4] ?? 768);
-const epoch = hazard === 'flood' ? 1 : hazard === 'quake' ? 2 : 0;
+const epoch = hazard === 'flood' ? 1 : hazard === 'quake' || hazard === 'ash' ? 2 : 0;
+const scenario = hazard === 'ash' ? 'ashen' : 'greenvale';
 const showcase = readFileSync(new URL('./showcase.js', import.meta.url), 'utf8');
 
 const browser = await chromium.launch({
@@ -25,7 +26,7 @@ await page.evaluate(`(() => { window.__EPOCH_IDX = ${epoch}; })()`);
 await page.evaluate(
   showcase.replace(
     'e.store.newGame(6001);',
-    `e.store.newGame(6001); if (${epoch} > 0) { e.store.campaign.epoch = ${epoch}; }`,
+    `e.store.newGame(6001, undefined, '${scenario}'); if (${epoch} > 0) { e.store.campaign.epoch = ${epoch}; }`,
   ),
 );
 await page.evaluate(() => {
@@ -51,7 +52,7 @@ for (const t of [0.02, 0.2, 0.4, 0.6, 0.84, 1.0]) {
   await page.evaluate(() => window.__epoch.camera.render());
   await page.waitForTimeout(2500);
   await page.screenshot({
-    path: `/tmp/shots/collapse-${hazard}-${String(Math.round(t * 100)).padStart(3, '0')}.png`,
+    path: `docs/screenshots/collapse-${hazard}-${String(Math.round(t * 100)).padStart(3, '0')}.png`,
   });
   console.log('t', t);
 }

@@ -4,7 +4,15 @@ export { BUILDINGS, BUILDING_KINDS, costOf, footprint, getDef } from './content/
 export type { BuildingDef } from './content/buildings';
 export { TECHS, TECH_IDS } from './content/techs';
 export { TRADITIONS, sumModifiers } from './content/traditions';
-export { GREENVALE, getScenario } from './content/scenario';
+export {
+  ASHEN,
+  DIFFICULTY,
+  GREENVALE,
+  SCENARIOS,
+  getScenario,
+  scaledStrength,
+  victoryFor,
+} from './content/scenario';
 export {
   advanceFixedTick,
   canAdvance,

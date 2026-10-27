@@ -14,30 +14,30 @@ Rates are per second at full staffing (internal: milli-units per tick × 10). Re
 | Quarry | yes | 0 | — | 3×2 | 12 timber | 15.0 | 3 | 0.85 stone | — | 70% / 50% / 50% | 10 | — |
 | Cottage | yes | 0 | — | 2×2 | 14 timber | 15.0 | 0 | — | 4 | 8% / 25% / 30% | 85 | — |
 | Workshop | yes | 0 | — | 2×2 | 12 timber, 6 stone | 17.0 | 2 | — | — | 25% / 30% / 40% | 60 | — |
-| Archive | yes | 0 | — | 3×3 | 16 timber, 12 stone | 33.0 | 1 | 0.36 knowledge | — | 85% / 45% / 45% | 6 | yes |
+| Archive | yes | 0 | — | 3×3 | 16 timber, 12 stone | 33.0 | 1 | 0.50 knowledge | — | 85% / 45% / 45% | 6 | yes |
 | Seed Vault | yes | 0 | — | 2×2 | 10 timber, 8 stone | 22.0 | 0 | — | — | 85% / 70% / 60% | 4 | yes |
 | Firebreak | yes | 0 | — | 5×2 (rot) | 4 timber | 9.0 | 0 | — | — | 100% / 40% / 90% | 0 | — |
-| Stone House | no | 0 | masonry | 2×2 | 6 timber, 14 stone | 23.0 | 0 | — | 5 | 75% / 50% / 55% | 8 | — |
-| Levee | no | 1 | hydrology | 5×1 (rot) | 4 timber, 8 stone | 12.0 | 0 | — | — | 90% / 80% / 50% | 0 | — |
-| Dam | no | 1 | hydrology | 4×2 (rot) | 20 timber, 30 stone | 42.0 | 0 | — | — | 90% / 60% / 40% | 0 | yes |
-| Bridge | no | 1 | bronze_tools | 4×2 (rot) | 18 timber, 8 stone | 24.0 | 0 | — | — | 70% / 40% / 35% | 6 | yes |
-| Retaining Wall | no | 2 | seismic_engineering | 5×1 (rot) | 14 stone | 16.0 | 0 | — | — | 90% / 70% / 80% | 0 | — |
-| Forge | no | 2 | ironworking | 3×2 | 14 timber, 18 stone | 30.0 | 2 | — | — | 80% / 50% / 45% | 14 | — |
-| Grove | no | 0 | forestry | 3×3 | 4 food, 4 timber | 11.0 | 0 | — | — | 10% / 70% / 80% | 70 | — |
+| Stone House | yes | 0 | masonry | 2×2 | 6 timber, 14 stone | 23.0 | 0 | — | 5 | 75% / 50% / 55% | 8 | — |
+| Levee | yes | 1 | hydrology | 5×1 (rot) | 4 timber, 8 stone | 12.0 | 0 | — | — | 90% / 80% / 50% | 0 | — |
+| Dam | yes | 1 | hydrology | 4×2 (rot) | 20 timber, 30 stone | 42.0 | 0 | — | — | 90% / 60% / 40% | 0 | yes |
+| Bridge | yes | 1 | bronze_tools | 4×2 (rot) | 18 timber, 8 stone | 24.0 | 0 | — | — | 70% / 40% / 35% | 6 | yes |
+| Retaining Wall | yes | 2 | seismic_engineering | 5×1 (rot) | 14 stone | 16.0 | 0 | — | — | 90% / 70% / 80% | 0 | — |
+| Forge | yes | 2 | ironworking | 3×2 | 14 timber, 18 stone | 30.0 | 2 | — | — | 80% / 50% / 45% | 14 | — |
+| Grove | yes | 0 | forestry | 3×3 | 4 food, 4 timber | 11.0 | 0 | — | — | 10% / 70% / 80% | 70 | — |
 
 ## Technologies
 
 | Tech | Branch | Enabled | Knowledge | Research time | Requires | Effect |
 |---|---|---|---|---|---|---|
 | Masonry | industry | yes | 10 | 8.0 s | — | Stone House · Quarry +25% |
-| Bronze Tools | industry | no | 16 | 10.0 s | masonry | Bridge · Builders +15% |
-| Ironworking | industry | no | 24 | 12.0 s | bronze_tools | Forge |
+| Bronze Tools | industry | yes | 16 | 10.0 s | masonry | Bridge · Builders +15% |
+| Ironworking | industry | yes | 24 | 12.0 s | bronze_tools | Forge |
 | Irrigation | ecology | yes | 10 | 8.0 s | — | Farm +25% |
-| Crop Rotation | ecology | no | 14 | 9.0 s | irrigation | No soil drain |
-| Forestry | ecology | no | 12 | 8.0 s | — | Grove · Lumber −40% forest loss |
+| Crop Rotation | ecology | yes | 14 | 9.0 s | irrigation | No soil drain · Soil recovers |
+| Forestry | ecology | yes | 12 | 8.0 s | — | Grove · Lumber −40% forest loss |
 | Writing | resilience | yes | 10 | 8.0 s | — | Archive +2 capacity · Archive +40% |
-| Hydrology | resilience | no | 16 | 10.0 s | writing | Levee · Dam |
-| Seismic Engineering | resilience | no | 22 | 12.0 s | writing, masonry | Retaining Wall · Quake resistance +250 |
+| Hydrology | resilience | yes | 16 | 10.0 s | writing | Levee · Dam |
+| Seismic Engineering | resilience | yes | 22 | 12.0 s | writing, masonry | Retaining Wall · Quake resistance +250 |
 
 ## Traditions
 
@@ -55,7 +55,7 @@ Rates are per second at full staffing (internal: milli-units per tick × 10). Re
 
 ## Scenario: Greenvale
 
-*Three ages. One landscape. Every choice survives.* Victory: ≥8 survivors, ≥1 cross-era heritage structure standing, ≥2 technologies retained after the final collapse.
+*Three ages. One landscape. Every choice survives.* Victory: ≥8 survivors, ≥1 cross-era heritage structure standing, ≥3 technologies retained after the final collapse.
 
 | # | Epoch | Age | Hazard | Strength | Scarcity | Start (food/timber/stone) | Start pop | Years after |
 |---|---|---|---|---|---|---|---|---|

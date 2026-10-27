@@ -28,7 +28,7 @@ export function createStructure(
     status,
     progress: 0,
     integrity: 1000,
-    bonus: { fire: 0, flood: 0, quake: 0 },
+    bonus: { fire: 0, flood: 0, quake: 0, ash: 0 },
     workers: 0,
     acc: 0,
     staffing: 0,

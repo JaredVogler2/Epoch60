@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { BuildTray, PlacementBar, ResourceBar, TopBar } from './Hud';
 import { FocusPanel, HelpPanel, Inspector, PauseOverlay, ResearchPanel, Toast } from './Panels';
 import { CollapseOverlay, DebriefScreen, EndScreen, InterregnumScreen, PrepareCard } from './Screens';
+import { Announcer } from './Announcer';
+import { StoryChip } from './Story';
 import { useStore } from './useStore';
 
-/** Keyboard: Esc cancels/closes, Space pauses, R rotates, 1-9 pick a building, Enter confirms placement. */
+/** Keyboard: Esc cancels/closes, Space pauses, R rotates, N next site, arrows move the ghost, 1-9 pick a building, Enter confirms. */
 function useShortcuts(): void {
   const s = useStore();
   useEffect(() => {
@@ -27,6 +29,16 @@ function useShortcuts(): void {
       }
       if (e.key.toLowerCase() === 'r' && s.placing) {
         s.rotatePlacing();
+        return;
+      }
+      if (e.key.toLowerCase() === 'n' && s.placing) {
+        s.suggestNext();
+        return;
+      }
+      if (s.placing && e.key.startsWith('Arrow')) {
+        e.preventDefault();
+        const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+        if (d) s.nudgePlacing(d[0]!, d[1]!);
         return;
       }
       if (e.key === 'Enter' && s.placing && s.ghost?.ok) {
@@ -52,6 +64,7 @@ export function GameHud() {
   const showTray = timed && !s.placing;
   return (
     <div className="hud" data-testid="hud" data-phase={c.phase}>
+      <Announcer />
       <TopBar />
       <ResourceBar />
       <div className="side-panels">
@@ -62,6 +75,7 @@ export function GameHud() {
       <Inspector />
       <div className="bottom-dock">
         <Toast />
+        <StoryChip />
         <PrepareCard />
         {s.placing && <PlacementBar />}
         {showTray && <BuildTray />}

@@ -1,7 +1,8 @@
-import { dispatchAction, runTicks } from './engine';
+import { computeHash, dispatchAction, runTicks } from './engine';
 import { findSpot } from './engine/ai/spots';
 import { store } from './game/store';
 import { cameraApi } from './render/CameraRig';
+import { perfApi } from './render/perf';
 import { presentation } from './render/presentation';
 
 /** Test/debug hooks: enabled in dev builds and when the URL contains ?debug. Never used by gameplay. */
@@ -15,6 +16,10 @@ export function installDebug(): void {
     runTicks,
     findSpot,
     dispatchAction,
+    /** Frame-time and draw-call statistics of the live scene (see scripts/perf-probe.mjs). */
+    perf: { reset: () => perfApi.reset(), stats: () => perfApi.stats() },
+    /** Integrity hash of the live campaign, for comparing a browser run with a recorded transcript. */
+    hash: () => (store.campaign ? computeHash(store.campaign) : null),
     /** Run `n` ticks instantly (tests only) and refresh the UI exactly as the real clock would. */
     fastForward: (n: number) => {
       const c = store.campaign;

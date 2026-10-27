@@ -35,12 +35,15 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 ## Status
 
 - [x] Complete 20-stage (00–19) implementation prompt program committed.
-- [~] Playable browser vertical slice (Chromium-verified): deterministic engine + R3F diorama + HUD + full 3-epoch loop to an ending; 82 unit + 13 Playwright tests. **Not yet a finished, balanced game** — see `docs/PROGRESS.md`.
-- [~] First complete 60-second civilization: automated E2E plays it; no human playtest yet.
-- [ ] 3D art quality acceptance passed.
-- [ ] Deterministic multi-epoch inheritance verified.
-- [ ] iPhone and desktop end-to-end tests passed.
-- [ ] Live deployment verified.
+- [~] Playable browser game (Chromium-verified): deterministic engine, R3F diorama, HUD, two scenarios (Greenvale; The Ashen Winter), four disaster types, ages with per-age architecture,
+  story decisions, procedural audio, difficulty tiers, seed links and Daily Ruins. Unit tests and Playwright (desktop 1366×768 + iPhone-13 profile) are in CI-style gates; see
+  [docs/TEST_RESULTS.md](docs/TEST_RESULTS.md). **Not yet a finished, balanced game.**
+- [~] Two mechanically distinct winning routes and credible losses are *executed* on the canonical seed and replayed headless and in the browser
+  ([fixtures/greenvale-traces.md](fixtures/greenvale-traces.md)); no human playtest yet.
+- [ ] 3D art quality acceptance passed — self-assessed below the minimum on life, era transformation and events (`docs/ART_DIRECTION.md`).
+- [~] Deterministic multi-epoch inheritance verified headless (replay, fuzz, bulk worlds) and in Chromium.
+- [~] Desktop and iPhone-profile end-to-end tests pass in Chromium; **no WebKit/Safari run and no real-device frame-rate measurement** (`docs/PERF.md` explains what the software-rendered numbers do and do not mean).
+- [ ] Live deployment verified — nothing is deployed.
 
 **Do not represent this document as a shipped game.**
 ## Additional binding quality and continuation instructions

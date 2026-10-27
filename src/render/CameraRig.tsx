@@ -144,6 +144,8 @@ export function CameraRig({ enabled }: { enabled: boolean }) {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      // While a building is being placed the arrow keys move the ghost, not the camera.
+      if (store.placing && e.key.startsWith('Arrow')) return;
       keys.current.add(e.key.toLowerCase());
       if (e.key === 'Home') {
         Object.assign(target.current, DEFAULT_CAMERA);

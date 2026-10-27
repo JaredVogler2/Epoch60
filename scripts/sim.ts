@@ -1,0 +1,161 @@
+/**
+ * Headless simulation tournament over many seeded valleys.
+ *   npx vite-node scripts/sim.ts --seeds 200 [--from 1] [--policies engineers,archivists,...] [--scenario greenvale|ashen] [--difficulty gentle|normal|hard] [--report docs/BALANCE_REPORT.md] [--json out.json]
+ * Every policy uses the same public action API as a human, with the same resources and clock, on the same seed.
+ */
+import { execSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { CONTENT_VERSION, RULES_VERSION, computeHash, createCampaign, validateWorld } from '../src/engine';
+import type { Campaign, Difficulty } from '../src/engine';
+import { noopPolicy, playCampaign, randomPolicy, type Policy } from '../src/engine/ai/bots';
+import { checkInvariants } from '../src/engine/ai/invariants';
+import { ROUTES } from '../src/engine/ai/routes';
+
+const arg = (name: string, d: string) => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 ? (process.argv[i + 1] ?? d) : d;
+};
+const N = Number(arg('seeds', '100'));
+const FROM = Number(arg('from', '1'));
+const names = arg('policies', 'noop,random,builder,maximizer,steward,engineers,archivists').split(',');
+const scenario = arg('scenario', 'greenvale');
+const difficulty = arg('difficulty', 'normal') as Difficulty;
+const reportPath = arg('report', '');
+const jsonPath = arg('json', '');
+
+const make = (name: string, seed: number): Policy => {
+  if (name === 'noop') return noopPolicy;
+  if (name === 'random') return randomPolicy(seed);
+  const p = ROUTES[name];
+  if (!p) throw new Error(`unknown policy ${name}`);
+  return p;
+};
+
+interface Row {
+  seed: number;
+  policy: string;
+  phase: string;
+  epochs: number;
+  survivors: number[];
+  met: [boolean, boolean, boolean] | null;
+  heritage: number;
+  techs: number;
+  ms: number;
+  violations: number;
+  decisions: number;
+  stories: number;
+}
+
+const rows: Row[] = [];
+const errors: string[] = [];
+const seeds = Array.from({ length: N }, (_, i) => FROM + i);
+let invalid = 0;
+const t0 = Date.now();
+for (const seed of seeds) {
+  const probe = createCampaign(seed, 'standard', scenario, difficulty);
+  if (!validateWorld(probe.world).ok) invalid++;
+  for (const name of names) {
+    const c: Campaign = createCampaign(seed, 'standard', scenario, difficulty);
+    const start = Date.now();
+    let violations = 0;
+    try {
+      const run = playCampaign(c, make(name, seed), {
+        onTick: (cc) => {
+          if (cc.tick % 100 === 0) violations += checkInvariants(cc).length;
+        },
+      });
+      violations += checkInvariants(c).length;
+      const v = c.report?.verdict ?? null;
+      rows.push({
+        seed,
+        policy: name,
+        phase: c.phase,
+        epochs: run.epochs.length,
+        survivors: run.epochs.map((e) => e.survivors),
+        met: v
+          ? [v.conditions[0]?.met ?? false, v.conditions[1]?.met ?? false, v.conditions[2]?.met ?? false]
+          : null,
+        heritage: v?.conditions[1]?.have ?? 0,
+        techs: v?.conditions[2]?.have ?? 0,
+        ms: Date.now() - start,
+        violations,
+        decisions: c.civ.stats.decisions,
+        stories: run.epochs.reduce((n, e) => n + e.stories.length, 0),
+      });
+      if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT')
+        errors.push(`seed ${seed} ${name}: stuck in ${c.phase}`);
+    } catch (e) {
+      errors.push(`seed ${seed} ${name}: ${(e as Error).message}`);
+    }
+  }
+}
+const wall = ((Date.now() - t0) / 1000).toFixed(1);
+
+const pct = (n: number, d: number) => (d ? `${((100 * n) / d).toFixed(1)}%` : '—');
+const med = (xs: number[]) => {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)]!;
+};
+const lines: string[] = [];
+lines.push(
+  '| Policy | Runs | Victory | Reached epoch 2 | Reached epoch 3 | Met: people | Met: landmark | Met: techs | Median final survivors | Median ms/run |',
+);
+lines.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |');
+for (const name of names) {
+  const rs = rows.filter((r) => r.policy === name);
+  const wins = rs.filter((r) => r.phase === 'VICTORY').length;
+  const finals = rs.filter((r) => r.epochs === 3);
+  lines.push(
+    `| ${name} | ${rs.length} | ${wins} (${pct(wins, rs.length)}) | ${rs.filter((r) => r.epochs >= 2).length} | ${finals.length} | ${pct(finals.filter((r) => r.met?.[0]).length, finals.length)} | ${pct(finals.filter((r) => r.met?.[1]).length, finals.length)} | ${pct(finals.filter((r) => r.met?.[2]).length, finals.length)} | ${med(finals.map((r) => r.survivors[2] ?? 0))} | ${med(rs.map((r) => r.ms))} |`,
+  );
+}
+const viol = rows.reduce((n, r) => n + r.violations, 0);
+let commit = 'unknown';
+try {
+  commit = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+} catch {
+  /* not a git checkout */
+}
+// Seeds where at least one thoughtful policy wins ("a feasible win witness").
+const witness = seeds.filter((s) =>
+  rows.some((r) => r.seed === s && r.phase === 'VICTORY' && !['noop', 'random'].includes(r.policy)),
+);
+const out = `# Balance report (generated) — scenario: ${scenario}, difficulty: ${difficulty}
+
+Generated by \`npx vite-node scripts/sim.ts --seeds ${N} --from ${FROM} --scenario ${scenario} --difficulty ${difficulty}\` at commit \`${commit}\`,
+rules ${RULES_VERSION} / content ${CONTENT_VERSION}. **Sample: ${N} seeds (${FROM}–${FROM + N - 1}) × ${names.length} policies = ${rows.length} full 3-epoch campaigns**, wall time ${wall} s.
+Nothing here is estimated: every number is counted from those runs. Policies were hand-tuned on seed 6001 only; other seeds measure how well each strategy generalizes.
+
+${lines.join('\n')}
+
+## Health
+
+- Seeds failing world validation: **${invalid}** of ${N}.
+- Invariant violations (NaN / negative / non-integer resources, map ownership, duplicate ids), sampled every 10 s: **${viol}**.
+- Campaigns that errored or ended outside VICTORY/DEFEAT (soft-locks): **${errors.length}**${
+  errors.length
+    ? '\n' +
+      errors
+        .slice(0, 10)
+        .map((e) => `  - ${e}`)
+        .join('\n')
+    : ''
+}.
+- Seeds with a feasible win witness (some non-baseline policy won): **${witness.length}** of ${N} (${pct(witness.length, N)}). This is a lower bound on solvability, not a proof.
+
+## Reading this table
+
+- \`noop\` and \`random\` are the baselines thoughtful play must beat. \`builder\` thrives but plans no legacy. \`maximizer\` and \`steward\` are
+  additional single-idea strategies; \`engineers\` and \`archivists\` are the two tuned winning routes (see \`fixtures/greenvale-traces.md\`).
+- "Met" columns are the share of campaigns that reached the final verdict and satisfied each victory condition.
+- Human playtesting has **not** been done; these figures say nothing about fun.
+`;
+if (reportPath) writeFileSync(reportPath, out);
+if (jsonPath)
+  writeFileSync(
+    jsonPath,
+    JSON.stringify({ commit, rules: RULES_VERSION, content: CONTENT_VERSION, rows, errors }, null, 1),
+  );
+console.log(out);
+void computeHash;

@@ -203,6 +203,25 @@ describe('physical and ecological inheritance', () => {
   });
 });
 
+describe('founding never soft-locks', () => {
+  it('offers sites even when the last hearth stood on a river bank', () => {
+    const c = fresh();
+    scriptedEpoch(c);
+    act(c, { type: 'continue' });
+    expect(c.phase).toBe('DEBRIEF');
+    // The old hearth sat where the cell diagonally up-left of it is open river.
+    const hearth = c.structures.find((s) => s.kind === 'hearth')!;
+    hearth.x = 15;
+    hearth.y = 21;
+    act(c, { type: 'continue' });
+    expect(c.phase).toBe('INTERREGNUM');
+    const sites = c.lineage.interregnum!.sites;
+    expect(sites.length).toBeGreaterThan(0);
+    expect(found(c, 0).ok).toBe(true);
+    expect(c.phase).toBe('PREPARE');
+  });
+});
+
 describe('archaeology is bounded', () => {
   it('limits surveys and excavations per interregnum and charges nothing free', () => {
     const c = fresh();

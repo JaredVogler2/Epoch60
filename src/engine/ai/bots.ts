@@ -8,14 +8,17 @@ import type {
   Campaign,
   HazardKind,
   LaborFocus,
+  StoryPrompt,
   TechId,
   TraditionId,
 } from '../core/types';
 import { advanceFixedTick, dispatchAction } from '../campaign';
 import { ruinYield } from '../legacy/inheritance';
+import { openPrompts } from '../events/story';
 import { findSpot, sumField, type SpotOptions } from './spots';
+import { mitigationSpot } from './mitigate';
 import { nextInt, createRngState } from '../core/prng';
-import { hasTech } from '../economy/modifiers';
+import { hasTech, reservedCost } from '../economy/modifiers';
 import { countKind } from '../economy/placement';
 import { resolveHazard } from '../world/hazards';
 
@@ -35,14 +38,23 @@ export interface Want {
   /** Reinforce every standing building of these kinds against the epoch hazard. */
   reinforce?: BuildingKind[];
   rot?: (0 | 1)[];
-  /** Build a protective line: place until the predicted hazard no longer hits `protect` kinds. */
+  /**
+   * If this want is only blocked by resources, stop here and wait rather than spending on lower priorities
+   * (a player saving up for the Archive does not buy a cottage first).
+   */
+  save?: boolean;
+  /** Repair damaged buildings and excavated ruins. */
   repair?: boolean;
+  /** Site the building where the forecast says it lowers the coming hazard's cost the most. */
+  mitigate?: { maxDist?: number; stride?: number };
 }
 
 export interface Policy {
   name: string;
   focus: (c: Campaign) => LaborFocus;
   wants: (c: Campaign) => Want[];
+  /** Answer a story decision (null = let the deadline apply the default). */
+  choose?: (c: Campaign, p: StoryPrompt) => string | null;
   /** Interregnum choices. */
   site: (c: Campaign) => number;
   tradition: (c: Campaign) => TraditionId;
@@ -56,6 +68,8 @@ const rock = (c: Campaign) => (x: number, y: number, w: number, h: number) =>
 const trees = (c: Campaign) => (x: number, y: number, w: number, h: number) =>
   sumField(c, c.world.forest, x - 3, y - 3, w + 6, h + 6) / 60;
 
+const mitigationMisses = new WeakMap<Campaign, { id: string; tick: number; nextId: number }>();
+
 export function spotFor(c: Campaign, w: Want): SpotOptions {
   const o = typeof w.spot === 'function' ? w.spot(c) : (w.spot ?? {});
   if (w.kind === 'farm') return { bonus: soil(c), ...o };
@@ -64,7 +78,7 @@ export function spotFor(c: Campaign, w: Want): SpotOptions {
   return o;
 }
 
-export function tryWant(c: Campaign, w: Want, rots: (0 | 1)[] = [0]): boolean {
+export function tryWant(c: Campaign, w: Want, rots: (0 | 1)[] = [0]): boolean | 'wait' {
   if (w.from !== undefined && c.tick < w.from) return false;
   if (w.to !== undefined && c.tick > w.to) return false;
   if (w.when && !w.when(c)) return false;
@@ -98,8 +112,28 @@ export function tryWant(c: Campaign, w: Want, rots: (0 | 1)[] = [0]): boolean {
   if (!w.kind) return false;
   const want = typeof w.count === 'function' ? w.count(c) : (w.count ?? 1);
   if (countKind(c, w.kind) >= want) return false;
-  const spot = findSpot(c, w.kind, { rots: w.rot ?? rots, ...spotFor(c, w) });
-  if (!spot) return false;
+  // Cheap early-out before any map search: can the treasury cover it at all?
+  const def = BUILDINGS[w.kind];
+  const reserved = reservedCost(c);
+  const short = (['food', 'timber', 'stone'] as const).some(
+    (k) => c.civ.res[k] - reserved[k] < (def.cost[k] ?? 0) * UNIT,
+  );
+  if (short) return w.save && !w.mitigate ? 'wait' : false;
+  // A failed trial search is expensive and cannot succeed again until something changes: back off for 4 s.
+  if (w.mitigate) {
+    const last = mitigationMisses.get(c);
+    if (last && last.id === w.id && last.nextId === c.nextId && c.tick - last.tick < 40) return false;
+  }
+  const spot = w.mitigate
+    ? mitigationSpot(c, w.kind, { rots: w.rot ?? [0, 1], ...w.mitigate })
+    : findSpot(c, w.kind, { rots: w.rot ?? rots, ...spotFor(c, w) });
+  if (!spot) {
+    if (w.mitigate) mitigationMisses.set(c, { id: w.id, tick: c.tick, nextId: c.nextId });
+    if (!w.save || w.mitigate) return false;
+    // Is there room for it if only we could afford it? Then wait for the resources.
+    const dry = findSpot(c, w.kind, { rots: w.rot ?? rots, ...spotFor(c, w), ignoreAffordability: true });
+    return dry ? 'wait' : false;
+  }
   return dispatchAction(c, { type: 'build', kind: w.kind, x: spot.x, y: spot.y, rot: spot.rot }).ok;
 }
 
@@ -153,6 +187,12 @@ export interface BotRun {
     decisions: number;
     hazard: HazardKind;
     headline: string;
+    /** Standing structures by kind just before the hazard resolved (from the report's own accounting). */
+    built: Record<string, number>;
+    techs: TechId[];
+    /** Story decisions of the epoch as "story:option" (":auto" when the deadline chose). */
+    stories: string[];
+    resources: { food: number; timber: number; stone: number; knowledge: number };
   }[];
 }
 
@@ -160,7 +200,7 @@ export interface BotRun {
 export function playCampaign(
   c: Campaign,
   p: Policy,
-  opts: { step?: number; maxEpochs?: number } = {},
+  opts: { step?: number; maxEpochs?: number; onTick?: (c: Campaign) => void } = {},
 ): BotRun {
   const step = opts.step ?? 5;
   const run: BotRun = { campaign: c, epochs: [] };
@@ -172,20 +212,32 @@ export function playCampaign(
       for (const w of p.wants(c)) {
         if (c.queue.length >= 3) break;
         if ((w.from ?? 0) > 0 || w.research || w.reinforce) continue;
-        tryWant(c, w);
+        if (tryWant(c, w) === 'wait') break;
       }
       dispatchAction(c, { type: 'beginEpoch' });
     } else if (c.phase === 'ACTIVE') {
       if (c.tick % step === 0) {
         const f = p.focus(c);
         if (f !== c.civ.focus) dispatchAction(c, { type: 'setFocus', focus: f });
+        for (const pr of openPrompts(c)) {
+          const pending = c.queue.some((q) => q.action.type === 'choose' && q.action.prompt === pr.seq);
+          const o = pending ? null : p.choose?.(c, pr);
+          if (o) dispatchAction(c, { type: 'choose', prompt: pr.seq, option: o });
+        }
         for (const w of p.wants(c)) {
-          if (tryWant(c, w)) break;
+          const r = tryWant(c, w);
+          if (r) break;
         }
       }
       advanceFixedTick(c);
+      opts.onTick?.(c);
     } else if (c.phase === 'COLLAPSING') {
       const r = c.report!;
+      const built: Record<string, number> = {};
+      for (const st of c.structures) {
+        if (st.status === 'rubble' || st.status === 'buried') continue;
+        built[st.kind] = (built[st.kind] ?? 0) + 1;
+      }
       run.epochs.push({
         epoch: c.epoch,
         survivors: r.survivors,
@@ -193,6 +245,17 @@ export function playCampaign(
         decisions: c.civ.stats.decisions,
         hazard: r.hazard,
         headline: r.headline,
+        built,
+        techs: [...c.civ.techs],
+        stories: c.prompts
+          .filter((x) => x.epoch === c.epoch)
+          .map((x) => `${x.story}:${x.chosen ?? 'open'}${x.auto ? ':auto' : ''}`),
+        resources: {
+          food: Math.round(c.civ.res.food / UNIT),
+          timber: Math.round(c.civ.res.timber / UNIT),
+          stone: Math.round(c.civ.res.stone / UNIT),
+          knowledge: Math.round(c.civ.res.knowledge / UNIT),
+        },
       });
       dispatchAction(c, { type: 'continue' });
     } else if (c.phase === 'DEBRIEF') {

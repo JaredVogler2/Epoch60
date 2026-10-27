@@ -1,4 +1,4 @@
-import type { HazardKind, ResourceKey, Resources } from '../core/types';
+import type { Difficulty, HazardKind, ResourceKey, Resources } from '../core/types';
 
 export interface HazardSpec {
   kind: HazardKind;
@@ -43,7 +43,7 @@ export const GREENVALE: ScenarioSpec = {
   id: 'greenvale',
   name: 'Greenvale',
   tagline: 'Three ages. One landscape. Every choice survives.',
-  victory: { minSurvivors: 8, minHeritage: 1, minRetainedTechs: 2 },
+  victory: { minSurvivors: 8, minHeritage: 1, minRetainedTechs: 3 },
   epochs: [
     {
       index: 0,
@@ -125,10 +125,94 @@ export const GREENVALE: ScenarioSpec = {
   ],
 };
 
-export const SCENARIOS: Record<string, ScenarioSpec> = { greenvale: GREENVALE };
+/**
+ * A second scenario on the same engine: the first two ages are Greenvale's (fire, flood), but the final age is an
+ * ashfall winter — wet ash breaks thatch roofs and no harvest comes, so the larders decide who lives.
+ */
+export const ASHEN: ScenarioSpec = {
+  id: 'ashen',
+  name: 'The Ashen Winter',
+  tagline: 'Fire, flood — and then the sky falls.',
+  victory: GREENVALE.victory,
+  epochs: [
+    GREENVALE.epochs[0]!,
+    GREENVALE.epochs[1]!,
+    {
+      ...GREENVALE.epochs[2]!,
+      id: 'ashen_winter',
+      name: 'The Ashen Winter',
+      ageName: 'Age of Iron',
+      hazard: {
+        kind: 'ash',
+        name: 'Ashfall winter',
+        headline: 'The Ashen Winter',
+        strength: 700,
+        warnings: [
+          'The ridge has been smoking for days. The sky to the east is turning the colour of lead.',
+          'Grey flakes are drifting into the valley — the ash is coming down!',
+          'The sun is gone. Roofs are groaning under the ash, and nothing will grow this year!',
+        ],
+      },
+      scarcity: 'food',
+      scarcityNote: 'Food is scarce, and for a whole winter no harvest will come.',
+      brief:
+        'Forge-smoke and iron towns, built over the old ruins. Far to the east a mountain has woken: when its ash falls the fields will fail.',
+      goal: 'Put food by before the sky darkens, keep the roofs steep and stone, and let something of yours stand through the winter.',
+    },
+  ],
+};
+
+export const SCENARIOS: Record<string, ScenarioSpec> = { greenvale: GREENVALE, ashen: ASHEN };
 
 export function getScenario(id: string): ScenarioSpec {
   const s = SCENARIOS[id];
   if (!s) throw new Error(`Unknown scenario ${id}`);
   return s;
+}
+
+/**
+ * Difficulty changes what the world does and what winning asks for — never the rules or the clock.
+ * `strengthPm` scales every hazard (1000 = as authored); the deltas shift the scenario's victory thresholds.
+ */
+export const DIFFICULTY: Record<
+  Difficulty,
+  { name: string; blurb: string; strengthPm: number; survivors: number; heritage: number; techs: number }
+> = {
+  gentle: {
+    name: 'Gentle',
+    blurb: 'Milder catastrophes; two retained technologies and six survivors are enough.',
+    strengthPm: 880,
+    survivors: -2,
+    heritage: 0,
+    techs: -1,
+  },
+  normal: {
+    name: 'Normal',
+    blurb: 'The authored challenge.',
+    strengthPm: 1000,
+    survivors: 0,
+    heritage: 0,
+    techs: 0,
+  },
+  hard: {
+    name: 'Hard',
+    blurb: 'Fiercer catastrophes; ten survivors, two surviving landmarks and four retained technologies.',
+    strengthPm: 1150,
+    survivors: 2,
+    heritage: 1,
+    techs: 1,
+  },
+};
+
+export function victoryFor(s: ScenarioSpec, d: Difficulty): ScenarioSpec['victory'] {
+  const k = DIFFICULTY[d];
+  return {
+    minSurvivors: s.victory.minSurvivors + k.survivors,
+    minHeritage: s.victory.minHeritage + k.heritage,
+    minRetainedTechs: s.victory.minRetainedTechs + k.techs,
+  };
+}
+
+export function scaledStrength(d: Difficulty | undefined, strength: number): number {
+  return Math.round((strength * DIFFICULTY[d ?? 'normal'].strengthPm) / 1000);
 }

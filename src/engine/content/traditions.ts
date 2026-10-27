@@ -11,6 +11,7 @@ export interface Modifiers {
   fireResist: number;
   floodResist: number;
   quakeResist: number;
+  ashResist: number;
   /** Absolute extras at epoch start. */
   startPop: number;
   startFood: number;
@@ -28,6 +29,7 @@ export const ZERO_MODS: Modifiers = {
   fireResist: 0,
   floodResist: 0,
   quakeResist: 0,
+  ashResist: 0,
   startPop: 0,
   startFood: 0,
   startTimber: 0,
@@ -42,7 +44,7 @@ export interface TraditionDef {
   downside: string;
   mods: Partial<Modifiers>;
   /** Offered when this hazard just struck (null = always eligible as a generic option). */
-  after: 'fire' | 'flood' | 'quake' | null;
+  after: 'fire' | 'flood' | 'quake' | 'ash' | null;
 }
 
 export const TRADITIONS: Record<TraditionId, TraditionDef> = {
@@ -109,6 +111,22 @@ export const TRADITIONS: Record<TraditionId, TraditionDef> = {
     upside: 'Quake resistance +30%.',
     downside: 'Slow digging: construction −10%.',
     mods: { quakeResist: 300, buildSpeed: -100 },
+  },
+  deep_larders: {
+    id: 'deep_larders',
+    name: 'Deep Larders',
+    after: 'ash',
+    upside: 'Start each age with +8 food; roofs resist ash +10%.',
+    downside: 'Hoarding habits: construction −5%.',
+    mods: { startFood: 8, ashResist: 100, buildSpeed: -50 },
+  },
+  steep_roofs: {
+    id: 'steep_roofs',
+    name: 'Steep Roofs',
+    after: 'ash',
+    upside: 'Roofs shed ash: ash resistance +25%.',
+    downside: 'Tall frames sway: quake resistance −10%.',
+    mods: { ashResist: 250, quakeResist: -100 },
   },
   open_hands: {
     id: 'open_hands',

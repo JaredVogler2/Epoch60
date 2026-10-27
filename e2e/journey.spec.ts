@@ -38,7 +38,10 @@ test.describe('first epoch: title → plan → build → time → collapse', () 
     ]) {
       await expect(page.getByTestId(`card-${k}`)).toBeVisible();
     }
-    await expect(page.getByTestId('card-levee')).toHaveCount(0);
+    // Later-age and untaught buildings are shown, but locked with the reason.
+    for (const k of ['levee', 'stone_house', 'forge']) {
+      await expect(page.getByTestId(`card-${k}`)).toHaveAttribute('aria-disabled', 'true');
+    }
     await shot(page, info, '02-prepare');
 
     // Plan three opening orders with the real pointer path. Nothing is paid yet.

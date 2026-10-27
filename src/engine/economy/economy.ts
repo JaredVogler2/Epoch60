@@ -171,6 +171,65 @@ export function farmFertilityPm(c: Campaign, s: Structure): number {
   return Math.round(f / Math.max(1, n));
 }
 
+/** Radius (cells) of a Forge's tool boost and of a Dam's irrigation. */
+export const FORGE_RADIUS = 8;
+export const DAM_IRRIGATION_RADIUS = 8;
+export const FORGE_BOOST_PM = 300;
+export const DAM_IRRIGATION_PM = 150;
+
+function centerDist2(a: Structure, b: Structure): number {
+  const dx = a.x + a.w / 2 - (b.x + b.w / 2);
+  const dy = a.y + a.h / 2 - (b.y + b.h / 2);
+  return dx * dx + dy * dy;
+}
+
+/** Permille bonus a worker-staffed Forge gives to a quarry or lumber camp near it. */
+export function forgeBoostPm(c: Campaign, s: Structure): number {
+  let best = 0;
+  for (const f of c.structures) {
+    if (f.kind !== 'forge' || f.status !== 'active' || f.staffing === 0) continue;
+    if (centerDist2(f, s) > FORGE_RADIUS * FORGE_RADIUS) continue;
+    best = Math.max(best, Math.round((FORGE_BOOST_PM * f.staffing) / 1000));
+  }
+  return best;
+}
+
+/** Permille bonus a standing Dam gives to a farm within reach of its water. */
+export function damIrrigationPm(c: Campaign, s: Structure): number {
+  for (const d of c.structures) {
+    if (d.kind !== 'dam' || !activeOrDamaged(d)) continue;
+    if (centerDist2(d, s) <= DAM_IRRIGATION_RADIUS * DAM_IRRIGATION_RADIUS)
+      return d.status === 'active' ? DAM_IRRIGATION_PM : DAM_IRRIGATION_PM / 2;
+  }
+  return 0;
+}
+
+/** A Forge's smoke slowly taints the soil around it. */
+function forgeSmoke(c: Campaign, s: Structure): void {
+  if ((c.tick + s.id) % 60 !== 0) return;
+  const cx = s.x + s.w / 2;
+  const cy = s.y + s.h / 2;
+  for (let j = -4; j <= 4; j++) {
+    for (let i = -4; i <= 4; i++) {
+      const x = Math.floor(cx) + i;
+      const y = Math.floor(cy) + j;
+      if (i * i + j * j > 16 || !inBounds(x, y, c.world.w, c.world.h)) continue;
+      const k = idx(x, y, c.world.w);
+      c.world.fertility[k] = Math.max(60, c.world.fertility[k]! - 3);
+    }
+  }
+}
+
+/** A planted Grove regrows its own woodland and holds the soil. */
+function groveGrowth(c: Campaign, s: Structure): void {
+  if ((c.tick + s.id) % 25 !== 0) return;
+  for (const [x, y] of footprintCells(s.x, s.y, s.w, s.h)) {
+    const k = idx(x, y, c.world.w);
+    c.world.forest[k] = Math.min(850, c.world.forest[k]! + 12);
+    c.world.erosion[k] = Math.max(0, c.world.erosion[k]! - 3);
+  }
+}
+
 export function stepProduction(c: Campaign): void {
   const m = mods(c);
   const res = c.civ.res;
@@ -192,9 +251,17 @@ export function stepProduction(c: Campaign): void {
     if (!funded) continue;
 
     if (s.kind === 'hearth') {
-      const out = Math.round((10 * cond * (1000 + m.knowledgeRate)) / 1_000_000);
+      const out = Math.round((12 * cond * (1000 + m.knowledgeRate)) / 1_000_000);
       res.knowledge = Math.min(RES_CAP, res.knowledge + out);
       stats.knowledgeMade += out;
+      continue;
+    }
+    if (s.kind === 'forge') {
+      if (s.staffing > 0 && s.status === 'active') forgeSmoke(c, s);
+      continue;
+    }
+    if (s.kind === 'grove') {
+      if (s.status === 'active') groveGrowth(c, s);
       continue;
     }
     if (!d.job || d.output === 0 || s.staffing === 0) continue;
@@ -204,22 +271,26 @@ export function stepProduction(c: Campaign): void {
       const soil = 400 + Math.round((fert * 800) / 1000);
       let tech = 1000 + m.foodRate;
       if (hasTech(c, 'irrigation')) tech += 250;
+      tech += damIrrigationPm(c, s);
       const out = Math.round((d.output * s.staffing * soil * tech * cond) / 1e12);
       res.food = Math.min(RES_CAP, res.food + out);
       stats.foodMade += out;
-      if (!hasTech(c, 'crop_rotation')) {
-        s.acc += s.staffing;
-        while (s.acc >= 5000) {
-          s.acc -= 5000;
-          for (const [x, y] of footprintCells(s.x, s.y, s.w, s.h)) {
-            const k = idx(x, y, c.world.w);
-            c.world.fertility[k] = Math.max(60, c.world.fertility[k]! - 1);
-          }
+      s.acc += s.staffing;
+      while (s.acc >= 5000) {
+        s.acc -= 5000;
+        const rotate = hasTech(c, 'crop_rotation');
+        for (const [x, y] of footprintCells(s.x, s.y, s.w, s.h)) {
+          const k = idx(x, y, c.world.w);
+          const f = c.world.fertility[k]!;
+          // Without rotation the soil is mined; with it the fields slowly recover toward a healthy loam.
+          c.world.fertility[k] = rotate ? Math.min(Math.max(f, 720), f + 1) : Math.max(60, f - 1);
         }
       }
     } else if (d.job === 'timber') {
       const eff = Math.min(1000, Math.round((forestAround(c, s, 3) * 1000) / 9000));
-      const out = Math.round((d.output * s.staffing * eff * (1000 + m.timberRate) * cond) / 1e12);
+      const out = Math.round(
+        (d.output * s.staffing * eff * (1000 + m.timberRate + forgeBoostPm(c, s)) * cond) / 1e12,
+      );
       if (out > 0) {
         res.timber = Math.min(RES_CAP, res.timber + out);
         stats.timberMade += out;
@@ -253,6 +324,7 @@ export function stepProduction(c: Campaign): void {
       }
       let tech = 1000 + m.stoneRate;
       if (hasTech(c, 'masonry')) tech += 250;
+      tech += forgeBoostPm(c, s);
       const out = Math.round((d.output * s.staffing * tech * cond) / 1e9);
       res.stone = Math.min(RES_CAP, res.stone + out);
       stats.stoneMade += out;

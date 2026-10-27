@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { getScenario, scaledStrength } from '../content/scenario';
 import type {
   BuildingKind,
   Campaign,
@@ -12,6 +12,8 @@ import type {
   World,
 } from '../core/types';
 import { mods } from '../economy/modifiers';
+import { FOOD_PER_PERSON_TICK } from '../economy/economy';
+import { UNIT } from '../core/constants';
 import { N4, cellsOf, clamp, idx, inBounds } from './query';
 
 /* ------------------------------------------------------------------ */
@@ -27,7 +29,14 @@ function structureAt(c: Campaign, i: number): Structure | undefined {
 export function resistanceOf(c: Campaign, s: Structure, hazard: HazardKind): number {
   const def = BUILDINGS[s.kind];
   const m = mods(c);
-  const trad = hazard === 'fire' ? m.fireResist : hazard === 'flood' ? m.floodResist : m.quakeResist;
+  const trad =
+    hazard === 'fire'
+      ? m.fireResist
+      : hazard === 'flood'
+        ? m.floodResist
+        : hazard === 'ash'
+          ? m.ashResist
+          : m.quakeResist;
   let tech = 0;
   if (hazard === 'quake' && c.civ.techs.includes('seismic_engineering')) tech += 250;
   let wall = 0;
@@ -160,6 +169,8 @@ function simulateFire(c: Campaign, budget: number): HazardCell[] {
 /* ------------------------------------------------------------------ */
 
 const FLOOD_FRICTION = 5;
+/** Permille multiplier on quake damage (see resolveHazard). */
+export const QUAKE_SEVERITY_PM = 1600;
 
 export function catchmentForestFraction(w: World): number {
   let sum = 0;
@@ -192,6 +203,11 @@ function simulateFlood(c: Campaign, strength: number): HazardCell[] {
     if (s.kind !== 'levee' || (s.status !== 'active' && s.status !== 'damaged')) continue;
     const bonus = s.status === 'active' ? 220 : 110;
     for (const [x, y] of cellsOf(s)) eff[idx(x, y, w.w)]! += bonus;
+  }
+  // Planted groves slow water: each grove cell is worth a little barrier height.
+  for (const s of c.structures) {
+    if (s.kind !== 'grove' || s.status !== 'active') continue;
+    for (const [x, y] of cellsOf(s)) eff[idx(x, y, w.w)]! += 90;
   }
   // A dam clips the crest for everything downstream (rows with larger y).
   let damY = -1;
@@ -282,6 +298,71 @@ function simulateQuake(c: Campaign, strength: number): HazardCell[] {
 }
 
 /* ------------------------------------------------------------------ */
+/* Ashfall winter                                                      */
+/* ------------------------------------------------------------------ */
+
+/** Ticks of lost harvest the village must live through on its reserves (30 s of the story's winter). */
+export const ASH_WINTER_TICKS = 300;
+/** Permille multiplier on ash damage: wet ash is heavy, and roofs fail all at once. */
+export const ASH_SEVERITY_PM = 1500;
+/** Food (whole units) a sealed Granary keeps safe through an ashfall winter. */
+export const GRANARY_RESERVE = 25;
+
+/** The vent lies upwind of the valley; the plume drifts with the prevailing wind. */
+export function ventOf(c: Campaign): { x: number; y: number } {
+  const { hearth, wind } = c.world.anchors;
+  return {
+    x: clamp(Math.round(hearth.x - wind.dx * 13), 2, c.world.w - 3),
+    y: clamp(Math.round(hearth.y - wind.dy * 13) - 4, 2, c.world.h - 3),
+  };
+}
+
+/** Ash depth (permille of a "roof-breaking" load) at a cell for a plume of the given strength. */
+export function ashDepthAt(c: Campaign, x: number, y: number, strength: number): number {
+  const v = ventOf(c);
+  const { wind } = c.world.anchors;
+  const dx = x - v.x;
+  const dy = y - v.y;
+  const along = dx * wind.dx + dy * wind.dy; // positive downwind
+  const across = dx * wind.dy - dy * wind.dx;
+  // The plume carries far downwind and barely upwind.
+  const eff = across * across + (along > 0 ? along * 0.45 : along * 2) ** 2;
+  return clamp(Math.round((strength * 70) / (70 + eff)), 0, 1000);
+}
+
+function simulateAsh(c: Campaign, strength: number): HazardCell[] {
+  const w = c.world;
+  const cells: HazardCell[] = [];
+  for (let y = 0; y < w.h; y++) {
+    for (let x = 0; x < w.w; x++) {
+      if (w.water[idx(x, y, w.w)]) continue; // the river carries ash away
+      const depth = ashDepthAt(c, x, y, strength);
+      if (depth < 120) continue;
+      const v = ventOf(c);
+      cells.push({ x, y, arrival: Math.round(Math.hypot(x - v.x, y - v.y) * 6), intensity: depth });
+    }
+  }
+  return cells;
+}
+
+/** Food (whole units) the village must have to see out the winter, and what it has safely put by. */
+export function winterLarder(c: Campaign): { need: number; have: number; perPerson: number } {
+  const perPerson = (FOOD_PER_PERSON_TICK * ASH_WINTER_TICKS) / UNIT;
+  const granaries = c.structures.filter(
+    (s) => s.kind === 'granary' && (s.status === 'active' || s.status === 'damaged'),
+  );
+  const sealed = granaries.reduce(
+    (n, s) => n + (s.status === 'active' ? GRANARY_RESERVE : Math.floor(GRANARY_RESERVE / 2)),
+    0,
+  );
+  return {
+    need: Math.round(c.civ.pop * perPerson),
+    have: Math.floor(c.civ.res.food / UNIT) + sealed,
+    perPerson,
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Resolution                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -304,7 +385,9 @@ function describe(
       ? `${Math.round(exposure / 10)}% of its ground burned`
       : hazard === 'flood'
         ? `water ${exposure}cm deep`
-        : `shaking ${Math.round(exposure / 10)}%`;
+        : hazard === 'ash'
+          ? `${Math.round(exposure / 10)} cm of ash on the roof`
+          : `shaking ${Math.round(exposure / 10)}%`;
   const verdict = after === 'rubble' ? 'was destroyed' : after === 'damaged' ? 'was damaged' : 'came through';
   return `${nm} (${hazard} resistance ${res}%) ${verdict}: ${what}, damage ${Math.round(damage / 10)}%.`;
 }
@@ -316,14 +399,18 @@ function describe(
 export function resolveHazard(
   c: Campaign,
   kind: HazardKind = getScenario(c.scenario).epochs[c.epoch]!.hazard.kind,
-  strength: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
+  nominal: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
 ): HazardResult {
+  // Difficulty scales the authored strength here, once, so the forecast, the resolution and every caller agree.
+  const strength = scaledStrength(c.difficulty, nominal);
   const cells =
     kind === 'fire'
       ? simulateFire(c, strength)
       : kind === 'flood'
         ? simulateFlood(c, strength)
-        : simulateQuake(c, strength);
+        : kind === 'ash'
+          ? simulateAsh(c, strength)
+          : simulateQuake(c, strength);
   const w = c.world;
   const map = new Map<number, HazardCell>();
   for (const cell of cells) map.set(idx(cell.x, cell.y, w.w), cell);
@@ -353,9 +440,13 @@ export function resolveHazard(
       exposure = depth;
       const share = Math.round((hit * 1000) / fp.length);
       damage = Math.round((clamp(depth * 12, 0, 1000) * (1000 - resist) * share) / 1_000_000);
+    } else if (kind === 'ash') {
+      exposure = maxI;
+      damage = Math.round((maxI * (1000 - resist) * ASH_SEVERITY_PM) / 1_000_000);
     } else {
       exposure = maxI;
-      damage = Math.round((maxI * (1000 - resist)) / 1000);
+      // Ground motion is violent: the same intensity does far more harm than a fire's heat or a flood's depth.
+      damage = Math.round((maxI * (1000 - resist) * QUAKE_SEVERITY_PM) / 1_000_000);
     }
     const before = s.status;
     const after = classify(damage);

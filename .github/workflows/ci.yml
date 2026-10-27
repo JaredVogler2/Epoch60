@@ -16,3 +16,24 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+  # Browser end-to-end on Chromium (software GL). Slow (~15 min), so it does not block the fast gate above; it is
+  # informational until it has proven stable on GitHub's runners (then drop `continue-on-error`).
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-failures
+          path: test-results/
+          retention-days: 7

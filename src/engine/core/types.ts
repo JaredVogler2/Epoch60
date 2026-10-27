@@ -17,6 +17,7 @@ export type BuildingKind =
   | 'workshop'
   | 'archive'
   | 'seed_vault'
+  | 'granary'
   | 'firebreak'
   | 'stone_house'
   | 'levee'
@@ -37,7 +38,7 @@ export type TechId =
   | 'hydrology'
   | 'seismic_engineering';
 
-export type HazardKind = 'fire' | 'flood' | 'quake';
+export type HazardKind = 'fire' | 'flood' | 'quake' | 'ash';
 
 export type TraditionId =
   | 'remember_fire'
@@ -48,6 +49,8 @@ export type TraditionId =
   | 'silt_farmers'
   | 'stone_hearted'
   | 'deep_foundations'
+  | 'deep_larders'
+  | 'steep_roofs'
   | 'open_hands';
 
 export type Material = 'wood' | 'thatch' | 'stone' | 'earth' | 'iron';
@@ -125,7 +128,7 @@ export interface Structure {
   /** 0..1000. */
   integrity: number;
   /** Extra per-hazard resistance bought by techs/reinforcement/walls (permille). */
-  bonus: { fire: number; flood: number; quake: number };
+  bonus: { fire: number; flood: number; quake: number; ash: number };
   /** Workers staffed this tick (render + UI). */
   workers: number;
   /** Production accumulators (milli) kept so tiny rates never truncate to zero. */
@@ -204,6 +207,7 @@ export type Action =
   | { type: 'reinforce'; id: number; hazard: HazardKind }
   | { type: 'research'; tech: TechId }
   | { type: 'setFocus'; focus: LaborFocus }
+  | { type: 'choose'; prompt: number; option: string }
   | { type: 'continue' }
   | { type: 'survey'; id: number }
   | { type: 'excavate'; id: number }
@@ -271,6 +275,39 @@ export type ActionResult = ActionOk | ActionError;
 /* Events, forecast, reports                                           */
 /* ------------------------------------------------------------------ */
 
+export type StoryId =
+  'dry_wind' | 'river_rising' | 'foreshock' | 'ash_warning' | 'refugees' | 'historian' | 'dam_leak';
+
+export interface StoryOption {
+  id: string;
+  label: string;
+  /** The honest trade-off, in plain words. */
+  detail: string;
+  /** Whole resource units paid when the player (not the deadline) picks this option. */
+  cost?: Partial<Record<ResourceKey, number>>;
+}
+
+/**
+ * A small decision that arises from the actual state of the village. It never pauses play: if the deadline passes,
+ * the default option (always the free, do-nothing one) is applied.
+ */
+export interface StoryPrompt {
+  seq: number;
+  story: StoryId;
+  epoch: number;
+  openedTick: number;
+  deadlineTick: number;
+  title: string;
+  body: string;
+  options: StoryOption[];
+  defaultOption: string;
+  status: 'open' | 'resolved';
+  chosen: string | null;
+  /** True when the deadline passed and the default was applied. */
+  auto: boolean;
+  outcome: string | null;
+}
+
 export interface SimEvent {
   tick: number;
   epoch: number;
@@ -331,6 +368,7 @@ export interface BeforeCells {
   forest: number[];
   scar: number[];
   silt: number[];
+  pollution: number[];
 }
 
 export interface CollapseReport {
@@ -442,6 +480,9 @@ export type Phase =
 
 export type GameMode = 'standard' | 'assisted';
 
+/** Scales every hazard's strength and the victory thresholds (see `content/scenario.ts`). */
+export type Difficulty = 'gentle' | 'normal' | 'hard';
+
 export interface Campaign {
   schema: number;
   rules: string;
@@ -449,6 +490,7 @@ export interface Campaign {
   seed: number;
   scenario: string;
   mode: GameMode;
+  difficulty: Difficulty;
   phase: Phase;
   /** Paused is orthogonal to phase. A saved ACTIVE game always reloads paused. */
   paused: boolean;
@@ -467,6 +509,8 @@ export interface Campaign {
   queue: { seq: number; tick: number; action: Action; paid: boolean }[];
   rng: RngState;
   events: SimEvent[];
+  /** Story decisions offered during play (most recent last; trimmed). */
+  prompts: StoryPrompt[];
   actionLog: LoggedAction[];
   /** Set once the hazard of the current epoch has been resolved. Prevents double application. */
   collapseResolved: boolean;

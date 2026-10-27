@@ -19,10 +19,10 @@ const scaffoldCache = new Map<string, BufferGeometry>();
 
 function modelFor(s: Structure): BuildingModel {
   const variant = (s.id * 7 + s.x * 3 + s.y) % 3;
-  const key = `${s.kind}:${s.w}x${s.h}:${variant}:${s.id % 5}`;
+  const key = `${s.kind}:${s.w}x${s.h}:${variant}:${s.id % 5}:${s.originEpoch}`;
   let m = modelCache.get(key);
   if (!m) {
-    m = buildingModel(s.kind, s.w, s.h, variant, 100 + s.id * 31 + variant);
+    m = buildingModel(s.kind, s.w, s.h, variant, 100 + s.id * 31 + variant, s.originEpoch);
     modelCache.set(key, m);
   }
   return m;
@@ -115,7 +115,10 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     void rev; // terrain is rebuilt when revisions change, so the ground height must be re-read
     return groundY(cx, cz) - 0.02;
   }, [cx, cz, rev]);
-  const hasSmoke = (s.kind === 'cottage' || s.kind === 'hearth') && status !== 'constructing' && !ruin;
+  const hasSmoke =
+    (s.kind === 'cottage' || s.kind === 'hearth' || s.kind === 'forge' || s.kind === 'stone_house') &&
+    status !== 'constructing' &&
+    !ruin;
   const since = sinceHit(s);
   const hit = presentation.hit.get(s.id);
   const burning =
@@ -129,11 +132,15 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
   const smokeAt: [number, number, number] =
     s.kind === 'hearth'
       ? [0, 0.7, 0]
-      : s.id % 3 === 1
-        ? [0, 1.45, 0]
-        : s.id % 3 === 2
-          ? [0.45, 1.25, -0.35]
-          : [0.65, 1.38, -0.28];
+      : s.kind === 'forge'
+        ? [0.5, 2.0, -0.35]
+        : s.kind === 'stone_house'
+          ? [s.id % 3 === 1 ? -0.45 : 0.55, 1.8, s.id % 3 === 1 ? 0.2 : -0.25]
+          : s.id % 3 === 1
+            ? [0, 1.45, 0]
+            : s.id % 3 === 2
+              ? [0.45, 1.25, -0.35]
+              : [0.65, 1.38, -0.28];
 
   useFrame((state, dt) => {
     const g = group.current;

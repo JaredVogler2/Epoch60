@@ -82,6 +82,11 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
       <path d="M5 12.500l4.500 4.500L19 7" strokeWidth="2.600" />
     </Svg>
   ),
+  next: ({ size }) => (
+    <Svg size={size}>
+      <path d="M5 12h13M13 6l6 6-6 6" strokeWidth="2.200" />
+    </Svg>
+  ),
   close: ({ size }) => (
     <Svg size={size}>
       <path d="M6 6l12 12M18 6 6 18" strokeWidth="2.400" />
@@ -114,6 +119,25 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
   quake: ({ size }) => (
     <Svg size={size}>
       <path d="M3 12h3l2-6 3 12 3-9 2 3h5" />
+    </Svg>
+  ),
+  ash: ({ size }) => (
+    <Svg size={size}>
+      <path d="M4 20 10 8h4l6 12z" />
+      <path d="M12 8V3M9 5l-2-2M15 5l2-2" />
+      <path d="M4 22h16" strokeDasharray="1 3" />
+    </Svg>
+  ),
+  speaker: ({ size }) => (
+    <Svg size={size}>
+      <path d="M4 9v6h4l5 4V5L8 9z" />
+      <path d="M16 9a4 4 0 0 1 0 6M18.500 6.500a8 8 0 0 1 0 11" />
+    </Svg>
+  ),
+  speakerOff: ({ size }) => (
+    <Svg size={size}>
+      <path d="M4 9v6h4l5 4V5L8 9z" />
+      <path d="M17 9l5 6M22 9l-5 6" />
     </Svg>
   ),
   skull: ({ size }) => (
@@ -217,6 +241,12 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
         d="M12 8c-2.500 0-3.500-1.500-3.500-3.500 2.500 0 3.500 1 3.500 3.500Zm0 0c2.500 0 3.500-1.500 3.500-3.500-2.500 0-3.500 1-3.500 3.500Z"
         {...fill}
       />
+    </Svg>
+  ),
+  granary: ({ size }) => (
+    <Svg size={size}>
+      <path d="M6 20V10c0-3 3-5 6-5s6 2 6 5v10" />
+      <path d="M4 20h16M9 12h6M9 16h6" />
     </Svg>
   ),
   firebreak: ({ size }) => (

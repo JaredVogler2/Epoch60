@@ -104,7 +104,13 @@ export function rebuildWorld(c: Campaign): void {
   const r = presentation.report;
   if (!r) return;
   const w = c.world;
-  const pw: World = { ...w, forest: w.forest.slice(), scar: w.scar.slice(), silt: w.silt.slice() };
+  const pw: World = {
+    ...w,
+    forest: w.forest.slice(),
+    scar: w.scar.slice(),
+    silt: w.silt.slice(),
+    pollution: w.pollution.slice(),
+  };
   const span = Math.max(1, r.result.span);
   r.result.cells.forEach((cell, k) => {
     const a = cell.arrival / span;
@@ -113,6 +119,7 @@ export function rebuildWorld(c: Campaign): void {
       pw.forest[i] = r.before.forest[k]!;
       pw.scar[i] = r.before.scar[k]!;
       pw.silt[i] = r.before.silt[k]!;
+      pw.pollution[i] = r.before.pollution[k]!;
     }
   });
   presentation.world = pw;
