@@ -87,11 +87,27 @@ export function Interaction() {
       return null;
     };
 
-    const onMove = (e: PointerEvent) => {
-      if (!store.placing || e.pointerType !== 'mouse' || e.buttons !== 0) return;
-      const g = groundAt(e);
-      if (g) store.hoverCell(g.x, g.z);
+    let lastHover = 0;
+    const setHover = (id: number | null) => {
+      store.hoverId = id;
+      el.style.cursor = id !== null ? 'pointer' : '';
     };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.buttons !== 0) return;
+      if (store.placing) {
+        if (store.hoverId !== null) setHover(null);
+        const g = groundAt(e);
+        if (g) store.hoverCell(g.x, g.z);
+        return;
+      }
+      // Desktop affordance: the building under the cursor brightens and the cursor shows it can be clicked
+      // (raycast against the structures only, at most every 50 ms).
+      const now = performance.now();
+      if (now - lastHover < 50) return;
+      lastHover = now;
+      setHover(store.screen === 'game' ? pickStructure(e) : null);
+    };
+    const onLeave = () => setHover(null);
     const onDown = (e: PointerEvent) => {
       down = { x: e.clientX, y: e.clientY, t: performance.now(), button: e.button, type: e.pointerType };
     };
@@ -142,10 +158,13 @@ export function Interaction() {
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointerleave', onLeave);
     return () => {
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointerleave', onLeave);
+      setHover(null);
     };
   }, [gl, camera, scene]);
 

@@ -70,6 +70,8 @@ export class GameStore {
   /** Bumped whenever the clock must forget its last frame time (begin, resume, new game). */
   clockResetSeq = 0;
   selectedId: number | null = null;
+  /** Structure under the mouse (render-only affordance; set by the interaction layer, read every frame, never emitted). */
+  hoverId: number | null = null;
   placing: Placing | null = null;
   ghost: { ok: true; info: PlacementOk } | { ok: false; error: ActionError } | null = null;
   showForecast = true;
@@ -198,6 +200,7 @@ export class GameStore {
 
   private afterReplace(): void {
     this.selectedId = null;
+    this.hoverId = null;
     this.placing = null;
     this.ghost = null;
     this.panel = null;
