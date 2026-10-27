@@ -124,3 +124,18 @@ mute and independent volumes; eight paired strategic experiments (prompt 15 A–
 **Fixed along the way:** "Play again" and "New valley" silently reset to Greenvale/Normal (now keep scenario and difficulty); the story e2e raced its own 15 s countdown under load.
 **Verified:** typecheck, lint, 199 Vitest tests; Playwright results in `docs/TEST_RESULTS.md`.
 **Not verified:** audio by ear; screen-reader behaviour with a real reader (the live region content is tested, not its reading); WebKit; real-device frame rates.
+
+### Session 3d — Verification, phone fixes and the Hard route
+
+**Found by the full browser suite (not by unit tests):** the new mute button was invisible on phones (an old `nth-child(3)` rule meant for Help), and the Next-site button made the placement bar
+182 px tall on a 390×664 screen, stacked under the Begin card and covering the valley — three iPhone specs could not place a building. Fixed: Help is what phones hide; the placement bar is now one
+info row plus one button row (107 px at 390, 122 px at 320) and the Begin card steps aside while placing. Screenshots inspected at 390×664 and 320×568. A "Next site" arrow icon replaced a second check mark.
+**Process fix:** PR #2 had been merged a minute after it opened, so three later commits sat on a branch with no PR; `main` was merged into the branch and PR #3 opened. `CONTINUE_HERE.md` now says to check
+`git rev-list --left-right --count origin/main...HEAD` before assuming a PR is open.
+**Balance (counted, bots only):** 100 seeds × 7 policies on Greenvale/Normal = 700 campaigns, 0 invariant violations, 0 soft-locks: both tuned routes 100/100, steward 11%, other baselines 0%. 40-seed runs on
+Gentle, Hard and Ashen in `docs/balance/`. The first Hard run exposed that the Engineers route could not win at all (0/40): Hard needs two landmarks and four technologies, and the route had one and three. Two
+dead ends were instructive — researching two techs in one age starved the economy (timber flat at 5 for the whole epoch), and a `save`-blocked second archive deadlocked because the fire had destroyed the
+lumber camp that would have paid for it. Final Hard-only plan: camp and quarry first, a second Archive (a landmark that doubles knowledge), hydrology in the third age. Greenvale Hard: Engineers 80%,
+Archivists 100%; Ashen Hard: Engineers 15%, Archivists 78%. A permanent test requires both routes to win Hard Greenvale by different mechanisms (it fails without the change); Normal fixtures are unchanged.
+**Verified:** typecheck, lint, 208 Vitest tests, build, Playwright 44 passed / 2 skipped / 0 failed locally, GitHub CI (`verify` and the Playwright job) green on PR #3's merge commit.
+**Not verified:** WebKit, real-device frame rates (`docs/PERF.md` is software GL), audio by ear, a real screen reader, any human play.

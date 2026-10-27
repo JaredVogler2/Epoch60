@@ -101,6 +101,19 @@ describe('what the tuned routes make of each tier (seed 6001)', () => {
     expect(hard.v.conditions.map((x) => x.need)).toEqual([10, 2, 4]);
   }, 60_000);
 
+  it('Hard still has two ways in on Greenvale: Engineers raise a second archive, Archivists scatter a seed vault', () => {
+    const standing = (c: Campaign, kind: string) =>
+      c.structures.filter((s) => s.kind === kind && (s.status === 'active' || s.status === 'damaged')).length;
+    const eng = verdictOf('engineers', 'hard');
+    const arc = verdictOf('archivists', 'hard');
+    expect(eng.v.outcome).toBe('victory');
+    expect(arc.v.outcome).toBe('victory');
+    // Different mechanisms: the engineers carry the second landmark as another archive, the archivists as a vault.
+    expect(standing(eng.c, 'archive')).toBeGreaterThanOrEqual(2);
+    expect(standing(eng.c, 'seed_vault')).toBe(0);
+    expect(standing(arc.c, 'seed_vault')).toBeGreaterThanOrEqual(1);
+  }, 120_000);
+
   it('Gentle is no harder than Normal for the same plan', () => {
     const g = verdictOf('engineers', 'gentle');
     expect(g.v.conditions.map((x) => x.need)).toEqual([6, 1, 2]);

@@ -39,8 +39,19 @@ function pick(prefs: TraditionId[]): (c: Campaign) => TraditionId {
 }
 
 /** Route A — Engineers: stay put, hold the line with stone and earthworks, let the forecast aim every defence. */
+const hardMode = (c: Campaign) => c.difficulty === 'hard';
+
+// Hard asks for four retained technologies and two standing landmarks from earlier ages: the engineers raise a
+// second archive in the second age (it doubles their knowledge and is a landmark) and learn hydrology in the third.
+// Normal and Gentle play, and the recorded traces, are untouched.
 const engineersScholar = scholarly((c) =>
-  c.epoch === 0 ? ['masonry', 'writing'] : c.epoch === 1 ? ['seismic_engineering'] : [],
+  c.epoch === 0
+    ? ['masonry', 'writing']
+    : c.epoch === 1
+      ? ['seismic_engineering']
+      : hardMode(c)
+        ? ['hydrology']
+        : [],
 );
 
 export const engineers: Policy = {
@@ -71,6 +82,20 @@ export const engineers: Policy = {
       return wantsOnly([
         { id: 'r-seismic', research: 'seismic_engineering' },
         { id: 'farm', kind: 'farm', count: 2, spot: { avoidHazard: true } },
+        // Hard: the camp and quarry first (the fire took the camp), then save for the second landmark.
+        ...(hardMode(c)
+          ? ([
+              { id: 'lumber-h', kind: 'lumber_camp', count: 1 },
+              { id: 'quarry-h', kind: 'quarry', count: 1 },
+              {
+                id: 'archive-2',
+                kind: 'archive',
+                count: 2,
+                save: true,
+                spot: { avoidEpochs: [2], maxDist: 24, high: true },
+              },
+            ] as Want[])
+          : []),
         { id: 'stone-house', kind: 'stone_house', count: 3, spot: { avoidHazard: true } },
         { id: 'lumber', kind: 'lumber_camp', count: 1 },
         { id: 'quarry', kind: 'quarry', count: 1 },
@@ -79,6 +104,7 @@ export const engineers: Policy = {
       ]);
     if (hazardOf(c) === 'ash')
       return wantsOnly([
+        ...(hardMode(c) ? [{ id: 'r-hydro', research: 'hydrology' as const }] : []),
         { id: 'farm', kind: 'farm', count: 2, save: true, spot: { avoidHazard: true } },
         { id: 'lumber', kind: 'lumber_camp', count: 1 },
         { id: 'granary', kind: 'granary', count: 2, save: true, spot: { avoidHazard: true } },
@@ -88,6 +114,7 @@ export const engineers: Policy = {
       ]);
     return wantsOnly([
       { id: 'walls', kind: 'retaining_wall', count: 2, mitigate: { stride: 2, maxDist: 24 } },
+      ...(hardMode(c) ? [{ id: 'r-hydro', research: 'hydrology' as const }] : []),
       { id: 'reinforce', reinforce: ['archive', 'stone_house', 'cottage'] },
       { id: 'farm', kind: 'farm', count: 2, spot: { avoidHazard: true } },
       { id: 'stone-house', kind: 'stone_house', count: 3, spot: { avoidHazard: true } },

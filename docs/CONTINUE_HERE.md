@@ -4,25 +4,27 @@
 
 ## State
 
-The 3-epoch loop is **playable in the browser and winnable two different ways** (Chromium-verified): title → plan → build → 60 s → collapse cinematic → debrief → interregnum
-(ruins, survey/excavate, sites, traditions) → next age → … → ending → Play again. Ages change the architecture (thatch → tile → slate); 16 buildings and 9 techs have tested effects;
-six state-derived story decisions appear as a deadline chip; two executed winning routes (Engineers, Archivists) and credible losses are recorded in `fixtures/greenvale/` and replayed
-headless (`tests/engine/routes.test.ts`) and in the browser (`e2e/victory.spec.ts`). 140 unit tests + Playwright on desktop 1366×768 and an iPhone-13 touch profile.
+The 3-epoch loop is **playable in the browser and winnable two different ways on both scenarios** (Chromium-verified): title → plan → build → 60 s → collapse cinematic → debrief → interregnum
+(ruins, survey/excavate, sites, traditions) → next age → … → ending → Play again. Ages change the architecture (thatch → tile → slate); 17 buildings, 9 techs and **four disasters** (fire, flood,
+quake, ashfall) have tested effects; seven state-derived story decisions appear as a deadline chip; two scenarios (Greenvale, The Ashen Winter) and three difficulty tiers; seed links, Daily Ruins and local
+run cards; procedural audio with mute; keyboard-only placement and a live announcer; an adaptive DPR governor. Executed winning routes (Engineers, Archivists) and credible losses are recorded in
+`fixtures/` and replayed headless (`tests/engine/routes.test.ts`) and in the browser (`e2e/victory.spec.ts`, hash-identical). **208 unit tests; Playwright 44 passed / 2 skipped on desktop 1366×768 and an
+iPhone-13 touch profile.** Balance: `docs/BALANCE_REPORT.md` and `docs/balance/` (Normal is easy for competent play; Hard separates the routes — K-003, K-017).
 
 ## Pre-push gate (mandatory, no pipes)
 
-`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes. After any rules/content change:
+`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 11 min; do not run heavy jobs beside it). After any rules/content/bot change:
 `npx vite-node scripts/record-traces.ts` and **read the diff of `fixtures/greenvale-traces.md`** (a route that stopped winning must be understood, not silently re-recorded).
 
 ## Next exact steps (highest value first)
 
-1. **Phase 15 — run the tournament at scale:** `npx vite-node scripts/sim.ts --seeds 200 --report docs/BALANCE_REPORT.md` (≈ 10 s per seed; the Engineers bot dominates the time). Add difficulty tiers
-   (the first 20 seeds are won by both tuned routes, so Normal is easy for competent play), the paired experiments A–H from `prompts/15_*.md` as permanent tests, and cache hazard maps in the bots.
-2. **Phase 17 — mobile / accessibility / performance:** 320×568 and landscape screenshots, tray with 15 cards, reduced-motion E2E, keyboard-only loop, DOM alternative to raycast placement,
-   quality profiles with measured frame times (real device if ever available), WebKit when installed (`EPOCH_WEBKIT=1`).
-3. **Phase 14 — polish:** audio (Web Audio, mute/volume, iOS unlock), citizen outfits per age, Age III skyline, flood-edge and quake fracture geometry, then-vs-now slider.
-4. **Phase 11 remainder:** a 4th disaster type (volcanic/toxic winter) with its own mechanics, more story decisions, NPC evacuation behaviour.
-5. **Phase 13:** modes (Expeditions, Daily Ruins, Sandbox), ≥ 12 modifiers, 8–12 epoch campaign, share URLs, local run cards. **Phases 16, 18, 19:** meta, deployment (nothing is deployed yet), final adversarial review.
+1. **Phase 19 — independent adversarial review.** The brief is in the session scratchpad (`review-brief.md`; regenerate from `prompts/19_FINAL_ADVERSARIAL_REVIEW.md` if gone). Run it on a fresh agent with the
+   code, not with conclusions, and fix what it proves (it has not been run yet).
+2. **Phase 17 remainder:** landscape phones, ≤ 360 px touch targets (K-008), a manual screen-reader pass (K-016), WebKit when available (`EPOCH_WEBKIT=1`), real-device frame times (K-009).
+3. **Phase 13:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004). **Phase 16:** meta-progression. **Phase 14 polish:** citizen outfits per age, Age III skyline, flood-edge and quake
+   fracture geometry, then-vs-now slider, more story decisions.
+4. **Phase 15 follow-ups:** make Normal harder or default to a harder tier after a human playtest; give the Hard Ashen Engineers a second landmark (K-017).
+5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015) are the biggest unmeasured things.
 
 ## Tooling you will use
 
