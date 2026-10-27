@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/5 (PRs #1–#4 were merged, often within minutes of CI going green; each time `main` was merged back into the branch and a new PR opened, because force-pushes are refused here) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (PRs #1–#5 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
 
 ## State
 
@@ -9,7 +9,8 @@ debrief → interregnum (ruins, survey/excavate, sites, traditions) → next age
 atmosphere, sky and haze, smooth tree species with autumn accents, masonry, the valley continuing past the board, birds, instanced smoke, high-tier tilt-shift and grade)
 and the collapse visuals (smooth flood / quake / ash fronts, a travelling fire wall), added WebGL context-loss recovery, an error boundary, validated storage, modal focus,
 and fixed what a second independent review proved (unreachable traditions, repair/hearth/queue bugs, stale forecast, finished-run re-save, Daily tag, Assisted ranking,
-exact arithmetic in hashed state) with mutation-checked behavioural tests. **247 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still
+exact arithmetic in hashed state) with mutation-checked behavioural tests. Visual iteration 3 covered every required viewport (scores 4/5 on the seven criteria
+judged from stills); desktop hover highlights buildings. **247 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still
 open: `docs/KNOWN_ISSUES.md` (notably K-003: on Normal a well-sited Archive alone wins Greenvale).
 
 ## Pre-push gate (mandatory, no pipes)
@@ -24,7 +25,7 @@ open: `docs/KNOWN_ISSUES.md` (notably K-003: on Normal a well-sited Archive alon
    `scripts/sim.ts` and the traces.
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
-3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 361 px wide are 40 px (K-008).
+3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
 4. **Phase 13 / 14 / 16:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); citizen outfits per age, Age III skyline, a
    then-vs-now slider, more story decisions; meta-progression.
 5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
@@ -50,4 +51,6 @@ every capture (`COLLAPSE_T=0.2` freezes a collapse earlier), and `scripts/perf-p
 - Do not run `pkill -f "<pattern>"` with a pattern that appears in your own command line — it kills the shell.
 - Geometry primitives auto-orient triangles; do not hand-wind faces.
 - The first `npx playwright test` of a session rebuilds `dist`; do not edit `src/` until the preview server is up.
-- PRs #1 and #2 are merged. Check `git rev-list --left-right --count origin/main...HEAD` before trusting that your branch has an open PR; if its PR was merged, merge `main` into the branch (a force-push was refused in this environment), push, and open a new PR.
+- PRs #1–#5 are merged. Check `git rev-list --left-right --count origin/main...HEAD` before trusting that your branch has an open PR. If its PR was merged and `main` contains the
+  branch's pushed head (PRs here are merged with a merge commit), rebase only the unpushed commits onto `origin/main` — the push is then a fast-forward; otherwise merge `main` into
+  the branch. Never force-push (it was refused in this environment). Then open a new PR.
