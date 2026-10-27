@@ -8,12 +8,14 @@ export interface QualitySettings {
   /** Multiplier on instanced vegetation counts. */
   foliage: number;
   grass: number;
+  /** Vertex wind on crowns and grass. */
+  wind: boolean;
 }
 
 export const TIERS: Record<QualityTier, Omit<QualitySettings, 'dpr'>> = {
-  high: { tier: 'high', shadowMap: 2048, antialias: true, foliage: 1, grass: 1 },
-  medium: { tier: 'medium', shadowMap: 1024, antialias: true, foliage: 0.75, grass: 0.5 },
-  low: { tier: 'low', shadowMap: 512, antialias: false, foliage: 0.5, grass: 0.2 },
+  high: { tier: 'high', shadowMap: 2048, antialias: true, foliage: 1, grass: 1, wind: true },
+  medium: { tier: 'medium', shadowMap: 1024, antialias: true, foliage: 0.8, grass: 0.55, wind: true },
+  low: { tier: 'low', shadowMap: 1024, antialias: false, foliage: 0.6, grass: 0.25, wind: true },
 };
 
 export function isTouchDevice(): boolean {

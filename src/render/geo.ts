@@ -37,8 +37,8 @@ export class GeoBuilder {
   col: number[] = [];
   /** Seed for brightness jitter. */
   seed: number;
-  /** Amount of per-facet brightness jitter (0..0.2). */
-  jitter = 0.07;
+  /** Amount of per-facet brightness jitter (0..0.2). Kept low: variation belongs to objects, not facets. */
+  jitter = 0.035;
   private tri = 0;
 
   constructor(seed = 1) {
@@ -155,6 +155,60 @@ export class GeoBuilder {
     this.quad(p(-x, 0, -z), p(-x, 0, z), p(-x, sy, z), p(-x, sy, -z), color);
   }
 
+  /**
+   * Coursed masonry: a mortar-coloured body with staggered, slightly proud, colour-varied blocks on the four sides,
+   * and a lighter coping on top. `course` is the block height, `block` the mean block length (both in cells).
+   */
+  masonry(
+    cx: number,
+    cy: number,
+    cz: number,
+    sx: number,
+    sy: number,
+    sz: number,
+    color: RGB,
+    rotY = 0,
+    opts: { course?: number; block?: number; top?: RGB; gap?: number; spread?: number } = {},
+  ): void {
+    const course = opts.course ?? 0.15;
+    const blockLen = opts.block ?? 0.32;
+    const gap = opts.gap ?? 0.02;
+    const spread = opts.spread ?? 0.16;
+    const mortar = shade(color, 0.6);
+    this.box(cx, cy, cz, sx, sy, sz, mortar, rotY, opts.top ?? shade(color, 1.1));
+    const off = 0.007;
+    const faces: { len: number; at: (u: number, y: number) => V3; n: V3 }[] = [
+      { len: sx, at: (u, y) => [u, y, sz / 2 + off], n: [0, 0, 1] },
+      { len: sx, at: (u, y) => [-u, y, -sz / 2 - off], n: [0, 0, -1] },
+      { len: sz, at: (u, y) => [sx / 2 + off, y, -u], n: [1, 0, 0] },
+      { len: sz, at: (u, y) => [-sx / 2 - off, y, u], n: [-1, 0, 0] },
+    ];
+    const rows = Math.max(1, Math.round(sy / course));
+    let k = 0;
+    for (const f of faces) {
+      const dir = this.xf(f.n, 0, 0, 0, rotY);
+      for (let r = 0; r < rows; r++) {
+        const y0 = (r / rows) * sy + gap / 2;
+        const y1 = ((r + 1) / rows) * sy - gap / 2;
+        let u = -f.len / 2 - (r % 2) * blockLen * 0.5;
+        while (u < f.len / 2) {
+          const len = blockLen * (0.75 + h01(this.seed, k, 31) * 0.5);
+          const u0 = Math.max(-f.len / 2, u) + gap / 2;
+          const u1 = Math.min(f.len / 2, u + len) - gap / 2;
+          u += len;
+          k++;
+          if (u1 - u0 < 0.03) continue;
+          const col = shade(color, 1 - spread / 2 + h01(this.seed, k, 37) * spread);
+          const p = (uu: number, yy: number): V3 => {
+            const q = f.at(uu, yy);
+            return this.xf(q, cx, cy, cz, rotY);
+          };
+          this.quadO(p(u0, y0), p(u1, y0), p(u1, y1), p(u0, y1), col, null, dir);
+        }
+      }
+    }
+  }
+
   /** Tapered box: bottom size (sx0,sz0), top size (sx1,sz1). */
   frustum(
     cx: number,
@@ -220,18 +274,31 @@ export class GeoBuilder {
         const s1 = ((r + 1) / rows) * hs * side;
         const y0 = h * (1 - r / rows);
         const y1 = h * (1 - (r + 1) / rows);
-        // step each row slightly outward so shingle/tile rows read as overlapping courses
-        const lip = rows > 1 ? 0.025 : 0;
+        // Courses read as overlapping tiles through a darker band at each course's lower edge (no see-through steps).
         for (let i = 0; i < nL; i++) {
           const l0 = -hl + (i / nL) * hl * 2;
           const l1 = -hl + ((i + 1) / nL) * hl * 2;
           const jb = (l: number, s: number) =>
             bump ? (h01(this.seed, Math.round(l * 50), Math.round(s * 50)) - 0.5) * bump : 0;
-          const a = P(l0, side * (Math.abs(s0) + lip), y0 + jb(l0, s0));
-          const b = P(l1, side * (Math.abs(s0) + lip), y0 + jb(l1, s0));
-          const c2 = P(l1, side * Math.abs(s1), y1 + jb(l1, s1));
-          const d2 = P(l0, side * Math.abs(s1), y1 + jb(l0, s1));
-          this.quadO(a, b, c2, d2, color, null, [0, 1, 0]);
+          if (rows > 1) {
+            const k = 0.78;
+            const sm = s0 + (s1 - s0) * k;
+            const ym = y0 + (y1 - y0) * k;
+            const a = P(l0, side * Math.abs(s0), y0 + jb(l0, s0));
+            const b = P(l1, side * Math.abs(s0), y0 + jb(l1, s0));
+            const c2 = P(l1, side * Math.abs(sm), ym + jb(l1, sm));
+            const d2 = P(l0, side * Math.abs(sm), ym + jb(l0, sm));
+            this.quadO(a, b, c2, d2, color, null, [0, 1, 0]);
+            const e2 = P(l1, side * Math.abs(s1), y1 + jb(l1, s1));
+            const f2 = P(l0, side * Math.abs(s1), y1 + jb(l0, s1));
+            this.quadO(d2, c2, e2, f2, shade(color, 0.8), null, [0, 1, 0]);
+          } else {
+            const a = P(l0, side * Math.abs(s0), y0 + jb(l0, s0));
+            const b = P(l1, side * Math.abs(s0), y0 + jb(l1, s0));
+            const c2 = P(l1, side * Math.abs(s1), y1 + jb(l1, s1));
+            const d2 = P(l0, side * Math.abs(s1), y1 + jb(l0, s1));
+            this.quadO(a, b, c2, d2, color, null, [0, 1, 0]);
+          }
         }
       }
     }

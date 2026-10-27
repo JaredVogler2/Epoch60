@@ -69,22 +69,24 @@ export interface TerrainModel {
 }
 
 const C = {
-  dry: rgb('#b9b25a'),
-  lush: rgb('#6ea944'),
-  rich: rgb('#4b9a3d'),
-  forestFloor: rgb('#3d6230'),
-  hillGrass: rgb('#8fa650'),
-  rock: rgb('#938a7b'),
-  rockLight: rgb('#b3aa98'),
-  earth: rgb('#8d7252'),
-  mud: rgb('#6d5a3f'),
-  sand: rgb('#c2ac7c'),
+  dry: rgb('#a8a35e'),
+  lush: rgb('#7e9a4c'),
+  rich: rgb('#6a9042'),
+  forestFloor: rgb('#55703a'),
+  hillGrass: rgb('#93a35c'),
+  rock: rgb('#9d9283'),
+  rockLight: rgb('#bab09d'),
+  earth: rgb('#94704c'),
+  mud: rgb('#7d6a4c'),
+  sand: rgb('#cdb88a'),
+  pebble: rgb('#b7aa8e'),
+  bed: rgb('#6f6a4e'),
   char: rgb('#2c2724'),
   ash: rgb('#6b655e'),
-  silt: rgb('#b49b6e'),
-  pad: rgb('#aa8d62'),
-  path: rgb('#b89c6c'),
-  wetGrass: rgb('#4f8a45'),
+  silt: rgb('#b9a074'),
+  pad: rgb('#ad9068'),
+  path: rgb('#b89a6c'),
+  wetGrass: rgb('#6e8f48'),
 };
 
 function noise2(x: number, y: number, seed: number): number {
@@ -199,17 +201,19 @@ export function buildTerrain(
     }
   }
   // 5. colours
+  // Worn yards: irregular edges and a little grass left in patches, never a square tile.
   const yardAt = (x: number, y: number): number => {
     let m = 0;
+    const wob = (noise2(x * 2.1, y * 2.1, 31) - 0.5) * 0.5;
     for (const p of pads) {
       if (p.yard <= 0) continue;
       const dx = Math.max(p.x - x, 0, x - (p.x + p.w));
       const dy = Math.max(p.y - y, 0, y - (p.y + p.h));
-      const d = Math.hypot(dx, dy);
-      const t = 1 - smooth(d / 0.45);
+      const d = Math.hypot(dx, dy) + wob;
+      const t = 1 - smooth((d + 0.12) / 0.55);
       if (t > m) m = t * p.yard;
     }
-    return m;
+    return m * (0.72 + 0.28 * noise2(x * 3.3, y * 3.3, 37));
   };
   for (let j = 0; j < nv; j++) {
     for (let i = 0; i < nv; i++) {
@@ -221,25 +225,29 @@ export function buildTerrain(
       const gy =
         (heights[Math.min(nv - 1, j + 1) * nv + i]! - heights[Math.max(0, j - 1) * nv + i]!) / (2 * step);
       const slope = Math.hypot(gx, gy);
-      const fert = clamp(sampleBilinear(world.fertility, fx, fy) / 1000, 0, 1);
-      const forest = clamp(sampleBilinear(world.forest, fx, fy) / 1000, 0, 1);
-      const rockV = sampleBilinear(world.rock, fx, fy);
-      const scar = clamp(sampleBilinear(world.scar, fx, fy) / 1000, 0, 1);
-      const silt = clamp(sampleBilinear(world.silt, fx, fy) / 1000, 0, 1);
-      const eros = clamp(sampleBilinear(world.erosion, fx, fy) / 1000, 0, 1);
-      const fouled = clamp(sampleBilinear(world.pollution, fx, fy) / 350, 0, 0.72);
+      // Warp the lookup with smooth noise so per-cell fields paint as organic patches, not cell-sized steps.
+      const wx = fx + (noise2(fx * 0.85, fy * 0.85, 5) - 0.5) * 0.9;
+      const wy = fy + (noise2(fx * 0.85 + 11.3, fy * 0.85 - 7.1, 6) - 0.5) * 0.9;
+      const fert = clamp(sampleSmooth(world.fertility, wx, wy) / 1000, 0, 1);
+      const forest = clamp(sampleSmooth(world.forest, wx, wy) / 1000, 0, 1);
+      const rockV = Math.max(0, sampleSmooth(world.rock, wx, wy));
+      const scar = clamp(sampleSmooth(world.scar, wx, wy) / 1000, 0, 1);
+      const silt = clamp(sampleSmooth(world.silt, wx, wy) / 1000, 0, 1);
+      const eros = clamp(sampleSmooth(world.erosion, wx, wy) / 1000, 0, 1);
+      const fouled = clamp(sampleSmooth(world.pollution, wx, wy) / 350, 0, 0.72);
 
       const n1 = noise2(fx * 1.7, fy * 1.7, 11);
       const n2 = noise2(fx * 5.3, fy * 5.3, 23);
       let c: RGB = fert < 0.55 ? mix(C.dry, C.lush, fert / 0.55) : mix(C.lush, C.rich, (fert - 0.55) / 0.45);
       c = mix(c, C.hillGrass, smooth((h - 2.2) / 3.2) * 0.55);
-      c = mix(c, C.forestFloor, forest * 0.75);
-      c = shade(c, 0.9 + n1 * 0.2 + (n2 - 0.5) * 0.1);
-      // wet margin and banks
-      const wet = 1 - smooth((h - WATER_LEVEL + 0.04) / 0.34);
-      c = mix(c, C.mud, wet * 0.85);
-      c = mix(c, C.sand, smooth(1 - Math.abs(h - 0.2) / 0.16) * 0.5 * (1 - forest));
-      c = mix(c, C.wetGrass, smooth(1 - Math.abs(h - 0.5) / 0.35) * 0.25);
+      c = mix(c, C.forestFloor, smooth(forest * 1.15) * 0.8);
+      c = shade(c, 0.93 + n1 * 0.14 + (n2 - 0.5) * 0.08);
+      // River: a dark bed under the water, then a narrow pale pebble bank, then lush wet grass.
+      const under = 1 - smooth((h - WATER_LEVEL + 0.01) / 0.05);
+      const bank = smooth(1 - Math.abs(h - (WATER_LEVEL + 0.07)) / 0.11) * (1 - under);
+      c = mix(c, C.wetGrass, smooth(1 - Math.abs(h - 0.42) / 0.3) * 0.3);
+      c = mix(c, mix(C.pebble, C.sand, n2), bank * 0.7);
+      c = mix(c, C.bed, under * 0.9);
       // slope exposes rock/earth
       const steep = smooth((slope - 0.45) / 0.9);
       c = mix(c, mix(C.earth, C.rock, clamp(h / 5, 0, 1)), steep * 0.85);

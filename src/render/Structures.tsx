@@ -3,7 +3,7 @@ import { memo, useMemo, useRef, useSyncExternalStore } from 'react';
 import { Color, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Plane, Vector3 } from 'three';
 import type { BufferGeometry } from 'three';
 import { BUILDINGS } from '../engine';
-import type { Structure } from '../engine';
+import type { Campaign, Structure } from '../engine';
 import { store } from '../game/store';
 import { buildingModel, ruinGeometry, scaffoldGeometry } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
@@ -11,7 +11,6 @@ import { groundY } from './world';
 import { presentation, sinceHit, visualStatus } from './presentation';
 import { BurnFx, DustPuff } from './CollapseFx';
 import { h01 } from './geo';
-import { Smoke } from './Effects';
 
 const modelCache = new Map<string, BuildingModel>();
 const ruinCache = new Map<string, BufferGeometry>();
@@ -51,6 +50,49 @@ function facing(s: Structure, hx: number, hz: number): number {
 }
 
 const white = new Color(1, 1, 1);
+
+/** Where a building's chimney (or the hearth's fire) breathes out, in the building's own frame. */
+function chimneyOf(s: Structure): [number, number, number] {
+  if (s.kind === 'hearth') return [0, 0.7, 0];
+  if (s.kind === 'forge') return [0.5, 2.0, -0.35];
+  if (s.kind === 'stone_house') return [s.id % 3 === 1 ? -0.45 : 0.55, 1.8, s.id % 3 === 1 ? 0.2 : -0.25];
+  return s.id % 3 === 1 ? [0, 1.45, 0] : s.id % 3 === 2 ? [0.45, 1.25, -0.35] : [0.65, 1.38, -0.28];
+}
+
+export interface SmokeSource {
+  x: number;
+  y: number;
+  z: number;
+  seed: number;
+  /** Forge smoke is darker and heavier. */
+  dark: boolean;
+}
+
+/** Every chimney that is smoking right now, in world space (render-only; read by the instanced smoke field). */
+export function smokeSources(c: Campaign | null): SmokeSource[] {
+  if (!c) return [];
+  const out: SmokeSource[] = [];
+  const hx = c.world.anchors.hearth.x + 1;
+  const hz = c.world.anchors.hearth.y + 1;
+  for (const s of c.structures) {
+    if (s.kind !== 'cottage' && s.kind !== 'hearth' && s.kind !== 'forge' && s.kind !== 'stone_house')
+      continue;
+    const st = visualStatus(s);
+    if (st === 'constructing' || st === 'rubble' || st === 'buried') continue;
+    const [lx, ly, lz] = chimneyOf(s);
+    const r = facing(s, hx, hz);
+    const cx = s.x + s.w / 2;
+    const cz = s.y + s.h / 2;
+    out.push({
+      x: cx + lx * Math.cos(r) + lz * Math.sin(r),
+      y: groundY(cx, cz) - 0.02 + ly,
+      z: cz - lx * Math.sin(r) + lz * Math.cos(r),
+      seed: s.id,
+      dark: s.kind === 'forge',
+    });
+  }
+  return out;
+}
 
 const StructureView = memo(function StructureView({ s, rev }: { s: Structure; rev: string }) {
   void rev;
@@ -115,10 +157,6 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     void rev; // terrain is rebuilt when revisions change, so the ground height must be re-read
     return groundY(cx, cz) - 0.02;
   }, [cx, cz, rev]);
-  const hasSmoke =
-    (s.kind === 'cottage' || s.kind === 'hearth' || s.kind === 'forge' || s.kind === 'stone_house') &&
-    status !== 'constructing' &&
-    !ruin;
   const since = sinceHit(s);
   const hit = presentation.hit.get(s.id);
   const burning =
@@ -129,18 +167,6 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     !!hit &&
     hit.after !== 'active';
   const puff = presentation.active && since >= 0 && since < 1.6 && !!hit && hit.after === 'rubble';
-  const smokeAt: [number, number, number] =
-    s.kind === 'hearth'
-      ? [0, 0.7, 0]
-      : s.kind === 'forge'
-        ? [0.5, 2.0, -0.35]
-        : s.kind === 'stone_house'
-          ? [s.id % 3 === 1 ? -0.45 : 0.55, 1.8, s.id % 3 === 1 ? 0.2 : -0.25]
-          : s.id % 3 === 1
-            ? [0, 1.45, 0]
-            : s.id % 3 === 2
-              ? [0.45, 1.25, -0.35]
-              : [0.65, 1.38, -0.28];
 
   useFrame((state, dt) => {
     const g = group.current;
@@ -205,7 +231,6 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
       {s.kind === 'hearth' && !ruin && <Flame />}
       {burning && <BurnFx w={s.w} h={s.h} seed={s.id} />}
       {puff && <DustPuff w={s.w} h={s.h} seed={s.id} />}
-      {hasSmoke && <Smoke position={smokeAt} seed={s.id} />}
     </group>
   );
 });
