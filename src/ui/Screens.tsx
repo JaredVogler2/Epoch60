@@ -387,9 +387,14 @@ export function InterregnumScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c.phase, s.inter.site]);
   if (c.phase !== 'INTERREGNUM' || !inter) return null;
+  // Landmarks and knowledge stores (their tablets can be dug up) head the list.
+  const notable = (x: Structure) => Number(BUILDINGS[x.kind].heritage || BUILDINGS[x.kind].retains > 0);
   const ruins = c.structures
     .filter((x) => x.status === 'rubble' || x.status === 'buried')
-    .sort((a, b) => Number(BUILDINGS[b.kind].heritage) - Number(BUILDINGS[a.kind].heritage) || a.id - b.id);
+    .sort((a, b) => notable(b) - notable(a) || a.id - b.id);
+  const oldHearth = c.structures.find(
+    (x) => x.kind === 'hearth' && (x.status === 'active' || x.status === 'damaged'),
+  );
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
   const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
   return (
@@ -419,30 +424,39 @@ export function InterregnumScreen() {
 
       <h3>Where will your people begin?</h3>
       <div className="site-list">
-        {inter.sites.map((st, i) => (
-          <button
-            key={i}
-            type="button"
-            className={`site ${s.inter.site === i ? 'selected' : ''}`}
-            aria-pressed={s.inter.site === i}
-            data-testid={`site-${i}`}
-            onClick={() => {
-              s.setInter({ site: i });
-              s.focusOn(st.x + 1, st.y + 1, 22);
-            }}
-          >
-            <b>{st.label}</b>
-            <small>{st.note}</small>
-            <span className="site-stats">
-              <span>Soil {Math.round(st.fertility / 10)}%</span>
-              <span className={st.risk > 500 ? 'neg' : st.risk > 150 ? 'warn' : 'pos'}>
-                <Icon name={hazardIcon(st.riskKind)} size={12} />{' '}
-                {st.risk > 500 ? 'Severe' : st.risk > 150 ? 'Exposed' : 'Safe'}
+        {inter.sites.map((st, i) => {
+          // Founding within a cell of a standing hearth moves into it; anywhere else abandons it to ruin.
+          const keeps = !!oldHearth && Math.abs(oldHearth.x - st.x) <= 1 && Math.abs(oldHearth.y - st.y) <= 1;
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`site ${s.inter.site === i ? 'selected' : ''}`}
+              aria-pressed={s.inter.site === i}
+              data-testid={`site-${i}`}
+              onClick={() => {
+                s.setInter({ site: i });
+                s.focusOn(st.x + 1, st.y + 1, 22);
+              }}
+            >
+              <b>{st.label}</b>
+              <small>{st.note}</small>
+              <span className="site-stats">
+                <span>Soil {Math.round(st.fertility / 10)}%</span>
+                <span className={st.risk > 500 ? 'neg' : st.risk > 150 ? 'warn' : 'pos'}>
+                  <Icon name={hazardIcon(st.riskKind)} size={12} />{' '}
+                  {st.risk > 500 ? 'Severe' : st.risk > 150 ? 'Exposed' : 'Safe'}
+                </span>
+                {st.onRuin && <span>On old foundations</span>}
+                {oldHearth && (
+                  <span className={keeps ? 'pos' : 'warn'}>
+                    {keeps ? 'Keeps the old hearth' : 'Abandons the old hearth'}
+                  </span>
+                )}
               </span>
-              {st.onRuin && <span>On old foundations</span>}
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       <h3>What will they remember?</h3>

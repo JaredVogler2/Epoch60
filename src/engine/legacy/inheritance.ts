@@ -276,7 +276,7 @@ function findSites(c: Campaign): FoundingSite[] {
       nearOld,
       'The Ancestral Hearth',
       old.standing
-        ? 'The old hearth still stands. Move in at once.'
+        ? 'The old hearth still stands. Move in at once — kept to the end, it is a landmark.'
         : 'Rebuild on the old foundations: familiar ground, flat and walkable.',
     );
   }
