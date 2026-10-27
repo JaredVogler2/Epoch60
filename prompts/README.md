@@ -77,3 +77,7 @@ Grandiose design documentation without implementation, meaningless resource mete
 ## Cross-phase binding supplements
 
 Before implementing code, read [QUALITY_GATE_VISUAL_AND_FUN.md](QUALITY_GATE_VISUAL_AND_FUN.md) and [AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md](AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md). Apply them throughout phases 01–19. The art/interaction scorecard and verified working-state commit protocol are mandatory and override any lower-quality implicit shortcut. Do not call a static 3D scene or graphical mockup a playable game.
+
+## Use shorter Claude Code sessions to avoid timeouts
+
+Read [CLAUDE_CODE_STEPWISE_RUNBOOK.md](CLAUDE_CODE_STEPWISE_RUNBOOK.md) for exact per-session `/goal` prompts, five milestone boundaries, and small working-state commits. Read [AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md](AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md) before ending any context; resume from `docs/CONTINUE_HERE.md`. Do not ask a single agent context to complete all 19 coding phases without checkpoints.
