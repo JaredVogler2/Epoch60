@@ -9,7 +9,8 @@ const seed = seedArg && /^\d+$/.test(seedArg) ? Number(seedArg) : 6001;
 const policy = policies[name];
 if (!policy) throw new Error(`unknown policy ${name}`);
 const scenarioArg = process.argv.find((a) => a.startsWith('--scenario='))?.slice(11) ?? 'greenvale';
-const difficultyArg = (process.argv.find((a) => a.startsWith('--difficulty='))?.slice(13) ?? 'normal') as Difficulty;
+const difficultyArg = (process.argv.find((a) => a.startsWith('--difficulty='))?.slice(13) ??
+  'normal') as Difficulty;
 const c = createCampaign(seed, 'standard', scenarioArg, difficultyArg);
 const trace = process.argv.includes('--trace');
 const onlyEpoch = process.argv.find((a) => a.startsWith('--epoch='))?.slice(8);

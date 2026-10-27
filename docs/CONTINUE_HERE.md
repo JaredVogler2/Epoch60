@@ -51,6 +51,8 @@ every capture (`COLLAPSE_T=0.2` freezes a collapse earlier), and `scripts/perf-p
 - Do not run `pkill -f "<pattern>"` with a pattern that appears in your own command line — it kills the shell.
 - Geometry primitives auto-orient triangles; do not hand-wind faces.
 - The first `npx playwright test` of a session rebuilds `dist`; do not edit `src/` until the preview server is up.
+- Playwright reuses any server already listening on port 4173 (`reuseExistingServer`). For a mutation check, run `fuser -k 4173/tcp`, build the
+  mutated code and start `npx vite preview --host 127.0.0.1 --port 4173` yourself, or the test may run against a stale build and pass.
 - PRs #1–#5 are merged. Check `git rev-list --left-right --count origin/main...HEAD` before trusting that your branch has an open PR. If its PR was merged and `main` contains the
   branch's pushed head (PRs here are merged with a merge commit), rebase only the unpushed commits onto `origin/main` — the push is then a fast-forward; otherwise merge `main` into
   the branch. Never force-push (it was refused in this environment). Then open a new PR.
