@@ -8,12 +8,13 @@ import {
   MeshStandardMaterial,
   ShaderMaterial,
 } from 'three';
-import { BUILDINGS, footprint } from '../engine';
+import { BUILDINGS, GRID_H, GRID_W, footprint } from '../engine';
 import type { BuildingKind, HazardKind, Structure } from '../engine';
 import { store } from '../game/store';
 import { buildingModel } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
+import { sampleBilinear } from './terrain';
 
 /* ------------------------------------------------------------------ */
 /* Decal shader: terrain-hugging translucent marks                     */
@@ -48,8 +49,12 @@ void main() {
   float border = 1.0 - smoothstep(0.0, 0.07, edge);
   float pulse = 0.78 + 0.22 * sin(uTime * 4.0);
   float a;
-  if (uMode < 0.5) {            // hazard forecast: striped, stronger where intense
-    a = (0.20 + 0.30 * vVal) * (0.55 + 0.45 * stripe);
+  if (uMode < 0.5) {            // hazard forecast: soft fill, fine drifting stripes, a contour where the zone ends
+    float v = vVal;
+    float fill = smoothstep(0.03, 0.4, v);
+    float fine = smoothstep(0.42, 0.5, abs(fract((vWorld.x - vWorld.z) * 1.4 - uTime * 0.12) - 0.5));
+    float contour = 1.0 - smoothstep(0.0, 0.035, abs(v - 0.16));
+    a = fill * (0.05 + 0.13 * v) * (0.6 + 0.4 * fine) + contour * 0.62;
   } else if (uMode < 1.5) {     // valid placement: soft fill + crisp border
     a = 0.28 + 0.6 * border;
   } else if (uMode < 2.5) {     // invalid: hatched fill + border
@@ -83,7 +88,7 @@ function decalMaterial(color: string, mode: number, alpha = 1): ShaderMaterial {
 const HAZARD_COLORS: Record<HazardKind, string> = {
   fire: '#ff5a1f',
   flood: '#2f86ff',
-  quake: '#b36bff',
+  quake: '#a874ff',
   ash: '#c9c4b8',
 };
 
@@ -126,33 +131,76 @@ function useRevs(): string {
 /* Hazard forecast on the terrain                                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The forecast as a smooth field draped on the terrain: per-cell intensities are blurred and sampled on a finer grid,
+ * so the danger zone has a soft body and a clean contour instead of cell-sized squares.
+ */
 function forecastGeometry(cells: { x: number; y: number; intensity: number }[]): BufferGeometry {
+  const W = GRID_W;
+  const H = GRID_H;
+  const raw = new Float32Array(W * H);
+  let x0 = W;
+  let x1 = 0;
+  let y0 = H;
+  let y1 = 0;
+  for (const c of cells) {
+    raw[c.y * W + c.x] = Math.max(raw[c.y * W + c.x]!, Math.min(1, c.intensity / 1000));
+    x0 = Math.min(x0, c.x);
+    x1 = Math.max(x1, c.x + 1);
+    y0 = Math.min(y0, c.y);
+    y1 = Math.max(y1, c.y + 1);
+  }
+  const field = new Float32Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      let sum = 0;
+      let wsum = 0;
+      for (let j = -1; j <= 1; j++)
+        for (let i = -1; i <= 1; i++) {
+          const xx = x + i;
+          const yy = y + j;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const wgt = i === 0 && j === 0 ? 4 : i === 0 || j === 0 ? 2 : 1;
+          sum += raw[yy * W + xx]! * wgt;
+          wsum += wgt;
+        }
+      field[y * W + x] = sum / wsum;
+    }
   const pos: number[] = [];
   const uv: number[] = [];
   const val: number[] = [];
-  const S = 2;
-  for (const c of cells) {
-    const v = Math.min(1, c.intensity / 1000);
-    for (let j = 0; j < S; j++) {
-      for (let i = 0; i < S; i++) {
-        const x0 = c.x + i / S;
-        const x1 = c.x + (i + 1) / S;
-        const z0 = c.y + j / S;
-        const z1 = c.y + (j + 1) / S;
-        const p = (x: number, z: number) => [x, groundY(x, z) + 0.06, z];
-        const a = p(x0, z0);
-        const b = p(x1, z0);
-        const d = p(x1, z1);
-        const e = p(x0, z1);
-        for (const q of [a, e, b, b, e, d]) {
-          pos.push(q[0]!, q[1]!, q[2]!);
-          uv.push(0.5, 0.5);
-          val.push(v);
-        }
-      }
-    }
+  const idx: number[] = [];
+  if (!cells.length) {
+    const g = new BufferGeometry();
+    g.setAttribute('position', new BufferAttribute(new Float32Array(0), 3));
+    return g;
   }
+  const S = 3;
+  const gx0 = Math.max(0, x0 - 1);
+  const gy0 = Math.max(0, y0 - 1);
+  const gx1 = Math.min(W, x1 + 1);
+  const gy1 = Math.min(H, y1 + 1);
+  const nx = (gx1 - gx0) * S;
+  const nz = (gy1 - gy0) * S;
+  for (let j = 0; j <= nz; j++)
+    for (let i = 0; i <= nx; i++) {
+      const px = gx0 + i / S;
+      const pz = gy0 + j / S;
+      pos.push(px, groundY(px, pz) + 0.06, pz);
+      uv.push(0.5, 0.5);
+      val.push(Math.max(0, sampleBilinear(field, px, pz)));
+    }
+  for (let j = 0; j < nz; j++)
+    for (let i = 0; i < nx; i++) {
+      const a = j * (nx + 1) + i;
+      const b = a + 1;
+      const c2 = a + nx + 1;
+      const d = c2 + 1;
+      if (val[a]! < 0.02 && val[b]! < 0.02 && val[c2]! < 0.02 && val[d]! < 0.02) continue;
+      idx.push(a, c2, b, b, c2, d);
+    }
   const g = new BufferGeometry();
+  g.setIndex(idx);
   g.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3));
   g.setAttribute('aUv', new BufferAttribute(new Float32Array(uv), 2));
   g.setAttribute('aVal', new BufferAttribute(new Float32Array(val), 1));

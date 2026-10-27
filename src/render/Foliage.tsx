@@ -5,20 +5,21 @@ import { store } from '../game/store';
 import { h01 } from './geo';
 import { resolveQuality } from './quality';
 import { WATER_LEVEL } from './terrain';
+import { flowerGeometry, grassGeometry, snagGeometry } from './models/vegetation';
 import {
-  birchGeometry,
-  boulderGeometry,
-  bushGeometry,
-  flowerGeometry,
-  grassGeometry,
-  oakGeometry,
-  pineGeometry,
-  snagGeometry,
-} from './models/vegetation';
+  CROWN_HUES,
+  birchTreeGeometry,
+  broadleafGeometry,
+  coniferGeometry,
+  cypressGeometry,
+  shrubGeometry,
+  stoneGeometry,
+} from './models/trees';
+import { atmosphere } from './atmosphere';
 import { presentation, renderWorld } from './presentation';
 import { worldModel } from './world';
 
-type Kind = 'pine' | 'oak' | 'birch' | 'bush' | 'snag' | 'boulder' | 'grass' | 'flower';
+type Kind = 'broadleaf' | 'cypress' | 'conifer' | 'birch' | 'shrub' | 'snag' | 'stone' | 'grass' | 'flower';
 
 interface Inst {
   x: number;
@@ -31,15 +32,17 @@ interface Inst {
 }
 
 const CAP: Record<Kind, number> = {
-  pine: 3400,
-  oak: 3400,
-  birch: 2200,
-  bush: 2600,
+  broadleaf: 3000,
+  cypress: 1800,
+  conifer: 2600,
+  birch: 1800,
+  shrub: 2600,
   snag: 1200,
-  boulder: 700,
+  stone: 700,
   grass: 9000,
   flower: 2200,
 };
+const TREES: Kind[] = ['broadleaf', 'cypress', 'conifer', 'birch'];
 
 /** Smooth value noise in [0,1) for glades. */
 function glen(x: number, y: number): number {
@@ -64,12 +67,13 @@ export function scatter(quality: { foliage: number; grass: number }): Record<Kin
   const w = renderWorld(c);
   const T = worldModel.terrain!;
   const out: Record<Kind, Inst[]> = {
-    pine: [],
-    oak: [],
+    broadleaf: [],
+    cypress: [],
+    conifer: [],
     birch: [],
-    bush: [],
+    shrub: [],
     snag: [],
-    boulder: [],
+    stone: [],
     grass: [],
     flower: [],
   };
@@ -120,7 +124,7 @@ export function scatter(quality: { foliage: number; grass: number }): Record<Kin
         // natural clearings: low-frequency noise carves glades out of continuous forest
         const glade = glen(cx, cy);
         const open = forest < 0.92 && glade > 0.6 ? 0.25 : 1;
-        const nTrees = Math.floor(forest * 2.5 * open * quality.foliage + h01(seed, 1, 1));
+        const nTrees = Math.floor(forest * 3.1 * open * quality.foliage + h01(seed, 1, 1));
         for (let t = 0; t < nTrees; t++) {
           const jx = (h01(seed, t, 5) - 0.5) * 0.9;
           const jy = (h01(seed, t, 6) - 0.5) * 0.9;
@@ -132,16 +136,17 @@ export function scatter(quality: { foliage: number; grass: number }): Record<Kin
           }
           const hi = hcell > 3.4;
           const low = hcell < 1.1;
+          // Species follow the land: conifers on the heights, broadleaf and birch by the water, cypress spires between.
           let kind: Kind;
-          if (hi) kind = r < 0.78 ? 'pine' : r < 0.92 ? 'birch' : 'oak';
-          else if (low) kind = r < 0.5 ? 'oak' : r < 0.85 ? 'birch' : 'pine';
-          else kind = r < 0.38 ? 'oak' : r < 0.74 ? 'pine' : 'birch';
-          place(kind, jx, jy, sc);
+          if (hi) kind = r < 0.62 ? 'conifer' : r < 0.8 ? 'cypress' : r < 0.9 ? 'birch' : 'broadleaf';
+          else if (low) kind = r < 0.5 ? 'broadleaf' : r < 0.78 ? 'birch' : r < 0.92 ? 'cypress' : 'conifer';
+          else kind = r < 0.44 ? 'broadleaf' : r < 0.64 ? 'conifer' : r < 0.82 ? 'cypress' : 'birch';
+          place(kind, jx, jy, sc * 0.8);
         }
-        // Understorey bushes
+        // Understorey shrubs
         if (forest > 0.15 && h01(seed, 9, 9) < forest * 0.7 * quality.foliage)
           place(
-            'bush',
+            'shrub',
             (h01(seed, 9, 1) - 0.5) * 0.8,
             (h01(seed, 9, 2) - 0.5) * 0.8,
             0.8 + h01(seed, 9, 3) * 0.6,
@@ -150,14 +155,14 @@ export function scatter(quality: { foliage: number; grass: number }): Record<Kin
       // Boulders on stone ground and scattered on high slopes
       if (rock > 0 && !clear && h01(seed, 11, 1) < 0.8)
         place(
-          'boulder',
+          'stone',
           (h01(seed, 11, 2) - 0.5) * 0.6,
           (h01(seed, 11, 3) - 0.5) * 0.6,
           0.7 + h01(seed, 11, 4) * 0.9,
         );
       else if (!clear && hcell > 3 && h01(seed, 12, 1) < 0.06)
         place(
-          'boulder',
+          'stone',
           (h01(seed, 12, 2) - 0.5) * 0.8,
           (h01(seed, 12, 3) - 0.5) * 0.8,
           0.5 + h01(seed, 12, 4) * 0.7,
@@ -196,7 +201,37 @@ export function scatter(quality: { foliage: number; grass: number }): Record<Kin
 const dummy = new Object3D();
 const tintA = new Color();
 
-function fill(mesh: InstancedMesh, list: Inst[], base: Color, spread: number): void {
+const hues = (list: string[]) => list.map((h) => new Color(h));
+const HUE: Partial<Record<Kind, Color[]>> = {
+  broadleaf: hues(CROWN_HUES.broadleaf),
+  cypress: hues(CROWN_HUES.cypress),
+  conifer: hues(CROWN_HUES.conifer),
+  birch: hues(CROWN_HUES.birch),
+  shrub: hues(CROWN_HUES.shrub),
+  grass: hues(['#7f9f48', '#8aa851', '#6f9442', '#98ac57']),
+  flower: hues(['#f4efe2', '#f0c24a', '#d96a8a', '#9a8de0']),
+};
+const AUTUMN = hues(CROWN_HUES.autumn);
+const BIRCH_GOLD = hues(['#e0c04a', '#d9a83a']);
+/** Share of each species wearing autumn colour: the warm accents that make the forest read as painted. */
+const AUTUMN_SHARE: Partial<Record<Kind, number>> = { broadleaf: 0.14, birch: 0.25, shrub: 0.08 };
+
+function hueFor(kind: Kind, it: Inst): Color {
+  const base = HUE[kind];
+  if (!base) return tintA.setRGB(1, 1, 1);
+  const r = it.tint;
+  const fall = AUTUMN_SHARE[kind] ?? 0;
+  if (r < fall) {
+    const pal = kind === 'birch' ? BIRCH_GOLD : AUTUMN;
+    tintA.copy(pal[Math.floor((r / fall) * pal.length) % pal.length]!);
+  } else {
+    tintA.copy(base[Math.floor(((r - fall) / (1 - fall)) * base.length) % base.length]!);
+  }
+  // a little per-tree value drift so neighbours never match exactly
+  return tintA.multiplyScalar(0.9 + h01(Math.round(it.x * 97), Math.round(it.z * 89), 5) * 0.2);
+}
+
+function fill(mesh: InstancedMesh, kind: Kind, list: Inst[]): void {
   const n = Math.min(list.length, mesh.instanceMatrix.count);
   for (let i = 0; i < n; i++) {
     const it = list[i]!;
@@ -205,8 +240,7 @@ function fill(mesh: InstancedMesh, list: Inst[], base: Color, spread: number): v
     dummy.scale.set(it.s, it.sy ?? it.s, it.s);
     dummy.updateMatrix();
     mesh.setMatrixAt(i, dummy.matrix);
-    tintA.copy(base).multiplyScalar(1 - spread + it.tint * spread * 2);
-    mesh.setColorAt(i, tintA);
+    if (HUE[kind]) mesh.setColorAt(i, hueFor(kind, it));
   }
   mesh.count = n;
   mesh.instanceMatrix.needsUpdate = true;
@@ -220,50 +254,67 @@ function useRevs(): string {
   );
 }
 
-const FLOWER_COLORS = ['#f4efe2', '#f0c24a', '#d96a8a', '#9a8de0'];
-
 export function Foliage() {
   const revs = useRevs();
   const quality = useMemo(() => resolveQuality(store.settings.quality), []);
   const refs = useRef<Partial<Record<Kind, InstancedMesh | null>>>({});
   const geoms = useMemo<Record<Kind, BufferGeometry>>(
     () => ({
-      pine: pineGeometry(),
-      oak: oakGeometry(),
-      birch: birchGeometry(),
-      bush: bushGeometry(),
+      broadleaf: broadleafGeometry(),
+      cypress: cypressGeometry(),
+      conifer: coniferGeometry(),
+      birch: birchTreeGeometry(),
+      shrub: shrubGeometry(),
       snag: snagGeometry(),
-      boulder: boulderGeometry(),
+      stone: stoneGeometry(),
       grass: grassGeometry(),
       flower: flowerGeometry(),
     }),
     [],
   );
-  const mat = useMemo(
-    () => new MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0 }),
+  // Crowns: hue per instance (trunks masked out), wind growing with height, cloud shadows.
+  const crownMat = useMemo(
+    () =>
+      atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }), {
+        sway: quality.wind ? 0.011 : 0,
+        foliageMask: true,
+      }),
+    [quality.wind],
+  );
+  const grassMat = useMemo(
+    () =>
+      atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }), {
+        sway: quality.wind ? 0.5 : 0,
+      }),
+    [quality.wind],
+  );
+  const stillMat = useMemo(
+    () => atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0 })),
     [],
   );
+  const matFor = (k: Kind) =>
+    TREES.includes(k) || k === 'shrub' ? crownMat : k === 'grass' || k === 'flower' ? grassMat : stillMat;
 
   useEffect(() => {
     if (!store.campaign || !worldModel.terrain) return;
     const lists = scatter(quality);
     for (const kind of Object.keys(lists) as Kind[]) {
       const m = refs.current[kind];
-      if (!m) continue;
-      const spread = kind === 'grass' ? 0.22 : 0.14;
-      fill(m, lists[kind], new Color(1, 1, 1), spread);
-      if (kind === 'flower') {
-        const list = lists.flower;
-        for (let i = 0; i < Math.min(list.length, m.instanceMatrix.count); i++) {
-          tintA.set(FLOWER_COLORS[Math.floor(list[i]!.tint * FLOWER_COLORS.length) % FLOWER_COLORS.length]!);
-          m.setColorAt(i, tintA);
-        }
-        if (m.instanceColor) m.instanceColor.needsUpdate = true;
-      }
+      if (m) fill(m, kind, lists[kind]);
     }
   }, [revs, quality]);
 
-  const kinds: Kind[] = ['pine', 'oak', 'birch', 'bush', 'snag', 'boulder', 'grass', 'flower'];
+  const kinds: Kind[] = [
+    'broadleaf',
+    'cypress',
+    'conifer',
+    'birch',
+    'shrub',
+    'snag',
+    'stone',
+    'grass',
+    'flower',
+  ];
   return (
     <group>
       {kinds.map((k) => (
@@ -272,7 +323,7 @@ export function Foliage() {
           ref={(m) => {
             refs.current[k] = m;
           }}
-          args={[geoms[k], mat, CAP[k]]}
+          args={[geoms[k], matFor(k), CAP[k]]}
           castShadow={k !== 'grass' && k !== 'flower'}
           receiveShadow={k !== 'grass'}
           frustumCulled={false}
