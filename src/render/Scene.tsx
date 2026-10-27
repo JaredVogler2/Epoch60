@@ -3,29 +3,37 @@ import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   NeutralToneMapping,
   BufferGeometry,
+  Color,
   DirectionalLight,
+  HemisphereLight,
   PCFShadowMap,
   ShaderMaterial,
   SRGBColorSpace,
 } from 'three';
+import { getScenario } from '../engine';
 import { store } from '../game/store';
 import { Foliage } from './Foliage';
 import { Structures } from './Structures';
+import { Citizens } from './Citizens';
+import { CollapseDirector, HazardFront } from './CollapseFx';
 import { Interaction } from './Interaction';
 import { ForecastOverlay, PlacementGhost, PlannedMarkers, RiskMarkers, SelectionRing } from './Overlays';
 import { CameraRig, DEFAULT_CAMERA, cameraApi } from './CameraRig';
 import { resolveQuality } from './quality';
+import { buildWalkable, roadMask } from './paths';
 import { buildSkirt, buildTerrain, buildWater, padsOf } from './terrain';
 import type { TerrainModel } from './terrain';
 import { detailTexture } from './textures';
 import { makeWaterMaterial } from './water';
+import { renderWorld } from './presentation';
+import { presentation } from './presentation';
 import { worldModel } from './world';
 
 /** Re-render only when terrain-affecting state actually changes. */
 function useRevs(): string {
   return useSyncExternalStore(
     store.subscribe,
-    () => `${store.campaign?.epoch ?? -1}:${store.worldRev}:${store.structRev}`,
+    () => `${store.campaign?.epoch ?? -1}:${store.worldRev}:${store.structRev}:${presentation.rev}`,
   );
 }
 
@@ -38,7 +46,7 @@ function Valley() {
     void revs;
     const c = store.campaign!;
     const pads = padsOf(c.structures, c.world);
-    const m = buildTerrain(c.world, pads, null, geomRef.current);
+    const m = buildTerrain(renderWorld(c), pads, roadMask(c, buildWalkable(c)), geomRef.current);
     geomRef.current = m.geometry;
     worldModel.terrain = m;
     cameraApi.heightAt = m.heightAt;
@@ -64,8 +72,37 @@ function Valley() {
   );
 }
 
+const SUN_CALM = new Color('#ffe9c4');
+const SKY_CALM = new Color('#d4e6ff');
+const MOODS: Record<string, { sun: Color; sky: Color; dim: number }> = {
+  fire: { sun: new Color('#ff9650'), sky: new Color('#ffb48a'), dim: 0.28 },
+  flood: { sun: new Color('#a9bdd0'), sky: new Color('#8fa6bf'), dim: 0.32 },
+  quake: { sun: new Color('#e6caa0'), sky: new Color('#c9b79a'), dim: 0.22 },
+};
+
 function Lights({ shadowMap }: { shadowMap: number }) {
   const sun = useRef<DirectionalLight>(null);
+  const hemi = useRef<HemisphereLight>(null);
+  // As the clock runs down the sky turns: warm dread for fire, grey for floods, dust for quakes.
+  useFrame(() => {
+    const c = store.campaign;
+    const l = sun.current;
+    const h = hemi.current;
+    if (!c || !l || !h) return;
+    let u = 0;
+    if (store.screen === 'game') {
+      if (c.phase === 'ACTIVE') u = Math.min(1, Math.max(0, (c.tick - 300) / 300));
+      else if (c.phase === 'COLLAPSING') u = 1;
+    }
+    const kind =
+      presentation.report?.hazard ??
+      (c ? getScenario(c.scenario).epochs[c.epoch]?.hazard.kind : undefined) ??
+      'fire';
+    const m = MOODS[kind] ?? MOODS.fire!;
+    l.color.copy(SUN_CALM).lerp(m.sun, u * 0.7);
+    l.intensity = 2.1 * (1 - m.dim * u);
+    h.color.copy(SKY_CALM).lerp(m.sky, u * 0.6);
+  });
   useEffect(() => {
     const l = sun.current;
     if (!l) return;
@@ -74,7 +111,7 @@ function Lights({ shadowMap }: { shadowMap: number }) {
   }, []);
   return (
     <>
-      <hemisphereLight args={['#d4e6ff', '#8a7650', 1.15]} />
+      <hemisphereLight ref={hemi} args={['#d4e6ff', '#8a7650', 1.15]} />
       <directionalLight
         ref={sun}
         position={[-6, 30, 38]}
@@ -132,6 +169,9 @@ export function GameCanvas() {
       <Valley />
       <Foliage />
       <Structures />
+      <Citizens />
+      <HazardFront />
+      <CollapseDirector />
       <ForecastOverlay />
       <RiskMarkers />
       <PlannedMarkers />

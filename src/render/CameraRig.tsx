@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { GRID_H, GRID_W } from '../engine';
 import { store } from '../game/store';
+import { presentation } from './presentation';
 
 export interface CameraState {
   x: number;
@@ -270,6 +271,19 @@ export function CameraRig({ enabled }: { enabled: boolean }) {
       ground + sp * c.dist,
       c.z + Math.cos(c.az) * c.dist * cp,
     );
+    // Quake: the camera trembles while the shockwave crosses the valley (never in reduced-motion mode).
+    if (
+      presentation.active &&
+      presentation.hazard === 'quake' &&
+      !store.settings.reducedMotion &&
+      presentation.t < 0.85
+    ) {
+      const amp = 0.16 * (1 - presentation.t / 0.85);
+      const tt = performance.now() / 1000;
+      camera.position.x += Math.sin(tt * 47) * amp;
+      camera.position.y += Math.sin(tt * 61 + 1) * amp * 0.7;
+      camera.position.z += Math.cos(tt * 53) * amp;
+    }
     // never dip underground
     const floor = cameraApi.heightAt(camera.position.x, camera.position.z) + 1.2;
     if (camera.position.y < floor) camera.position.y = floor;

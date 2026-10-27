@@ -251,3 +251,25 @@ describe('end of campaign', () => {
     expect(advanceFixedTick(c)).toBe(false);
   });
 });
+
+describe('collapse presentation data', () => {
+  it('records the pre-collapse state of every hazard cell without affecting the simulation', () => {
+    const c = fresh();
+    begin(c);
+    stock(c);
+    const forestBefore = c.world.forest.slice();
+    const scarBefore = c.world.scar.slice();
+    runTicks(c, 600);
+    const r = c.report!;
+    expect(r.before.cells).toHaveLength(r.result.cells.length);
+    for (let k = 0; k < r.before.cells.length; k++) {
+      const i = r.before.cells[k]!;
+      expect(r.before.forest[k]).toBe(forestBefore[i]);
+      expect(r.before.scar[k]).toBe(scarBefore[i]);
+    }
+    // The world itself is already in its final (scarred) state when the presentation starts.
+    const k = r.before.cells.findIndex((i) => forestBefore[i]! > 300);
+    expect(k).toBeGreaterThanOrEqual(0);
+    expect(c.world.forest[r.before.cells[k]!]).toBeLessThan(forestBefore[r.before.cells[k]!]!);
+  });
+});

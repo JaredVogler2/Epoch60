@@ -5,7 +5,7 @@
 ## State
 
 A complete 3-epoch loop is **playable in the browser** (Chromium-verified): title → plan → build → 60 s → collapse → debrief → interregnum (ruins, sites,
-traditions) → next epoch → … → ending → Play again. 82 unit tests + 13 Playwright tests (desktop 1366×768 and iPhone-13 touch profile) pass; CI green.
+traditions) → next epoch → … → ending → Play again. 83 unit tests + 13 Playwright tests (desktop 1366×768 and iPhone-13 touch profile) pass; CI green.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -13,14 +13,11 @@ traditions) → next epoch → … → ending → Play again. 82 unit tests + 13
 
 ## Next exact steps (highest value first)
 
-1. **Phase 08 — city life:** citizens (instanced figures with jobs from `Structure.workers`, BFS paths from hearth over the walkable grid, no walking on water),
-   construction hammering/dust, production effects. This is the art gate's biggest hole ("Life" = 1).
-2. **Phase 09 — collapse cinematic:** animate `report.result.cells` by normalized `arrival` (fire front spreading, flood rising, quake fracture) over 3–4 s,
-   skippable, low-motion crossfade; then ghost "then vs now" slider.
-3. **Phase 10/11 — ages & disasters:** enable Stone House / Levee / Dam / Retaining Wall / Forge / Bridge + hydrology/seismic techs with real effects, add Age II/III
+1. ~~Citizens and collapse cinematic~~ — DONE (see PROGRESS session 2b). Remaining polish: then-vs-now slider, fracture geometry, citizen personas.
+2. **Phase 10/11 — ages & disasters:** enable Stone House / Levee / Dam / Retaining Wall / Forge / Bridge + hydrology/seismic techs with real effects, add Age II/III
    architecture variants (stone/brick vs thatch), flood water surface + quake visuals. Update `docs/GAME_RULES.md` and tables, hide until tested.
-4. **Phase 12 gate:** tune Greenvale with bots (`src/engine/ai/bots.ts`) until two different routes win and no-action loses; record executed traces in `fixtures/`.
-5. Mobile polish: 320×568 + landscape screenshots, one-row resource chips, WebKit run when available, measure FPS on a real device.
+3. **Phase 12 gate:** tune Greenvale with bots (`src/engine/ai/bots.ts`) until two different routes win and no-action loses; record executed traces in `fixtures/`.
+4. Mobile polish: 320×568 + landscape screenshots, one-row resource chips, WebKit run when available, measure FPS on a real device.
 
 ## Tooling you will use
 

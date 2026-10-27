@@ -116,6 +116,11 @@ export class GameStore {
     this.emit();
   }
 
+  /** Notify subscribers that render-only state (the collapse presentation) changed. */
+  bump(): void {
+    this.emit();
+  }
+
   /** Show a living (paused) village behind the title screen. */
   initDemo(): void {
     this.campaign = createDemoCampaign();

@@ -282,6 +282,20 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
       s.provenance.push(`${nameOf(s)} survived ${spec.hazard.headline}.`);
     }
   }
+  // Snapshot affected cells before the world is scarred, so the presentation can replay the transition.
+  const before = {
+    cells: [] as number[],
+    forest: [] as number[],
+    scar: [] as number[],
+    silt: [] as number[],
+  };
+  for (const cell of result.cells) {
+    const i = idx(cell.x, cell.y, c.world.w);
+    before.cells.push(i);
+    before.forest.push(c.world.forest[i]!);
+    before.scar.push(c.world.scar[i]!);
+    before.silt.push(c.world.silt[i]!);
+  }
   applyWorldEffects(c, result);
   c.civ.pop = Math.max(0, c.civ.pop - deaths);
   const survivors = c.civ.pop;
@@ -336,6 +350,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
 
   const report: CollapseReport = {
     epoch: c.epoch,
+    before,
     hazard: kind,
     hazardName: spec.hazard.headline,
     headline,

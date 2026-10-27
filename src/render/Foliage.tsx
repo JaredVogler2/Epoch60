@@ -15,6 +15,7 @@ import {
   pineGeometry,
   snagGeometry,
 } from './models/vegetation';
+import { presentation, renderWorld } from './presentation';
 import { worldModel } from './world';
 
 type Kind = 'pine' | 'oak' | 'birch' | 'bush' | 'snag' | 'boulder' | 'grass' | 'flower';
@@ -60,7 +61,7 @@ function glen(x: number, y: number): number {
 /** Derive every plant and stone to draw from the persistent world fields. Pure + deterministic per world state. */
 export function scatter(quality: { foliage: number; grass: number }): Record<Kind, Inst[]> {
   const c = store.campaign!;
-  const w = c.world;
+  const w = renderWorld(c);
   const T = worldModel.terrain!;
   const out: Record<Kind, Inst[]> = {
     pine: [],
@@ -215,7 +216,7 @@ function fill(mesh: InstancedMesh, list: Inst[], base: Color, spread: number): v
 function useRevs(): string {
   return useSyncExternalStore(
     store.subscribe,
-    () => `${store.campaign?.epoch ?? -1}:${store.worldRev}:${store.structRev}`,
+    () => `${store.campaign?.epoch ?? -1}:${store.worldRev}:${store.structRev}:${presentation.rev}`,
   );
 }
 

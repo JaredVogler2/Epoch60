@@ -2,6 +2,7 @@ import { dispatchAction, runTicks } from './engine';
 import { findSpot } from './engine/ai/spots';
 import { store } from './game/store';
 import { cameraApi } from './render/CameraRig';
+import { presentation } from './render/presentation';
 
 /** Test/debug hooks: enabled in dev builds and when the URL contains ?debug. Never used by gameplay. */
 export function installDebug(): void {
@@ -10,6 +11,7 @@ export function installDebug(): void {
   (window as unknown as { __epoch: unknown }).__epoch = {
     store,
     camera: cameraApi,
+    presentation,
     runTicks,
     findSpot,
     dispatchAction,

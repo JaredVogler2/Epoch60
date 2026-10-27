@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BUILDINGS, TECHS, TRADITIONS, UNIT, currentSpec, getScenario, ruinYield, unplan } from '../engine';
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
+import { presentation } from '../render/presentation';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { useStore } from './useStore';
@@ -117,21 +118,44 @@ export function CollapseOverlay() {
   const c = s.campaign!;
   if (c.phase !== 'COLLAPSING' || !c.report) return null;
   const r = c.report;
+  // The 3D world plays the hazard front first; the headline card appears when the front has passed.
+  const done = !presentation.active || presentation.t >= 0.84 || s.settings.reducedMotion;
   return (
-    <div className={`collapse-overlay ${r.hazard}`} data-testid="collapse" role="alert">
-      <div className="collapse-title">
-        <Icon name={hazardIcon(r.hazard as HazardKind)} size={34} />
-        <h1>{r.hazardName}</h1>
-        <p>{r.headline}</p>
-      </div>
-      <button
-        type="button"
-        className="btn primary big"
-        data-testid="skip-collapse"
-        onClick={() => s.dispatch({ type: 'continue' })}
-      >
-        See what survived
-      </button>
+    <div
+      className={`collapse-overlay ${r.hazard} ${done ? 'done' : 'playing'}`}
+      data-testid="collapse"
+      role="alert"
+    >
+      {done ? (
+        <>
+          <div className="collapse-title">
+            <Icon name={hazardIcon(r.hazard as HazardKind)} size={34} />
+            <h1>{r.hazardName}</h1>
+            <p>{r.headline}</p>
+          </div>
+          <button
+            type="button"
+            className="btn primary big"
+            data-testid="skip-collapse"
+            onClick={() => s.dispatch({ type: 'continue' })}
+          >
+            See what survived
+          </button>
+        </>
+      ) : (
+        <div className="collapse-banner">
+          <Icon name={hazardIcon(r.hazard as HazardKind)} size={22} />
+          <b>{r.hazardName}</b>
+          <button
+            type="button"
+            className="btn sm"
+            data-testid="skip-collapse"
+            onClick={() => s.dispatch({ type: 'continue' })}
+          >
+            Skip
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -885,6 +885,21 @@ h3 {
 .collapse-overlay > * {
   pointer-events: auto;
 }
+.collapse-overlay.playing {
+  justify-content: flex-start;
+  padding-top: calc(var(--safe-t) + 80px);
+  background: none;
+}
+.collapse-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(40, 14, 8, 0.82);
+  border: 1px solid var(--bad);
+  font-size: 1.05rem;
+}
 .collapse-title {
   text-align: center;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);

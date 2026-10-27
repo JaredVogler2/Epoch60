@@ -8,6 +8,8 @@ import { store } from '../game/store';
 import { buildingModel, ruinGeometry, scaffoldGeometry } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
+import { presentation, sinceHit, visualStatus } from './presentation';
+import { BurnFx, DustPuff } from './CollapseFx';
 import { h01 } from './geo';
 import { Smoke } from './Effects';
 
@@ -27,7 +29,10 @@ function modelFor(s: Structure): BuildingModel {
 }
 
 function useStructRev(): string {
-  return useSyncExternalStore(store.subscribe, () => `${store.campaign?.epoch ?? -1}:${store.structRev}`);
+  return useSyncExternalStore(
+    store.subscribe,
+    () => `${store.campaign?.epoch ?? -1}:${store.structRev}:${presentation.rev}`,
+  );
 }
 
 /** Facing: houses turn their doors toward the hearth, with a little hand-placed irregularity. */
@@ -54,7 +59,11 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
   const cropRef = useRef<Mesh>(null);
   const glowMat = useRef<MeshBasicMaterial>(null);
   const growth = useRef(0);
-  const ruin = s.status === 'rubble' || s.status === 'buried';
+  // During the collapse cinematic a building looks as it did until the hazard front reaches it.
+  const status = visualStatus(s);
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const ruin = status === 'rubble' || status === 'buried';
   const model = useMemo(() => modelFor(s), [s]);
   const hearth = store.campaign!.world.anchors.hearth;
   const rotY = useMemo(() => facing(s, hearth.x + 1, hearth.y + 1), [s, hearth.x, hearth.y]);
@@ -106,7 +115,17 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     void rev; // terrain is rebuilt when revisions change, so the ground height must be re-read
     return groundY(cx, cz) - 0.02;
   }, [cx, cz, rev]);
-  const hasSmoke = (s.kind === 'cottage' || s.kind === 'hearth') && s.status !== 'constructing' && !ruin;
+  const hasSmoke = (s.kind === 'cottage' || s.kind === 'hearth') && status !== 'constructing' && !ruin;
+  const since = sinceHit(s);
+  const hit = presentation.hit.get(s.id);
+  const burning =
+    presentation.active &&
+    presentation.hazard === 'fire' &&
+    since >= 0 &&
+    since < 2.6 &&
+    !!hit &&
+    hit.after !== 'active';
+  const puff = presentation.active && since >= 0 && since < 1.6 && !!hit && hit.after === 'rubble';
   const smokeAt: [number, number, number] =
     s.kind === 'hearth'
       ? [0, 0.7, 0]
@@ -121,12 +140,13 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     if (!g) return;
     const now = state.clock.elapsedTime;
     const total = def.buildWork * 1000;
-    const frac = s.status === 'constructing' ? Math.min(1, s.progress / Math.max(1, total)) : 1;
+    const st = statusRef.current;
+    const frac = st === 'constructing' ? Math.min(1, s.progress / Math.max(1, total)) : 1;
     // Sweep the clip plane up through the model as it is assembled.
     const height = model.height * 1.08;
-    plane.constant = s.status === 'constructing' ? baseY + 0.04 + frac * height : 1e4;
+    plane.constant = st === 'constructing' ? baseY + 0.04 + frac * height : 1e4;
     // Damaged buildings are scorched and dimmed.
-    if (s.status === 'damaged') {
+    if (st === 'damaged') {
       const k = Math.max(0.35, s.integrity / 1000);
       mat.color.setRGB(0.55 + 0.35 * k, 0.5 + 0.35 * k, 0.48 + 0.3 * k);
       if (s.cause === 'fire') mat.color.multiplyScalar(0.8);
@@ -136,21 +156,17 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     // Crops ripen while a staffed farm is active.
     if (s.kind === 'farm') {
       const target =
-        s.status === 'active'
-          ? 0.25 + 0.75 * Math.min(1, s.staffing / 1000)
-          : s.status === 'damaged'
-            ? 0.2
-            : 0.05;
+        st === 'active' ? 0.25 + 0.75 * Math.min(1, s.staffing / 1000) : st === 'damaged' ? 0.2 : 0.05;
       growth.current += (target - growth.current) * Math.min(1, dt * 0.35);
       if (cropRef.current) {
         const gr = growth.current;
         cropRef.current.scale.set(1, 0.12 + 0.88 * gr, 1);
-        cropRef.current.visible = s.status !== 'constructing' || frac > 0.5;
+        cropRef.current.visible = st !== 'constructing' || frac > 0.5;
       }
     }
     if (glowMat.current) {
       const flick = 0.82 + 0.18 * Math.sin(now * 9 + s.id) * Math.sin(now * 5.3 + s.id * 2);
-      const on = s.status === 'active' || s.status === 'damaged';
+      const on = st === 'active' || st === 'damaged';
       glowMat.current.color.setRGB(on ? 1.5 * flick : 0, on ? 1.05 * flick : 0, on ? 0.45 * flick : 0);
     }
   });
@@ -168,7 +184,7 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
       {!ruin && model.crops && (
         <mesh ref={cropRef} geometry={model.crops} material={cropMat} castShadow receiveShadow />
       )}
-      {!ruin && s.status === 'constructing' && (
+      {!ruin && status === 'constructing' && (
         <mesh geometry={scaffold} material={cropMat} castShadow receiveShadow />
       )}
       {ruin && ruinGeo && (
@@ -180,6 +196,8 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
         <meshBasicMaterial />
       </mesh>
       {s.kind === 'hearth' && !ruin && <Flame />}
+      {burning && <BurnFx w={s.w} h={s.h} seed={s.id} />}
+      {puff && <DustPuff w={s.w} h={s.h} seed={s.id} />}
       {hasSmoke && <Smoke position={smokeAt} seed={s.id} />}
     </group>
   );

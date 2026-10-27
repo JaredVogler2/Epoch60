@@ -39,8 +39,11 @@ await page.waitForFunction(() => !!window.__epoch, null, { timeout: 15000 });
 if (js) await page.evaluate(js);
 await page.waitForTimeout(wait);
 if (cam) await page.evaluate(`window.__epoch.camera.set(${cam}, true)`);
-await page.evaluate(() => window.__epoch.camera.render());
-await page.waitForTimeout(Number(process.env.RENDER_WAIT ?? 4000));
+const frames = Number(opt('frames', 1));
+for (let i = 0; i < frames; i++) {
+  await page.evaluate(() => window.__epoch.camera.render());
+  await page.waitForTimeout(Number(process.env.RENDER_WAIT ?? 4000));
+}
 await page.screenshot({ path: out });
 console.log(
   logs
