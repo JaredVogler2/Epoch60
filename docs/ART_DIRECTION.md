@@ -21,21 +21,23 @@ a flowing teal river, thatched villages that visibly age into ruins and later er
 
 ## Self-assessment vs `QUALITY_GATE_VISUAL_AND_FUN.md` (honest; 1–5)
 
-| Category             | Score      | Evidence / gap                                                                                                                                                          |
-| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| World composition    | 3.5        | Title hero and village read as intentional; map edge/backdrop still plain gradient.                                                                                     |
-| Geometry depth       | 3.5        | Real roofs/doors/windows/fences/crops; houses still simple; no interiors, few props.                                                                                    |
-| Materials & lighting | 3          | Consistent palette, soft shadows; no PBR texture detail, no AO, flat-ish sunlight on terrain.                                                                           |
-| Vegetation           | 3.5        | Four species + bushes + glades; no wind sway; repetition visible when zoomed out.                                                                                       |
-| Animated water       | 3          | Flow ripples + foam; no reflections or flood surface yet.                                                                                                               |
-| Life                 | **1**      | **No citizens yet** (phase 08). Smoke and fire only.                                                                                                                    |
-| Era transformation   | **1.5**    | Only Age I architecture exists; ages II/III reuse thatch models. Ruins persist and age (this is working).                                                               |
-| Events & legacy      | 3          | Fire: scorched ground, snags, charred ruins, forecast overlay. Flood/quake have no visuals beyond the overlay and ruins. Collapse is a title card, not yet a cinematic. |
-| Camera & input       | 3.5        | Orbit/pan/zoom + touch + keyboard + reliable picking verified in E2E; no inertia tuning pass.                                                                           |
-| HUD                  | 4          | World stays visible; compact top bar; usable at 390 px. 320 px layout not yet captured.                                                                                 |
-| Phone performance    | unverified | No device measurement.                                                                                                                                                  |
+| Category             | Score      | Evidence / gap                                                                                                                                                                                                                                              |
+| -------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| World composition    | 3.5        | Title hero and village read as intentional; map edge/backdrop still plain gradient.                                                                                                                                                                         |
+| Geometry depth       | 3.5        | Real roofs/doors/windows/fences/crops; houses still simple; no interiors, few props.                                                                                                                                                                        |
+| Materials & lighting | 3          | Consistent palette, soft shadows; no PBR texture detail, no AO, flat-ish sunlight on terrain.                                                                                                                                                               |
+| Vegetation           | 3.5        | Four species + bushes + glades; no wind sway; repetition visible when zoomed out.                                                                                                                                                                           |
+| Animated water       | 3          | Flow ripples + foam; no reflections or flood surface yet.                                                                                                                                                                                                   |
+| Life                 | 3          | Instanced citizens driven by the engine's labor allocation (walk/work/idle, deaths in the collapse), smoke, flames, ripening crops; no personas, outfits by age or interiors.                                                                               |
+| Era transformation   | **2.5**    | Cottages and stone houses are re-roofed by the age they were raised in (thatch → fired tile → slate); stone houses, forge, dam, bridge, levee, retaining wall exist; no distinct Age III skyline or industrial district yet. Ruins persist and age.         |
+| Events & legacy      | 3.5        | Read-only cinematics for fire (front, embers, char), flood (rising surface) and quake (shockwave, camera shake); scorched ground, snags, charred and mossy ruins; story decisions with measured outcomes. Flood front edge is jagged; no fracture geometry. |
+| Camera & input       | 3.5        | Orbit/pan/zoom + touch + keyboard + reliable picking verified in E2E; no inertia tuning pass.                                                                                                                                                               |
+| HUD                  | 4          | World stays visible; compact top bar; usable at 390 px. 320 px layout not yet captured.                                                                                                                                                                     |
+| Phone performance    | unverified | No device measurement.                                                                                                                                                                                                                                      |
 
-**Verdict:** a convincing vertical-slice look for Age I, _not_ yet release quality. The gate's rejection rule is not triggered (it is a real 3D diorama with
-real placement and consequences), but "Life" and "Era transformation" are below the minimum 4 and block the art gate until phases 08/10/14 land.
+**Verdict:** a convincing vertical-slice look for Ages I–II with a first Age III roofline, _not_ yet release quality. The gate's rejection rule is not triggered
+(it is a real 3D diorama with real placement and consequences), but "Life", "Era transformation" and "Events & legacy" are still below the minimum 4, so the art
+gate is **not met**; phase 14 owns the remaining work (citizen outfits per age, industrial/Age III skyline, fracture and flood-edge geometry, audio).
 
+Age comparison and new works: `docs/review/ages-overview.jpg`, `ages-dam-bridge.jpg`, `ages-forge-houses.jpg`; story chip: `story-chip-desktop.jpg`, `story-chip-iphone.jpg`.
 Review screenshots: `docs/review/` (JPEG copies; raw PNGs are produced by `npm run test:e2e` into the git-ignored `docs/screenshots/`).

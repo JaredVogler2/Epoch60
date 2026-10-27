@@ -204,6 +204,7 @@ export type Action =
   | { type: 'reinforce'; id: number; hazard: HazardKind }
   | { type: 'research'; tech: TechId }
   | { type: 'setFocus'; focus: LaborFocus }
+  | { type: 'choose'; prompt: number; option: string }
   | { type: 'continue' }
   | { type: 'survey'; id: number }
   | { type: 'excavate'; id: number }
@@ -270,6 +271,38 @@ export type ActionResult = ActionOk | ActionError;
 /* ------------------------------------------------------------------ */
 /* Events, forecast, reports                                           */
 /* ------------------------------------------------------------------ */
+
+export type StoryId = 'dry_wind' | 'river_rising' | 'foreshock' | 'refugees' | 'historian' | 'dam_leak';
+
+export interface StoryOption {
+  id: string;
+  label: string;
+  /** The honest trade-off, in plain words. */
+  detail: string;
+  /** Whole resource units paid when the player (not the deadline) picks this option. */
+  cost?: Partial<Record<ResourceKey, number>>;
+}
+
+/**
+ * A small decision that arises from the actual state of the village. It never pauses play: if the deadline passes,
+ * the default option (always the free, do-nothing one) is applied.
+ */
+export interface StoryPrompt {
+  seq: number;
+  story: StoryId;
+  epoch: number;
+  openedTick: number;
+  deadlineTick: number;
+  title: string;
+  body: string;
+  options: StoryOption[];
+  defaultOption: string;
+  status: 'open' | 'resolved';
+  chosen: string | null;
+  /** True when the deadline passed and the default was applied. */
+  auto: boolean;
+  outcome: string | null;
+}
 
 export interface SimEvent {
   tick: number;
@@ -467,6 +500,8 @@ export interface Campaign {
   queue: { seq: number; tick: number; action: Action; paid: boolean }[];
   rng: RngState;
   events: SimEvent[];
+  /** Story decisions offered during play (most recent last; trimmed). */
+  prompts: StoryPrompt[];
   actionLog: LoggedAction[];
   /** Set once the hazard of the current epoch has been resolved. Prevents double application. */
   collapseResolved: boolean;

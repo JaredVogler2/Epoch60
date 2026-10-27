@@ -38,6 +38,7 @@ import { checkPlacement, countKind, epochAge } from './economy/placement';
 import { createStructure, findStructure, levelPad, removeStructure } from './economy/structures';
 import { collapseEpoch, computeDeaths } from './legacy/collapse';
 import { enterInterregnum, excavateRuin, foundNextEpoch, surveyRuin } from './legacy/inheritance';
+import { applyChoice, checkChoice, stepStories } from './events/story';
 import { generateWorld } from './world/generate';
 import { resolveHazard } from './world/hazards';
 
@@ -116,6 +117,7 @@ export function createCampaign(
     queue: [],
     rng: createRngState(seed, 1),
     events: [],
+    prompts: [],
     actionLog: [],
     collapseResolved: false,
     report: null,
@@ -206,6 +208,7 @@ const TIMED_ACTIONS: Action['type'][] = [
   'reinforce',
   'research',
   'setFocus',
+  'choose',
 ];
 
 function log(c: Campaign, action: Action): number {
@@ -352,6 +355,12 @@ export function dispatchAction(c: Campaign, action: Action): ActionResult {
         return err('already_done', 'Already reinforced against that');
       const a = canAfford(effectiveResources(c), reinforceCost(s));
       if (!a.ok) return err('not_enough', 'Not enough resources', hintOf(a.missing));
+      break;
+    }
+    case 'choose': {
+      if (c.phase !== 'ACTIVE') return err('wrong_phase', 'Decisions arise only while time is running');
+      const bad = checkChoice(c, action.prompt, action.option);
+      if (bad) return bad;
       break;
     }
     case 'research': {
@@ -543,6 +552,10 @@ function applyAction(c: Campaign, action: Action): void {
       c.civ.focus = action.focus;
       return;
     }
+    case 'choose': {
+      applyChoice(c, action.prompt, action.option);
+      return;
+    }
     default:
       return;
   }
@@ -577,6 +590,8 @@ export function advanceFixedTick(c: Campaign): boolean {
   stepPopulation(c);
   // 6. Research.
   stepResearch(c);
+  // 7b. Story decisions arise from the state just computed.
+  stepStories(c);
   // 8. Forecast beats: 25 s, 15 s, 5 s before the end.
   const spec = currentSpec(c);
   const level = FORECAST_LEAD_TICKS.filter((lead) => c.tick + 1 >= EPOCH_TICKS - lead).length;

@@ -160,6 +160,8 @@ function simulateFire(c: Campaign, budget: number): HazardCell[] {
 /* ------------------------------------------------------------------ */
 
 const FLOOD_FRICTION = 5;
+/** Permille multiplier on quake damage (see resolveHazard). */
+export const QUAKE_SEVERITY_PM = 1600;
 
 export function catchmentForestFraction(w: World): number {
   let sum = 0;
@@ -192,6 +194,11 @@ function simulateFlood(c: Campaign, strength: number): HazardCell[] {
     if (s.kind !== 'levee' || (s.status !== 'active' && s.status !== 'damaged')) continue;
     const bonus = s.status === 'active' ? 220 : 110;
     for (const [x, y] of cellsOf(s)) eff[idx(x, y, w.w)]! += bonus;
+  }
+  // Planted groves slow water: each grove cell is worth a little barrier height.
+  for (const s of c.structures) {
+    if (s.kind !== 'grove' || s.status !== 'active') continue;
+    for (const [x, y] of cellsOf(s)) eff[idx(x, y, w.w)]! += 90;
   }
   // A dam clips the crest for everything downstream (rows with larger y).
   let damY = -1;
@@ -355,7 +362,8 @@ export function resolveHazard(
       damage = Math.round((clamp(depth * 12, 0, 1000) * (1000 - resist) * share) / 1_000_000);
     } else {
       exposure = maxI;
-      damage = Math.round((maxI * (1000 - resist)) / 1000);
+      // Ground motion is violent: the same intensity does far more harm than a fire's heat or a flood's depth.
+      damage = Math.round((maxI * (1000 - resist) * QUAKE_SEVERITY_PM) / 1_000_000);
     }
     const before = s.status;
     const after = classify(damage);

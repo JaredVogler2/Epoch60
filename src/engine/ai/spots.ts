@@ -1,4 +1,5 @@
 import { footprint } from '../content/buildings';
+import { getScenario } from '../content/scenario';
 import type { BuildingKind, Campaign } from '../core/types';
 import { checkPlacement, isPlacementOk } from '../economy/placement';
 import { resolveHazard } from '../world/hazards';
@@ -20,6 +21,11 @@ export interface SpotOptions {
   maxDist?: number;
   /** Penalize cells the coming hazard reaches. */
   avoidHazard?: boolean;
+  /**
+   * Penalize cells that the hazards of these epochs of the scenario will reach (a veteran's foresight, used to
+   * site landmarks that must outlive several collapses). Quakes count where they are strong enough to topple.
+   */
+  avoidEpochs?: number[];
   /** Prefer high ground. */
   high?: boolean;
   /** Custom bonus. */
@@ -38,6 +44,30 @@ export function currentHearth(c: Campaign): { x: number; y: number } {
   return best ?? c.world.anchors.hearth;
 }
 
+const futureCache = new WeakMap<Campaign, Map<string, Set<number>>>();
+
+/** Cells the hazards of the given scenario epochs would reach on the map as it stands (cached per state). */
+function futureHazardCells(c: Campaign, epochs: number[]): Set<number> {
+  let perCampaign = futureCache.get(c);
+  if (!perCampaign) futureCache.set(c, (perCampaign = new Map()));
+  const key = `${epochs.join(',')}|${c.nextId}|${c.epoch}`;
+  const hit = perCampaign.get(key);
+  if (hit) return hit;
+  perCampaign.clear();
+  const out = new Set<number>();
+  const scenario = getScenario(c.scenario);
+  for (const e of epochs) {
+    const hz = scenario.epochs[e]?.hazard;
+    if (!hz) continue;
+    for (const h of resolveHazard(c, hz.kind, hz.strength).cells) {
+      if (hz.kind === 'quake' && h.intensity < 420) continue;
+      out.add(idx(h.x, h.y, c.world.w));
+    }
+  }
+  perCampaign.set(key, out);
+  return out;
+}
+
 /** Brute-force search for the best legal footprint. Pure and deterministic (scan order breaks ties). */
 export function findSpot(c: Campaign, kind: BuildingKind, opts: SpotOptions = {}): Spot | null {
   const near = opts.near ?? currentHearth(c);
@@ -46,6 +76,10 @@ export function findSpot(c: Campaign, kind: BuildingKind, opts: SpotOptions = {}
   let hazardCells: Set<number> | null = null;
   if (opts.avoidHazard) {
     hazardCells = new Set(resolveHazard(c).cells.map((h) => idx(h.x, h.y, c.world.w)));
+  }
+  if (opts.avoidEpochs) {
+    hazardCells ??= new Set<number>();
+    for (const i of futureHazardCells(c, opts.avoidEpochs)) hazardCells.add(i);
   }
   let best: Spot | null = null;
   for (const rot of rots) {

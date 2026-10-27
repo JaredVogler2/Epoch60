@@ -43,7 +43,7 @@ export const GREENVALE: ScenarioSpec = {
   id: 'greenvale',
   name: 'Greenvale',
   tagline: 'Three ages. One landscape. Every choice survives.',
-  victory: { minSurvivors: 8, minHeritage: 1, minRetainedTechs: 2 },
+  victory: { minSurvivors: 8, minHeritage: 1, minRetainedTechs: 3 },
   epochs: [
     {
       index: 0,

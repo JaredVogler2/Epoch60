@@ -51,6 +51,7 @@ export function deserialize(text: string): Campaign {
   if (file.schema !== SCHEMA_VERSION) throw new SaveError(`Unsupported save schema ${String(file.schema)}`);
   const c = file.campaign;
   if (computeHash(c) !== file.hash) throw new SaveError('Save data failed its integrity check');
+  c.prompts ??= []; // saves written before story decisions existed
   if (c.phase === 'ACTIVE') c.paused = true;
   return c;
 }

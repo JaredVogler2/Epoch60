@@ -71,11 +71,20 @@ function fenceLine(g: GeoBuilder, x0: number, z0: number, x1: number, z1: number
 /* Cottage: three silhouettes                                          */
 /* ------------------------------------------------------------------ */
 
-function cottage(variant: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+function cottage(
+  variant: number,
+  era: number,
+  seed: number,
+): { g: GeoBuilder; gl: GeoBuilder; height: number } {
   const g = new GeoBuilder(seed);
   const gl = new GeoBuilder(seed + 1);
   gl.jitter = 0;
   const plaster = [PAL.plaster, PAL.plasterWarm, rgb('#e9dcc0')][seed % 3]!;
+  // Later ages re-roof in fired tile or slate; the first age thatches.
+  const roof = era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
+  const roofDark = shade(roof, era >= 1 ? 0.78 : 0.82);
+  const bump = era >= 1 ? 0.0 : 0.07;
+  const rows = era >= 1 ? 5 : 4;
   if (variant === 0) {
     // Longhouse with a long thatched ridge.
     g.box(0, 0, 0, 1.82, 0.12, 1.28, PAL.stoneDark);
@@ -88,12 +97,12 @@ function cottage(variant: number, seed: number): { g: GeoBuilder; gl: GeoBuilder
     }
     g.beam([-0.8, 0.14, 0.585], [-0.3, 0.6, 0.585], 0.018, PAL.timber);
     g.beam([0.8, 0.14, 0.585], [0.3, 0.6, 0.585], 0.018, PAL.timber);
-    g.gable(0, 0.62, 0, 2.1, 1.55, 0.66, PAL.thatch, {
+    g.gable(0, 0.62, 0, 2.1, 1.55, 0.66, roof, {
       ridgeAxis: 'x',
-      bump: 0.07,
-      rows: 4,
-      ridgeColor: PAL.thatchDark,
-      gableColor: PAL.thatchDark,
+      bump,
+      rows,
+      ridgeColor: roofDark,
+      gableColor: era >= 1 ? plaster : PAL.thatchDark,
     });
     door(g, -0.4, 0.58);
     windowAt(g, gl, 0.45, 0.3, 0.585);
@@ -112,7 +121,7 @@ function cottage(variant: number, seed: number): { g: GeoBuilder; gl: GeoBuilder
       const a = (i / 10) * Math.PI * 2 + 0.3;
       g.box(Math.cos(a) * 0.65, 0.1, Math.sin(a) * 0.65, 0.07, 0.5, 0.07, PAL.timber);
     }
-    g.cyl(0, 0.6, 0, 0.92, 0.0, 0.82, 10, PAL.thatch, { wobble: 0.1 });
+    g.cyl(0, 0.6, 0, 0.92, 0.0, 0.82, 10, roof, { wobble: era >= 1 ? 0.02 : 0.1 });
     g.cyl(0, 1.38, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
     door(g, 0, 0.64, 0.26, 0.38);
     windowAt(g, gl, 0.5, 0.32, 0.4, 0.2, 0.17, 0.7);
@@ -129,18 +138,18 @@ function cottage(variant: number, seed: number): { g: GeoBuilder; gl: GeoBuilder
   g.box(0, 0.7, 0.645, 1.3, 0.07, 0.07, PAL.timberDark);
   g.beam([-0.6, 0.15, 0.655], [0.0, 0.72, 0.655], 0.02, PAL.timberDark);
   g.beam([0.6, 0.15, 0.655], [0.0, 0.72, 0.655], 0.02, PAL.timberDark);
-  g.gable(0, 0.74, 0, 1.55, 1.62, 0.8, PAL.thatch, {
+  g.gable(0, 0.74, 0, 1.55, 1.62, 0.8, roof, {
     ridgeAxis: 'z',
-    bump: 0.07,
-    rows: 4,
-    ridgeColor: PAL.thatchDark,
-    gableColor: PAL.thatchDark,
+    bump,
+    rows,
+    ridgeColor: roofDark,
+    gableColor: era >= 1 ? plaster : PAL.thatchDark,
   });
   door(g, 0.0, 0.65, 0.3, 0.46);
   windowAt(g, gl, -0.45, 0.46, 0.645, 0.22, 0.22);
   windowAt(g, gl, 0.62, 0.46, 0.2, 0.2, 0.2, Math.PI / 2);
   // lean-to
-  g.shed(-1.0, 0.1, -0.1, 0.5, 0.8, 0.5, 0.32, PAL.thatchDark, 0, 0.04);
+  g.shed(-1.0, 0.1, -0.1, 0.5, 0.8, 0.5, 0.32, roofDark, 0, era >= 1 ? 0 : 0.04);
   for (const z of [-0.45, 0.25]) g.box(-1.2, 0, z, 0.05, 0.5, 0.05, PAL.timber);
   logPile(g, -1.0, -0.1, Math.PI / 2, 0.5, 2);
   g.box(0.45, 0.8, -0.35, 0.2, 0.75, 0.2, PAL.stone, 0, PAL.stoneDark);
@@ -518,6 +527,261 @@ function hearth(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number }
 }
 
 /* ------------------------------------------------------------------ */
+/* Stone house: ashlar walls, tiled roof                               */
+/* ------------------------------------------------------------------ */
+
+function stoneHouse(
+  variant: number,
+  era: number,
+  seed: number,
+): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const wall = [PAL.stone, PAL.stoneLight, PAL.sandstone][variant % 3]!;
+  const roof = era >= 2 ? PAL.slate : PAL.terracotta;
+  const ridge = shade(roof, 0.78);
+  g.box(0, 0, 0, 1.78, 0.12, 1.66, PAL.stoneDark);
+  g.box(0, 0.12, 0, 1.6, 0.8, 1.48, wall);
+  // ashlar courses and dressed corner stones
+  for (const y of [0.3, 0.5, 0.7]) {
+    g.box(0, y, 0.745, 1.6, 0.025, 0.02, PAL.stoneDark);
+    g.box(0, y, -0.745, 1.6, 0.025, 0.02, PAL.stoneDark);
+    g.box(0.805, y, 0, 0.02, 0.025, 1.48, PAL.stoneDark);
+    g.box(-0.805, y, 0, 0.02, 0.025, 1.48, PAL.stoneDark);
+  }
+  for (const x of [-0.78, 0.78])
+    for (const z of [-0.72, 0.72]) g.box(x, 0.12, z, 0.16, 0.82, 0.16, PAL.stoneLight);
+  g.gable(0, 0.94, 0, 1.92, 1.74, 0.64, roof, {
+    ridgeAxis: variant === 1 ? 'z' : 'x',
+    rows: 5,
+    ridgeColor: ridge,
+    gableColor: wall,
+  });
+  // chimney, door with a stone lintel, shuttered windows
+  g.box(variant === 1 ? -0.45 : 0.55, 0.95, variant === 1 ? 0.2 : -0.25, 0.22, 0.75, 0.22, PAL.stoneDark);
+  g.box(variant === 1 ? -0.45 : 0.55, 1.7, variant === 1 ? 0.2 : -0.25, 0.28, 0.05, 0.28, PAL.stone);
+  door(g, -0.3, 0.74, 0.3, 0.5);
+  g.box(-0.3, 0.64, 0.75, 0.46, 0.07, 0.07, PAL.stoneLight);
+  windowAt(g, gl, 0.45, 0.42, 0.745, 0.24, 0.26);
+  windowAt(g, gl, 0, 0.42, -0.745, 0.24, 0.26, Math.PI);
+  g.box(0.1, 0.35, 0.76, 0.06, 0.34, 0.02, era >= 1 ? PAL.teal : PAL.timberDark);
+  g.box(0.8, 0.35, 0.3, 0.02, 0.34, 0.06, era >= 1 ? PAL.teal : PAL.timberDark);
+  barrel(g, 0.95, 0.9);
+  g.lump(-0.95, 0.1, 0.55, 0.16, 0.1, 0.14, PAL.stone, { seed: 2, rough: 0.2 });
+  return { g, gl, height: 1.65 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Levee: a turfed earth bank with a stone-faced toe                   */
+/* ------------------------------------------------------------------ */
+
+function levee(w: number, h: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const rotY = h > w ? Math.PI / 2 : 0;
+  const L = Math.max(w, h) - 0.1;
+  g.jitter = 0.04;
+  g.frustum(0, 0, 0, L, 1.0, L - 0.55, 0.42, 0.78, PAL.earth, rotY);
+  g.box(0, 0.78, 0, L - 0.58, 0.07, 0.46, PAL.leafLight, rotY);
+  // stone facing blocks along the toe, river side
+  const n = Math.round(L / 0.5);
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n - 0.5;
+    const off = h01(seed, i, 3) * 0.04;
+    // along axis in world: x for rotY 0; local z is the span
+    const lx = t * L;
+    const lz = -0.5 + off;
+    const wx = rotY === 0 ? lx : lz;
+    const wz = rotY === 0 ? lz : -lx;
+    g.box(wx, 0, wz, 0.4, 0.22, 0.12, i % 2 ? PAL.stone : PAL.stoneLight, rotY);
+  }
+  // stakes and a measuring post
+  for (let i = 0; i < 4; i++) {
+    const t = (i + 0.5) / 4 - 0.5;
+    const lx = t * (L - 0.4);
+    const wx = rotY === 0 ? lx : 0.52;
+    const wz = rotY === 0 ? 0.52 : -lx;
+    g.box(wx, 0, wz, 0.045, 0.34, 0.045, PAL.timber);
+  }
+  return { g, gl, height: 0.9 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Dam: a masonry wall across the river with a spillway                */
+/* ------------------------------------------------------------------ */
+
+function dam(w: number, h: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const rotY = h > w ? Math.PI / 2 : 0;
+  const L = Math.max(w, h) - 0.2;
+  g.jitter = 0.03;
+  const seg = (x0: number, x1: number, y: number, hgt: number, depth: number, col: typeof PAL.stone) =>
+    g.box((x0 + x1) / 2, y, 0, x1 - x0, hgt, depth, col, rotY, PAL.stoneLight);
+  // bank-side wall sections, full height; a lower weir in the middle
+  seg(-L / 2, -0.45, -0.5, 1.7, 0.78, PAL.stone);
+  seg(0.45, L / 2, -0.5, 1.7, 0.78, PAL.stone);
+  seg(-0.45, 0.45, -0.5, 1.15, 0.78, PAL.stoneDark);
+  // spillway sheet
+  g.frustum(0, 0.6, 0.15, 0.9, 0.26, 0.9, 0.7, 0.04, rgb('#9fd8ea'), rotY);
+  // walkway with posts along the crest
+  g.box(0, 1.2, 0, L, 0.09, 0.9, PAL.stoneLight, rotY);
+  for (let i = 0; i <= 6; i++) {
+    const lx = (i / 6 - 0.5) * (L - 0.2);
+    if (Math.abs(lx) < 0.5) continue;
+    const wx = rotY === 0 ? lx : 0.4;
+    const wz = rotY === 0 ? 0.4 : -lx;
+    g.box(wx, 1.29, wz, 0.07, 0.3, 0.07, PAL.timber);
+  }
+  // downstream buttresses and a sluice gate house
+  for (const lx of [-1.4, -0.8, 0.8, 1.4]) {
+    if (Math.abs(lx) > L / 2 - 0.2) continue;
+    const wx = rotY === 0 ? lx : 0.55;
+    const wz = rotY === 0 ? 0.55 : -lx;
+    g.frustum(wx, -0.5, wz, 0.3, 0.36, 0.22, 0.12, 1.1, PAL.stoneDark, rotY);
+  }
+  const gx = rotY === 0 ? 1.2 : 0;
+  const gz = rotY === 0 ? 0 : -1.2;
+  g.box(gx, 1.29, gz, 0.5, 0.45, 0.5, PAL.plaster);
+  g.gable(gx, 1.74, gz, 0.6, 0.6, 0.28, PAL.teal, { ridgeAxis: 'x', rows: 3, rotY });
+  return { g, gl, height: 2.0 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Bridge: stone piers, a paved deck and parapets                      */
+/* ------------------------------------------------------------------ */
+
+function bridge(w: number, h: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const rotY = h > w ? Math.PI / 2 : 0;
+  const L = Math.max(w, h) - 0.1;
+  g.jitter = 0.03;
+  const at = (lx: number, lz: number): [number, number] => (rotY === 0 ? [lx, lz] : [lz, -lx]);
+  for (const lx of [-L * 0.32, 0, L * 0.32]) {
+    const [x, z] = at(lx, 0);
+    g.box(x, -0.45, z, 0.5, 0.95, 0.7, PAL.stone, rotY, PAL.stoneLight);
+  }
+  g.box(0, 0.5, 0, L, 0.14, 0.82, PAL.sandstone, rotY, PAL.stoneLight);
+  for (const lz of [-0.4, 0.4]) {
+    const [x, z] = at(0, lz);
+    g.box(x, 0.64, z, L - 0.1, 0.2, 0.08, PAL.stoneLight, rotY);
+    for (let i = 0; i <= 5; i++) {
+      const [px, pz] = at((i / 5 - 0.5) * (L - 0.2), lz);
+      g.box(px, 0.64, pz, 0.12, 0.3, 0.12, PAL.stone, rotY);
+    }
+  }
+  // approach ramps at each end
+  for (const e of [-1, 1]) {
+    const [x, z] = at(e * (L / 2 + 0.02), 0);
+    g.frustum(x, 0, z, 0.5, 0.9, 0.2, 0.84, 0.5, shade(PAL.earth, 1.1), rotY + (e > 0 ? 0 : Math.PI));
+  }
+  return { g, gl, height: 1.0 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Retaining wall: buttressed stonework                                */
+/* ------------------------------------------------------------------ */
+
+function retainingWall(
+  w: number,
+  h: number,
+  seed: number,
+): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const rotY = h > w ? Math.PI / 2 : 0;
+  const L = Math.max(w, h) - 0.12;
+  g.jitter = 0.04;
+  g.frustum(0, 0, 0, L, 0.5, L - 0.08, 0.34, 0.72, PAL.stone, rotY);
+  g.box(0, 0.72, 0, L - 0.06, 0.08, 0.42, PAL.stoneLight, rotY);
+  for (const y of [0.18, 0.36, 0.54]) {
+    const [x, z] = rotY === 0 ? [0, 0.17] : [0.17, 0];
+    g.box(x, y, z, rotY === 0 ? L - 0.1 : 0.02, 0.02, rotY === 0 ? 0.02 : L - 0.1, PAL.stoneDark);
+  }
+  const n = Math.max(2, Math.round(L / 0.95));
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n - 0.5;
+    const lx = t * (L - 0.2);
+    const wx = rotY === 0 ? lx : 0.34;
+    const wz = rotY === 0 ? 0.34 : -lx;
+    g.frustum(wx, 0, wz, 0.3, 0.38, 0.22, 0.12, 0.62, PAL.stoneDark, rotY);
+  }
+  return { g, gl, height: 0.82 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Forge: a brick smithy with a glowing furnace and a tall stack        */
+/* ------------------------------------------------------------------ */
+
+function forge(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  gl.jitter = 0;
+  const brick = rgb('#a2503e');
+  g.box(0, 0, 0, 2.7, 0.1, 1.8, PAL.stoneDark);
+  g.box(-0.25, 0.1, -0.1, 1.9, 0.82, 1.35, PAL.stone);
+  g.box(-0.25, 0.1, 0.58, 1.95, 0.05, 0.1, PAL.timberDark);
+  // open front: furnace mouth glowing between two stone piers
+  g.box(-0.9, 0.1, 0.62, 0.22, 0.82, 0.16, PAL.stoneDark);
+  g.box(0.1, 0.1, 0.62, 0.22, 0.82, 0.16, PAL.stoneDark);
+  g.box(-0.4, 0.78, 0.62, 0.9, 0.14, 0.16, PAL.stoneDark);
+  gl.box(-0.4, 0.14, 0.58, 0.7, 0.58, 0.04, rgb('#ff7a24'));
+  gl.box(-0.4, 0.14, 0.55, 0.5, 0.34, 0.04, rgb('#ffc24a'));
+  // brick stack
+  g.frustum(0.5, 0.92, -0.35, 0.46, 0.46, 0.34, 0.34, 1.0, brick);
+  g.box(0.5, 1.92, -0.35, 0.44, 0.06, 0.44, PAL.stoneDark);
+  g.gable(-0.25, 0.92, -0.1, 2.1, 1.55, 0.5, PAL.slate, {
+    ridgeAxis: 'x',
+    rows: 4,
+    ridgeColor: shade(PAL.slate, 0.7),
+    gableColor: PAL.stone,
+  });
+  // anvil, quench trough, charcoal and bellows
+  g.box(1.1, 0.1, 0.3, 0.3, 0.18, 0.16, PAL.char);
+  g.box(1.1, 0.04, 0.3, 0.2, 0.08, 0.2, PAL.timber);
+  g.box(1.05, 0.1, -0.35, 0.5, 0.2, 0.28, PAL.timberDark);
+  g.box(1.05, 0.28, -0.35, 0.44, 0.02, 0.22, rgb('#4a7a8a'));
+  g.lump(-1.15, 0.12, -0.55, 0.3, 0.17, 0.25, PAL.char, { seed: 3, rough: 0.28 });
+  logPile(g, 0.7, 0.75, 0.2, 0.5, 2);
+  return { g, gl, height: 2.0 };
+}
+
+/* ------------------------------------------------------------------ */
+/* Grove: staked saplings in rows                                      */
+/* ------------------------------------------------------------------ */
+
+function grove(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  g.disc(0, 0.01, 0, 1.35, 16, shade(PAL.earth, 1.25), 0.1);
+  for (let j = 0; j < 3; j++) {
+    for (let i = 0; i < 3; i++) {
+      const x = (i - 1) * 0.8 + (h01(seed, i, j) - 0.5) * 0.22;
+      const z = (j - 1) * 0.8 + (h01(seed, j, i + 4) - 0.5) * 0.22;
+      const s = 0.8 + h01(seed, i + 7, j) * 0.5;
+      const kind = (i + j) % 2;
+      g.cyl(x, 0.02, z, 0.045, 0.035, 0.34 * s, 5, PAL.bark);
+      if (kind === 0) {
+        g.cyl(x, 0.24 * s, z, 0.27 * s, 0.0, 0.62 * s, 7, PAL.leafDark);
+        g.cyl(x, 0.5 * s, z, 0.2 * s, 0.0, 0.5 * s, 7, PAL.leaf);
+      } else {
+        g.lump(x, 0.36 * s, z, 0.27 * s, 0.24 * s, 0.27 * s, PAL.leaf, {
+          seed: i + j,
+          topColor: PAL.leafLight,
+        });
+      }
+      g.box(x + 0.16, 0, z + 0.1, 0.03, 0.26, 0.03, PAL.woodLight);
+    }
+  }
+  // rope-and-stake fence, with a marker board
+  fenceLine(g, -1.35, 1.35, 1.35, 1.35, 0.25);
+  g.box(1.35, 0, 1.2, 0.04, 0.5, 0.04, PAL.timber);
+  g.box(1.35, 0.32, 1.22, 0.3, 0.16, 0.03, PAL.woodLight);
+  return { g, gl, height: 1.2 };
+}
+
+/* ------------------------------------------------------------------ */
 /* Generic stand-ins for buildings whose gameplay arrives later        */
 /* ------------------------------------------------------------------ */
 
@@ -539,11 +803,13 @@ export function buildingModel(
   h: number,
   variant: number,
   seed: number,
+  /** Architectural age (the epoch the building was raised in): 0 thatch, 1 tile, 2 slate. */
+  era = 0,
 ): BuildingModel {
   let r: { g: GeoBuilder; gl: GeoBuilder; crops?: GeoBuilder; height: number };
   switch (kind) {
     case 'cottage':
-      r = cottage(variant % 3, seed);
+      r = cottage(variant % 3, era, seed);
       break;
     case 'farm':
       r = farm(seed);
@@ -568,6 +834,27 @@ export function buildingModel(
       break;
     case 'hearth':
       r = hearth(seed);
+      break;
+    case 'stone_house':
+      r = stoneHouse(variant % 3, era, seed);
+      break;
+    case 'levee':
+      r = levee(w, h, seed);
+      break;
+    case 'dam':
+      r = dam(w, h, seed);
+      break;
+    case 'bridge':
+      r = bridge(w, h, seed);
+      break;
+    case 'retaining_wall':
+      r = retainingWall(w, h, seed);
+      break;
+    case 'forge':
+      r = forge(seed);
+      break;
+    case 'grove':
+      r = grove(seed);
       break;
     default:
       r = generic(w, h, seed);

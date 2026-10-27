@@ -45,7 +45,11 @@ describe('placement legality', () => {
     for (const k of kinds) expect(BUILDINGS[k].enabled).toBe(true);
     expect(kinds).toContain('farm');
     expect(kinds).not.toContain('hearth');
-    expect(kinds).not.toContain('levee');
+    // Later-age buildings are listed but locked, with a reason the player can read.
+    const levee = cat.find((e) => e.kind === 'levee');
+    expect(levee?.blocked?.code).toBe('locked_age');
+    const stone = cat.find((e) => e.kind === 'stone_house');
+    expect(stone?.blocked?.code).toBe('locked_tech');
     const r = checkPlacement(c, 'levee', 10, 10, 0);
     expect(r.ok).toBe(false);
   });

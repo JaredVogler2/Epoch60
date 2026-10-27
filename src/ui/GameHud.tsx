@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BuildTray, PlacementBar, ResourceBar, TopBar } from './Hud';
 import { FocusPanel, HelpPanel, Inspector, PauseOverlay, ResearchPanel, Toast } from './Panels';
 import { CollapseOverlay, DebriefScreen, EndScreen, InterregnumScreen, PrepareCard } from './Screens';
+import { StoryChip } from './Story';
 import { useStore } from './useStore';
 
 /** Keyboard: Esc cancels/closes, Space pauses, R rotates, 1-9 pick a building, Enter confirms placement. */
@@ -62,6 +63,7 @@ export function GameHud() {
       <Inspector />
       <div className="bottom-dock">
         <Toast />
+        <StoryChip />
         <PrepareCard />
         {s.placing && <PlacementBar />}
         {showTray && <BuildTray />}

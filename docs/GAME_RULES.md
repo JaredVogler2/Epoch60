@@ -129,7 +129,8 @@ Embers may leap **one** bare cell along or across the wind for +42 cost; two cel
 
 Peak rise = `strength × clamp(1 + 1.5 × (0.42 − meanForest), 0.65, 1.55)` — bare slopes shed water faster. Head starts at river-bed + peak
 in every river cell, loses 5 per step outward, and floods any cell whose head exceeds its effective height (levees add +2.2 cells).
-A dam cuts the peak to 62 % downstream (rows below it).
+A dam cuts the peak to 62 % downstream (rows below it). Each active Grove cell adds +0.9 cells of barrier (vegetation slows water); a damaged levee
+adds only half.
 
 ### Quake
 
@@ -137,8 +138,9 @@ Intensity at a cell = `strength × 46 / (46 + d²)` (d from the epicentre), ×0.
 
 ### Damage
 
-`damage = exposure × (1000 − resistance) / 1000` (fire: share of footprint burned; flood: `min(1000, 12 × depth_cm) × share`; quake: peak intensity).
-Resistance = building + reinforce bonus + traditions + techs (Seismic Engineering +25 % quake) + nearby Retaining Wall (+25 % quake) − state (damaged −15 %).
+`damage = exposure × (1000 − resistance) / 1000` (fire: share of footprint burned; flood: `min(1000, 12 × depth_cm) × share`; quake: peak intensity × **1.6**,
+because ground motion does far more harm than the same "amount" of heat or water).
+Resistance = building + reinforce bonus + traditions + techs (Seismic Engineering +25 % quake) + a Retaining Wall within 5 cells (+25 % quake) − state (damaged −15 %), capped at 98 %.
 Outcome: `damage ≥ 600` → **rubble**, `≥ 250` → **damaged**, else intact. Statuses only ever worsen.
 
 ### People in a collapse
@@ -179,10 +181,64 @@ Score (debrief): `people = 100 × survivors`, `livelihood = 2 × food made + 10 
 `ecology = (meanForest + meanFertility)/10`, `heritage = 150 × heritage structures standing`.
 
 - **Defeat (any epoch):** fewer than 3 survivors — "no one is left to remember".
-- **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 heritage structure (Hearth, Archive, Seed Vault, Dam, Bridge) from an _earlier_ epoch still standing **and** ≥ 2 technologies carried through the final collapse.
+- **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 heritage structure (Hearth, Archive, Seed Vault, Dam, Bridge) from an _earlier_ epoch still standing **and** ≥ 3 technologies carried through the final collapse (a surviving people keeps 1 by oral tradition and 1 more through the Hearth, so an Archive must stand to reach 3).
 - Otherwise defeat with the unmet conditions listed.
 
-## 10. Status of designed-but-not-yet-live content
+## 10. Ages, technology and what each building does
 
-`Stone House`, `Levee`, `Dam`, `Bridge`, `Retaining Wall`, `Forge`, `Grove` and techs beyond Masonry/Irrigation/Writing exist as data with
-`enabled: false`. They are **hidden from the catalog** until their gameplay is wired and tested (phases 08–11).
+Buildings unlock by **age** (the epoch index) and by **technology**; the build tray lists later-age or untaught buildings greyed out with the reason.
+Techs form a branching tree (industry · ecology · resilience) and cost knowledge; a hearth yields 0.12 per second of it, a fully staffed Archive 0.5 per second (+40 % with Writing),
+and idle labor does nothing for it unless the labor focus is set to Knowledge. Knowledge does **not** carry between epochs — only technologies do.
+
+| Tech (branch) | Needs | Effect |
+| --- | --- | --- |
+| Masonry (industry) | — | Quarries +25 %; unlocks Stone House |
+| Bronze Tools (industry) | Masonry | Builders +15 %; unlocks Bridge |
+| Ironworking (industry) | Bronze Tools | Unlocks Forge |
+| Irrigation (ecology) | — | Farms +25 % |
+| Crop Rotation (ecology) | Irrigation | Farms stop mining the soil and slowly restore it toward 72 % fertility |
+| Forestry (ecology) | — | Lumber camps fell 40 % fewer trees; unlocks Grove |
+| Writing (resilience) | — | Archives +40 % knowledge, carry 2 more techs |
+| Hydrology (resilience) | Writing | Unlocks Levee and Dam |
+| Seismic Engineering (resilience) | Writing, Masonry | All buildings +25 % quake resistance; unlocks Retaining Wall |
+
+| Building | Age · tech | Mechanism |
+| --- | --- | --- |
+| Stone House | any · Masonry | 5 housing; fire 75 %, flood 50 %, quake 55 % resistance (cottage: 8 % / 25 % / 30 %) |
+| Levee | Bronze · Hydrology | 2.2 cells of barrier on its footprint; water goes around the ends, so placement matters (limit 6) |
+| Dam | Bronze · Hydrology | Spans the river; downstream flood peak ×0.62; farms within 8 cells get +15 % irrigation; a heritage landmark |
+| Bridge | Bronze · Bronze Tools | Walkable crossing, so the far bank becomes buildable; a heritage landmark |
+| Retaining Wall | Iron · Seismic Engineering | Buildings within 5 cells gain +25 % quake resistance (limit 4) |
+| Forge | Iron · Ironworking | Staffed: quarries and lumber camps within 8 cells work +30 %; its smoke lowers fertility within 4 cells by 3 per 6 s |
+| Grove | any · Forestry | Regrows +1.2 % forest per 2.5 s on its cells and calms erosion; slows floods; burns (fuel 70) |
+
+Every effect above is exercised by `tests/engine/ages.test.ts`; the hazard maths is shared by the forecast and the resolution.
+
+## 11. Greenvale routes (executed)
+
+Two policies written in `src/engine/ai/routes.ts` win Greenvale on seed 6001 by different mechanisms, and their transcripts are replayed by
+`tests/engine/routes.test.ts` (see `fixtures/greenvale-traces.md`):
+
+- **Engineers** stay on the ancestral valley floor, keep their Archive on the north-east ridge inside the quake zone, and survive the Great Quake by Seismic
+  Engineering, Retaining Walls and Stone Houses.
+- **Archivists** keep Archive and Seed Vault on ground no age's hazard reaches, found each later society on the High Ground, research for retention and dig up what was left.
+
+A do-nothing village loses to the first fire; twelve random policies never win; a thriving builder that never researches or plans a landmark loses.
+
+## 12. Story decisions (agency during the 60 seconds)
+
+Small decisions arise from the village's **actual state** — never as modals, never in the planning phase, never in the last 15 s, at most **3 per epoch**,
+at least 10 s apart. Each is a compact chip with a 15 s countdown; if the deadline passes, the **free default** (always "do nothing") is applied.
+Answering is a normal timed action (`choose`), validated when sent and re-validated at the tick boundary; an unaffordable choice is refused and the decision stays open.
+
+| Decision | Offered when (state) | Options (cost) → real effect |
+| --- | --- | --- |
+| A dry wind (fire age, ≥ tick 150) | the fire forecast destroys or damages a building | Clear the brush (4 timber): forest/scrub within 3 cells of the hearth is removed, shrinking the forecast burn · Cut what we can: +8 timber · Trust the forecast |
+| The river is climbing (flood age, ≥ tick 250) | the flood forecast reaches a building | Sandbag (6 timber): buildings within 6 cells of the hearth gain +16 % flood resistance · Bring the harvest in: +10 food · Hold our nerve |
+| The ground trembles (quake age, ≥ tick 250) | the quake forecast reaches a building | Brace the worst-hit building (8 stone, +22 % quake resistance) · Shore up up to three at-risk homes (10 stone) · Wait and see |
+| Refugees (age ≥ 2, ≥ tick 100) | at least 3 free beds and 12 food | Welcome them (8 food): +3 people, +3 knowledge · Turn them away |
+| A historian (≥ tick 120) | an Archive is standing and sound | Fund her (6 timber, 4 food): +8 knowledge · Decline |
+| The dam is seeping (flood age, ≥ tick 200) | a sound Dam or Levee exists | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much) |
+
+The outcome line states the measured result ("the predicted burn shrank by 18 cells") and appears in the debrief's important events.
+Impossible decisions are never offered (no dam leak without a dam, no refugees without beds). Covered by `tests/engine/story.test.ts` and `e2e/story.spec.ts`.

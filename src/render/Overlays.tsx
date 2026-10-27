@@ -178,11 +178,12 @@ export function ForecastOverlay() {
 
 const ghostModels = new Map<string, BuildingModel>();
 function ghostModel(kind: BuildingKind, rot: 0 | 1): BuildingModel {
-  const key = `${kind}:${rot}`;
+  const era = store.campaign?.epoch ?? 0;
+  const key = `${kind}:${rot}:${era}`;
   let m = ghostModels.get(key);
   if (!m) {
     const { w, h } = footprint(kind, rot);
-    m = buildingModel(kind, w, h, 0, 77);
+    m = buildingModel(kind, w, h, 0, 77, era);
     ghostModels.set(key, m);
   }
   return m;

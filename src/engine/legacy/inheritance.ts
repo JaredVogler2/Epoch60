@@ -21,7 +21,7 @@ import { bridgeCells } from '../economy/placement';
 import { isStanding } from '../economy/modifiers';
 import { createStructure, levelPad, removeStructure } from '../economy/structures';
 import { quakeIntensityAt, resolveHazard } from '../world/hazards';
-import { cellsOf, clamp, idx, inBounds, reachableSet, slopeSpread } from '../world/query';
+import { cellsOf, clamp, footprintCells, idx, inBounds, reachableSet, slopeSpread } from '../world/query';
 
 export const SURVEYS_PER_INTERREGNUM = 2;
 export const EXCAVATIONS_PER_INTERREGNUM = 1;
@@ -207,28 +207,34 @@ function findSites(c: Campaign): FoundingSite[] {
   };
 
   const old = lastHearth(c);
-  const start = reachableSet(
-    c.world,
-    bridgeCells(c),
-    clamp(old.x - 1, 0, c.world.w - 1),
-    clamp(old.y - 1, 0, c.world.h - 1),
-  );
-  const cands: { x: number; y: number; soil: number; risk: number; elev: number; onRuin: boolean }[] = [];
-  for (let y = 1; y < c.world.h - 3; y++) {
-    for (let x = 1; x < c.world.w - 3; x++) {
-      if (!start.has(idx(x, y, c.world.w))) continue;
-      const p = padInfo(c, x, y);
-      if (!p.ok) continue;
-      cands.push({
-        x,
-        y,
-        soil: soilAround(c, x, y),
-        risk: riskOf(x, y),
-        elev: c.world.height[idx(x, y, c.world.w)]!,
-        onRuin: p.onRuin,
-      });
-    }
+  // Everything walkable from any cell around the old hearth (the hearth may stand on a river bank).
+  const bridges = bridgeCells(c);
+  const start = new Set<number>();
+  for (const [x, y] of footprintCells(old.x - 1, old.y - 1, 4, 4)) {
+    if (!inBounds(x, y, c.world.w, c.world.h) || start.has(idx(x, y, c.world.w))) continue;
+    for (const v of reachableSet(c.world, bridges, x, y)) start.add(v);
   }
+  const cands: { x: number; y: number; soil: number; risk: number; elev: number; onRuin: boolean }[] = [];
+  const collect = (anywhere: boolean) => {
+    for (let y = 1; y < c.world.h - 3; y++) {
+      for (let x = 1; x < c.world.w - 3; x++) {
+        if (!anywhere && !start.has(idx(x, y, c.world.w))) continue;
+        const p = padInfo(c, x, y);
+        if (!p.ok) continue;
+        cands.push({
+          x,
+          y,
+          soil: soilAround(c, x, y),
+          risk: riskOf(x, y),
+          elev: c.world.height[idx(x, y, c.world.w)]!,
+          onRuin: p.onRuin,
+        });
+      }
+    }
+  };
+  collect(false);
+  // A campaign must never soft-lock: if the survivors are cut off, they may settle anywhere they can stand.
+  if (cands.length === 0) collect(true);
   const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
     Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const sites: FoundingSite[] = [];
@@ -538,6 +544,7 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   c.tick = 0;
   c.queue = [];
   c.events = [];
+  c.prompts = [];
   c.report = null;
   c.collapseResolved = false;
   c.forecastLevel = 0;
