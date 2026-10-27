@@ -8,12 +8,12 @@ This repository is currently a **Claude Code Opus 5.5 Max implementation specifi
 
 **Start:** [prompts/README.md](prompts/README.md)  
 **Master goal:** [prompts/00_MASTER_GOAL.md](prompts/00_MASTER_GOAL.md)  
-**Game rules:** [prompts/01_GAME_DESIGN_AND_CORE_LOOP.md](prompts/01_GAME_DESIGN_AND_CORE_LOOP.md)
+**Game rules:** [prompts/01_GAME_DESIGN_BIBLE.md](prompts/01_GAME_DESIGN_AND_CORE_LOOP.md)
 
 In Claude Code, open this repo and paste:
 
 ~~~text
-/goal Read prompts/README.md and prompts/00_MASTER_GOAL.md. Execute the numbered implementation prompts in order, implementing, testing and committing a genuinely playable and gorgeous real-time 3D browser game, EPOCH: The 60-Second Civilization. Maintain a playable vertical slice from the earliest phases. Use Three.js/React Three Fiber, a deterministic headless game engine, responsive mobile-first interaction, and a coherent premium miniature-diorama visual style. A run lasts exactly 60 seconds of active simulated play. When it ends, centuries pass and the next civilization inherits the buildings, damage, ecology, ruins, technology and cultural consequences. Ship proven survival/progression and rich replayability, not a screenshot, prototype dashboard or boxes on green tiles. Create evidence-backed tests and screenshots at each stage. Continue autonomously, recording truthful progress and commits, and never silently replace quality with placeholders.
+/goal Read prompts/README.md and prompts/00_MASTER_GOAL.md. Execute numbered phases 01–19 in order, implementing, testing and committing a genuinely playable and gorgeous real-time 3D browser game, EPOCH: The 60-Second Civilization. Maintain a playable vertical slice from the earliest phases. Use Three.js/React Three Fiber, a deterministic headless game engine, responsive mobile-first interaction, and a coherent premium miniature-diorama visual style. A run lasts exactly 60 seconds of active simulated play. When it ends, centuries pass and the next civilization inherits the buildings, damage, ecology, ruins, technology and cultural consequences. Ship proven survival/progression and rich replayability, not a screenshot, prototype dashboard or boxes on green tiles. Create evidence-backed tests and screenshots at each stage. Continue autonomously, recording truthful progress and commits, and never silently replace quality with placeholders.
 ~~~
 
 ## Creative contract
@@ -43,3 +43,9 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 - [ ] Live deployment verified.
 
 **Do not represent this document as a shipped game.**
+## Additional binding quality and continuation instructions
+
+- [Premium 3D and 60-second fun acceptance matrix](prompts/QUALITY_GATE_VISUAL_AND_FUN.md)
+- [Agent context reset and verified-commit protocol](prompts/AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md)
+
+Execute these alongside each relevant phase. In particular, a green-grid, cubes-only, image-only or dashboard-led game is a **visual acceptance failure** even if unit tests pass.
