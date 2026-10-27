@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { getScenario, scaledStrength } from '../content/scenario';
 import type {
   BuildingKind,
   Campaign,
@@ -399,8 +399,10 @@ function describe(
 export function resolveHazard(
   c: Campaign,
   kind: HazardKind = getScenario(c.scenario).epochs[c.epoch]!.hazard.kind,
-  strength: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
+  nominal: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
 ): HazardResult {
+  // Difficulty scales the authored strength here, once, so the forecast, the resolution and every caller agree.
+  const strength = scaledStrength(c.difficulty, nominal);
   const cells =
     kind === 'fire'
       ? simulateFire(c, strength)

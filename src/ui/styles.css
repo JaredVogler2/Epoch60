@@ -410,6 +410,35 @@ h3 {
   background: rgba(232, 184, 74, 0.14);
 }
 
+/* ---------- difficulty picker ---------- */
+.difficulty-pick {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.diff {
+  flex: 1 1 0;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--parchment);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.diff.on {
+  border-color: var(--gold);
+  background: rgba(232, 184, 74, 0.14);
+}
+.diff-note {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: 0.76rem;
+  color: var(--dim);
+  text-align: center;
+}
+
 /* ---------- story decisions ---------- */
 .story {
   width: min(100%, 560px);
@@ -1314,7 +1343,8 @@ h3 {
   .timer-hazard {
     font-size: 0.74rem;
   }
-  .top-right .btn-icon:nth-child(3) {
+  /* Help is the one control phones can drop (it is also on the title screen); sound must stay reachable. */
+  .top-right .btn-icon[aria-label='Help'] {
     display: none;
   }
   .top-left .epoch-chip {
@@ -1356,6 +1386,39 @@ h3 {
   .prepare-body {
     max-height: 34vh;
   }
+  /* Placing a building: the bar is one short info row over one row of equal buttons, and the Begin card steps aside
+     so the valley stays tappable (a 3-row bar under the Begin card covered most of a 390x664 screen). */
+  .bottom-dock:has(.placebar) .prepare {
+    display: none;
+  }
+  .placebar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .place-info {
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+  .place-msg {
+    font-size: 0.8rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .place-actions {
+    width: 100%;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 6px;
+  }
+  .place-actions .btn {
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
 }
 @media (max-width: 360px) {
   .chip {
@@ -1380,4 +1443,66 @@ h3 {
   .collapse-overlay {
     animation: none;
   }
+}
+
+/* ---------- accessibility ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.slider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+.slider input[type='range'] {
+  flex: 1 1 auto;
+  max-width: 220px;
+  accent-color: var(--gold);
+}
+.btn-icon.off {
+  opacity: 0.6;
+}
+
+.seed-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  align-items: flex-end;
+}
+.seed-field {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: var(--dim);
+}
+.seed-field input {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--parchment);
+  font: inherit;
+  font-size: 1rem;
+}
+.recent-runs {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 0.74rem;
+  color: var(--dim);
+  text-align: center;
 }

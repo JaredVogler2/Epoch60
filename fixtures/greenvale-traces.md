@@ -10,10 +10,10 @@ same forecast and placement information a returning player has, and no hidden en
 
 | Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
 | --- | --- | --- | --- | --- | --- |
-| engineers | VICTORY | 10 → 8 → 9 | 9/8 · 1/1 · 3/3 | 45 | `0251a959bb5926` |
-| archivists | VICTORY | 9 → 11 → 14 | 14/8 · 3/1 · 4/3 | 53 | `09ee106abc140e` |
-| builder | DEFEAT | 11 → 12 → 15 | 15/8 · 0/1 · 0/3 | 36 | `02775750e2cde2` |
-| noop | DEFEAT | 2 | 2/3 | 4 | `1780494abfca56` |
+| engineers | VICTORY | 10 → 8 → 9 | 9/8 · 1/1 · 3/3 | 45 | `180272cdd5bf9d` |
+| archivists | VICTORY | 9 → 11 → 14 | 14/8 · 3/1 · 4/3 | 53 | `0d4875a29bb07f` |
+| builder | DEFEAT | 11 → 12 → 15 | 15/8 · 0/1 · 0/3 | 36 | `1a26c75150f225` |
+| noop | DEFEAT | 2 | 2/3 | 4 | `0f1388a530a8ce` |
 
 ## What the two winning routes do differently
 
@@ -66,10 +66,10 @@ Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatc
 
 | Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
 | --- | --- | --- | --- | --- | --- |
-| engineers | VICTORY | 10 → 8 → 11 | 11/8 · 1/1 · 3/3 | 48 | `183c1f9ce36424` |
-| archivists | VICTORY | 9 → 9 → 11 | 11/8 · 2/1 · 4/3 | 51 | `02d80f72796822` |
-| builder | DEFEAT | 11 → 12 → 4 | 4/8 · 0/1 · 0/3 | 36 | `1cb441a380aa54` |
-| steward | DEFEAT | 13 → 11 → 0 | 0/3 | 38 | `19aa8a626dc82b` |
+| engineers | VICTORY | 10 → 8 → 11 | 11/8 · 1/1 · 3/3 | 48 | `0456daf156e73e` |
+| archivists | VICTORY | 9 → 9 → 11 | 11/8 · 2/1 · 4/3 | 51 | `17fe889c9bdf83` |
+| builder | DEFEAT | 11 → 12 → 4 | 4/8 · 0/1 · 0/3 | 36 | `132ca4a40000df` |
+| steward | DEFEAT | 13 → 11 → 0 | 0/3 | 38 | `01282b9e9bde25` |
 
 ### engineers — VICTORY
 

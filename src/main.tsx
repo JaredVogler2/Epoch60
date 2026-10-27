@@ -3,8 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './ui/styles.css';
 import { installDebug } from './debug';
+import { attachAudio } from './game/audioBridge';
+import { store } from './game/store';
 
 installDebug();
+attachAudio(store);
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root');

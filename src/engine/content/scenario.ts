@@ -1,4 +1,4 @@
-import type { HazardKind, ResourceKey, Resources } from '../core/types';
+import type { Difficulty, HazardKind, ResourceKey, Resources } from '../core/types';
 
 export interface HazardSpec {
   kind: HazardKind;
@@ -168,4 +168,51 @@ export function getScenario(id: string): ScenarioSpec {
   const s = SCENARIOS[id];
   if (!s) throw new Error(`Unknown scenario ${id}`);
   return s;
+}
+
+/**
+ * Difficulty changes what the world does and what winning asks for — never the rules or the clock.
+ * `strengthPm` scales every hazard (1000 = as authored); the deltas shift the scenario's victory thresholds.
+ */
+export const DIFFICULTY: Record<
+  Difficulty,
+  { name: string; blurb: string; strengthPm: number; survivors: number; heritage: number; techs: number }
+> = {
+  gentle: {
+    name: 'Gentle',
+    blurb: 'Milder catastrophes; two retained technologies and six survivors are enough.',
+    strengthPm: 880,
+    survivors: -2,
+    heritage: 0,
+    techs: -1,
+  },
+  normal: {
+    name: 'Normal',
+    blurb: 'The authored challenge.',
+    strengthPm: 1000,
+    survivors: 0,
+    heritage: 0,
+    techs: 0,
+  },
+  hard: {
+    name: 'Hard',
+    blurb: 'Fiercer catastrophes; ten survivors, two surviving landmarks and four retained technologies.',
+    strengthPm: 1150,
+    survivors: 2,
+    heritage: 1,
+    techs: 1,
+  },
+};
+
+export function victoryFor(s: ScenarioSpec, d: Difficulty): ScenarioSpec['victory'] {
+  const k = DIFFICULTY[d];
+  return {
+    minSurvivors: s.victory.minSurvivors + k.survivors,
+    minHeritage: s.victory.minHeritage + k.heritage,
+    minRetainedTechs: s.victory.minRetainedTechs + k.techs,
+  };
+}
+
+export function scaledStrength(d: Difficulty | undefined, strength: number): number {
+  return Math.round((strength * DIFFICULTY[d ?? 'normal'].strengthPm) / 1000);
 }

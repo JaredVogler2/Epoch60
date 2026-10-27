@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { getScenario, scaledStrength } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { TRADITIONS, sumModifiers } from '../content/traditions';
 import { UNIT } from '../core/constants';
@@ -202,7 +202,8 @@ function findSites(c: Campaign): FoundingSite[] {
     let r = 0;
     for (let dy = 0; dy < 2; dy++)
       for (let dx = 0; dx < 2; dx++) r = Math.max(r, riskAt.get(idx(x + dx, y + dy, c.world.w)) ?? 0);
-    if (riskKind === 'quake') r = Math.max(r, quakeIntensityAt(c, x, y, next.hazard.strength));
+    if (riskKind === 'quake')
+      r = Math.max(r, quakeIntensityAt(c, x, y, scaledStrength(c.difficulty, next.hazard.strength)));
     return r;
   };
 

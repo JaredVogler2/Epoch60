@@ -473,6 +473,8 @@ export function stepStories(c: Campaign): void {
   for (const p of c.prompts) {
     if (p.status === 'open' && c.tick >= p.deadlineTick) resolve(c, p, p.defaultOption, true);
   }
+  // Conditions read the live forecast, which is not free: ask once a second, not every tick.
+  if (c.tick % 10 !== 0) return;
   const thisEpoch = c.prompts.filter((p) => p.epoch === c.epoch);
   if (thisEpoch.length >= MAX_STORIES_PER_EPOCH) return;
   if (thisEpoch.some((p) => c.tick - p.openedTick < MIN_SPACING_TICKS)) return;

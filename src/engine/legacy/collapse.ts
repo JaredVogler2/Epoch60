@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { getScenario, victoryFor } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { UNIT } from '../core/constants';
 import { emit } from '../core/events';
@@ -189,7 +189,7 @@ export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId
     };
   }
   if (!final) return null;
-  const v = scenario.victory;
+  const v = victoryFor(scenario, c.difficulty);
   const crossEra = c.structures.filter(
     (s) => BUILDINGS[s.kind].heritage && isStanding(s) && s.originEpoch < c.epoch,
   ).length;

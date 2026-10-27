@@ -261,3 +261,37 @@ A regional hazard with its own physics, unlike the three spreading fronts:
 
 Combination effects covered by tests: a Grove planted against floods burns hotter in the next fire; Forge smoke and ash stack on the same soil; deforestation raises both flood
 peak and fire reach; a neglected dam weakens before the flood.
+
+## 14. Difficulty tiers
+
+Difficulty changes what the world does and what winning asks for — never the rules or the clock. It is part of the campaign (saves and replay transcripts), and the title screen offers it.
+
+| Tier   | Hazard strength | Survivors | Surviving landmarks | Retained technologies |
+| ------ | --------------- | --------- | ------------------- | --------------------- |
+| Gentle | ×0.88           | 6         | 1                   | 2                     |
+| Normal | ×1.00           | 8         | 1                   | 3                     |
+| Hard   | ×1.15           | 10        | 2                   | 4                     |
+
+Strength is applied once, inside `resolveHazard`, so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
+
+## 15. Ways to start a lineage
+
+- **Story** — the authored scenarios (Greenvale; The Ashen Winter) on the canonical seed.
+- **Seed / shared link** — type a number or any words (hashed to a stable uint32), or open `?seed=…&scenario=…&difficulty=…`. Links are validated: unknown scenarios, non-integer or
+  out-of-range seeds, over-long queries and anything that is not a known value are dropped. Nothing in a link can run code or set state.
+- **Random valley** — a random seed in the UI layer (never in the engine); the seed is shown and shareable.
+- **Daily Ruins** — one seed and scenario per UTC calendar date, pinned to Normal, identical for everyone; a run that began on a date finishes as that date's run. There is no server
+  and no global ranking: results are local run cards (newest first, at most 40) kept in the browser, with "best for this valley" shown on the title and a "Copy link to this valley" button.
+- **Explorer** — the existing Assisted setting (the same 60 simulated seconds at half speed, scored separately) with the Gentle tier.
+
+Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers, a replay viewer.
+
+## 16. Accessibility and audio
+
+- **Keyboard:** Tab through every control; `1`–`9` choose a building; `N` jumps to the next suggested site (safe-from-forecast first, then nearest the village); arrow keys nudge the
+  ghost one cell (the camera keeps WASD); `R` rotates; `Enter` builds; `Esc` cancels; `Space` pauses. The whole first epoch can be played without a pointer (`e2e/a11y.spec.ts`).
+- **Screen readers:** a polite live region announces each age, 30 s and 10 s left, each forecast warning, the collapse headline, the debrief and the verdict — never every tick;
+  warnings are `role=alert`; the placement message states whether the site is valid and why not.
+- **Motion:** the OS "reduce motion" preference is the default for the in-game setting; with it, the catastrophe card appears at once with the facts and the camera does not shake.
+- **Audio:** procedural Web Audio (no sample files). Created only after a user gesture (one context per page), suspended while paused or hidden, with a master mute (HUD button and
+  settings) and independent music/effects volumes. The graph, routing, mute and event→sound mapping are unit-tested with a recording fake; **how it sounds has not been judged by ear**.

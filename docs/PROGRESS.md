@@ -115,3 +115,12 @@ the **Ashen Winter** scenario (title-screen picker), ash cinematic (front shader
 **Found by the bots:** the first Engineers plan starved in the ash winter (it built no lumber camp or second farm); a steward ignoring roofs and larders is buried; the famine
 explanation in the debrief initially described the empty village after the deaths (fixed: the larder is captured before they apply).
 **Not done:** a human playtest of the ash winter; ash story decisions beyond one; Age III skyline.
+
+### Session 3c — Accessibility, difficulty, modes and audio (slices of phases 13, 14, 15, 17)
+
+**Built:** accessible placement (`suggestSpots`, Next-site button/`N`, arrow-key nudging, camera keeps WASD), a polite live announcer, OS reduced-motion default; difficulty tiers
+(Gentle/Normal/Hard) in the engine, saves, transcripts and title; modes — validated seed/link entry, Random valley, Daily Ruins (UTC), local run cards, share link; procedural audio with
+mute and independent volumes; eight paired strategic experiments (prompt 15 A–H) as permanent tests; bot back-off for failed searches.
+**Fixed along the way:** "Play again" and "New valley" silently reset to Greenvale/Normal (now keep scenario and difficulty); the story e2e raced its own 15 s countdown under load.
+**Verified:** typecheck, lint, 199 Vitest tests; Playwright results in `docs/TEST_RESULTS.md`.
+**Not verified:** audio by ear; screen-reader behaviour with a real reader (the live region content is tested, not its reading); WebKit; real-device frame rates.

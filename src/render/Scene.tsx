@@ -20,6 +20,8 @@ import { Interaction } from './Interaction';
 import { ForecastOverlay, PlacementGhost, PlannedMarkers, RiskMarkers, SelectionRing } from './Overlays';
 import { CameraRig, DEFAULT_CAMERA, cameraApi } from './CameraRig';
 import { resolveQuality } from './quality';
+import { DprGovernor } from './governor';
+import { perfApi } from './perf';
 import { buildWalkable, roadMask } from './paths';
 import { buildSkirt, buildTerrain, buildWater, padsOf } from './terrain';
 import type { TerrainModel } from './terrain';
@@ -134,6 +136,36 @@ function Lights({ shadowMap }: { shadowMap: number }) {
   );
 }
 
+/**
+ * Adapts the pixel ratio to the device (auto quality only, continuous rendering only) and feeds the performance probe.
+ * Geometry, foliage and forecast information are never reduced.
+ */
+function Governor({ maxDpr, adaptive, phone }: { maxDpr: number; adaptive: boolean; phone: boolean }) {
+  const gl = useThree((st) => st.gl);
+  const setDpr = useThree((st) => st.setDpr);
+  const gov = useMemo(
+    () => new DprGovernor({ budgetMs: phone ? 1000 / 30 : 1000 / 60, minDpr: 0.6, maxDpr }),
+    [maxDpr, phone],
+  );
+  useEffect(() => {
+    perfApi.attach(() => ({
+      drawCalls: gl.info.render.calls,
+      triangles: gl.info.render.triangles,
+      geometries: gl.info.memory.geometries,
+      textures: gl.info.memory.textures,
+      programs: gl.info.programs?.length ?? 0,
+      pixelRatio: gl.getPixelRatio(),
+    }));
+  }, [gl]);
+  useFrame((_, dt) => {
+    perfApi.frame(dt * 1000);
+    if (!adaptive) return;
+    const next = gov.sample(dt * 1000);
+    if (next !== null) setDpr(next);
+  });
+  return null;
+}
+
 /** Exposes an on-demand render for deterministic test screenshots (`?still`). */
 function StillHook() {
   const invalidate = useThree((st) => st.invalidate);
@@ -182,6 +214,11 @@ export function GameCanvas() {
       <Interaction />
       <CameraRig enabled />
       <StillHook />
+      <Governor
+        maxDpr={quality.dpr}
+        adaptive={!still && store.settings.quality === 'auto'}
+        phone={quality.tier !== 'high'}
+      />
     </Canvas>
   );
 }

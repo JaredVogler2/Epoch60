@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
-import { BUILDINGS, TECHS, TRADITIONS, UNIT, currentSpec, getScenario, ruinYield, unplan } from '../engine';
+import {
+  BUILDINGS,
+  DIFFICULTY,
+  TECHS,
+  TRADITIONS,
+  UNIT,
+  currentSpec,
+  getScenario,
+  ruinYield,
+  unplan,
+} from '../engine';
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
 import { presentation } from '../render/presentation';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
+import { shareQuery } from '../game/modes';
 import { useStore } from './useStore';
 
 /* ------------------------------ PREPARE ------------------------------ */
@@ -473,7 +484,9 @@ export function EndScreen() {
           ))}
         </ol>
         <p className="score-total">
-          Lineage score <b>{c.lineage.score}</b> · seed {c.seed}
+          Lineage score <b>{c.lineage.score}</b> · seed {c.seed} · {getScenario(c.scenario).name} ·{' '}
+          {DIFFICULTY[c.difficulty].name}
+          {s.runDaily ? ` · Daily Ruins ${s.runDaily}` : ''}
         </p>
         <div className="end-actions">
           <button
@@ -482,7 +495,7 @@ export function EndScreen() {
             data-testid="play-again"
             onClick={() => {
               clearSave();
-              s.newGame(c.seed);
+              s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined);
             }}
           >
             Play again
@@ -492,10 +505,29 @@ export function EndScreen() {
             className="btn"
             onClick={() => {
               clearSave();
-              s.newGame(((c.seed * 1103515245 + 12345) >>> 0) % 99999);
+              s.newGame(
+                ((c.seed * 1103515245 + 12345) >>> 0) % 99999 || 1,
+                undefined,
+                c.scenario,
+                c.difficulty,
+              );
             }}
           >
             New valley
+          </button>
+          <button
+            type="button"
+            className="btn"
+            data-testid="copy-link"
+            onClick={() => {
+              const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined })}`;
+              void navigator.clipboard?.writeText(url).then(
+                () => s.showToast('Link to this valley copied.', 'good'),
+                () => s.showToast(url, 'info'),
+              );
+            }}
+          >
+            Copy link to this valley
           </button>
           <button
             type="button"

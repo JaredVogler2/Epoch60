@@ -8,18 +8,23 @@ import {
   getForecast,
   setPaused,
 } from '../engine';
+import { suggestSpots } from '../engine/economy/suggest';
+import type { SuggestedSpot } from '../engine/economy/suggest';
 import type { CatalogEntry } from '../engine';
 import type {
   Action,
   ActionResult,
   BuildingKind,
   Campaign,
+  Difficulty,
   Forecast,
   GameMode,
   PlacementOk,
   ActionError,
 } from '../engine';
 import { createDemoCampaign } from './demo';
+import { cardOf, loadRuns, saveRun } from './modes';
+import type { RunCard } from './modes';
 import { explain } from './messages';
 import {
   DEFAULT_SETTINGS,
@@ -92,6 +97,12 @@ export class GameStore {
   private focusSeq = 0;
   private lastPhase = '';
   private lastSaveTick = -1;
+  /** UTC date when the current run is a Daily Ruins challenge. */
+  runDaily: string | null = null;
+  /** Finished runs, newest first (local only). */
+  runs: RunCard[] = loadRuns();
+  /** Cycling list of suggested sites for the building being placed (the keyboard / screen-reader path). */
+  suggest: { kind: BuildingKind; key: string; spots: SuggestedSpot[]; i: number } | null = null;
 
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);
@@ -106,9 +117,16 @@ export class GameStore {
 
   /* ------------------------------ lifecycle ------------------------------ */
 
-  newGame(seed: number = CANON_SEED, mode?: GameMode, scenarioId = 'greenvale'): void {
+  newGame(
+    seed: number = CANON_SEED,
+    mode?: GameMode,
+    scenarioId = 'greenvale',
+    difficulty: Difficulty = 'normal',
+    daily?: string,
+  ): void {
+    this.runDaily = daily ?? null;
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
-    this.campaign = createCampaign(seed, m, scenarioId);
+    this.campaign = createCampaign(seed, m, scenarioId, difficulty);
     this.afterReplace();
     this.clockResetSeq++;
     this.screen = 'game';
@@ -225,6 +243,10 @@ export class GameStore {
   private onPhaseChange(phase: string): void {
     this.lastPhase = phase;
     this.skipRequested = false;
+    if (phase === 'VICTORY' || phase === 'DEFEAT') {
+      const card = this.campaign ? cardOf(this.campaign, this.runDaily ?? undefined, new Date()) : null;
+      if (card) this.runs = saveRun(card);
+    }
     if (phase !== 'ACTIVE') {
       this.placing = null;
       this.ghost = null;
@@ -352,6 +374,7 @@ export class GameStore {
     this.selectedId = null;
     this.placing = { kind, rot: 0, x: null, y: null };
     this.ghost = null;
+    this.suggest = null;
     this.emit();
   }
 
@@ -359,6 +382,53 @@ export class GameStore {
     if (!this.placing) return;
     this.placing = null;
     this.ghost = null;
+    this.suggest = null;
+    this.emit();
+  }
+
+  /**
+   * Step to the next suggested site (safe-from-forecast first, then nearest the village) without any pointing:
+   * the accessible, one-handed way to place a building.
+   */
+  suggestNext(): void {
+    const c = this.campaign;
+    const p = this.placing;
+    if (!c || !p) return;
+    const key = `${p.kind}:${this.structRev}:${Math.floor(c.tick / 40)}`;
+    if (!this.suggest || this.suggest.key !== key || this.suggest.kind !== p.kind) {
+      const f = this.getForecastCached();
+      const avoid = f ? new Set(f.predicted.cells.map((h) => h.y * c.world.w + h.x)) : undefined;
+      this.suggest = { kind: p.kind, key, spots: suggestSpots(c, p.kind, { avoid, limit: 12 }), i: -1 };
+    }
+    const sg = this.suggest;
+    if (!sg.spots.length) {
+      this.showToast('No legal site you can afford right now.', 'warn');
+      return;
+    }
+    sg.i = (sg.i + 1) % sg.spots.length;
+    const spot = sg.spots[sg.i]!;
+    p.rot = spot.rot;
+    p.x = spot.x;
+    p.y = spot.y;
+    this.updateGhost();
+    this.focusOn(spot.x + spot.w / 2, spot.y + spot.h / 2);
+    this.emit();
+  }
+
+  /** Move the ghost one cell (arrow keys). The first nudge adopts the first suggested site. */
+  nudgePlacing(dx: number, dy: number): void {
+    const c = this.campaign;
+    const p = this.placing;
+    if (!c || !p) return;
+    if (p.x === null || p.y === null) {
+      this.suggestNext();
+      return;
+    }
+    const { w, h } = footprintOf(p.kind, p.rot);
+    p.x = Math.max(0, Math.min(c.world.w - w, p.x + dx));
+    p.y = Math.max(0, Math.min(c.world.h - h, p.y + dy));
+    this.updateGhost();
+    this.focusOn(p.x + w / 2, p.y + h / 2);
     this.emit();
   }
 

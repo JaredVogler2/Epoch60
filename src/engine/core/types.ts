@@ -480,6 +480,9 @@ export type Phase =
 
 export type GameMode = 'standard' | 'assisted';
 
+/** Scales every hazard's strength and the victory thresholds (see `content/scenario.ts`). */
+export type Difficulty = 'gentle' | 'normal' | 'hard';
+
 export interface Campaign {
   schema: number;
   rules: string;
@@ -487,6 +490,7 @@ export interface Campaign {
   seed: number;
   scenario: string;
   mode: GameMode;
+  difficulty: Difficulty;
   phase: Phase;
   /** Paused is orthogonal to phase. A saved ACTIVE game always reloads paused. */
   paused: boolean;

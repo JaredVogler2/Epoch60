@@ -22,6 +22,7 @@ import type {
   Campaign,
   ErrorCode,
   Forecast,
+  Difficulty,
   GameMode,
   Resources,
   Structure,
@@ -54,6 +55,7 @@ export function createCampaign(
   seed: number,
   mode: GameMode = 'standard',
   scenarioId = 'greenvale',
+  difficulty: Difficulty = 'normal',
 ): Campaign {
   const scenario = getScenario(scenarioId);
   const spec = scenario.epochs[0]!;
@@ -66,6 +68,7 @@ export function createCampaign(
     seed,
     scenario: scenarioId,
     mode,
+    difficulty,
     phase: 'PREPARE',
     paused: false,
     epoch: 0,

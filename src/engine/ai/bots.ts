@@ -68,6 +68,8 @@ const rock = (c: Campaign) => (x: number, y: number, w: number, h: number) =>
 const trees = (c: Campaign) => (x: number, y: number, w: number, h: number) =>
   sumField(c, c.world.forest, x - 3, y - 3, w + 6, h + 6) / 60;
 
+const mitigationMisses = new WeakMap<Campaign, { id: string; tick: number; nextId: number }>();
+
 export function spotFor(c: Campaign, w: Want): SpotOptions {
   const o = typeof w.spot === 'function' ? w.spot(c) : (w.spot ?? {});
   if (w.kind === 'farm') return { bonus: soil(c), ...o };
@@ -117,10 +119,16 @@ export function tryWant(c: Campaign, w: Want, rots: (0 | 1)[] = [0]): boolean | 
     (k) => c.civ.res[k] - reserved[k] < (def.cost[k] ?? 0) * UNIT,
   );
   if (short) return w.save && !w.mitigate ? 'wait' : false;
+  // A failed trial search is expensive and cannot succeed again until something changes: back off for 4 s.
+  if (w.mitigate) {
+    const last = mitigationMisses.get(c);
+    if (last && last.id === w.id && last.nextId === c.nextId && c.tick - last.tick < 40) return false;
+  }
   const spot = w.mitigate
     ? mitigationSpot(c, w.kind, { rots: w.rot ?? [0, 1], ...w.mitigate })
     : findSpot(c, w.kind, { rots: w.rot ?? rots, ...spotFor(c, w) });
   if (!spot) {
+    if (w.mitigate) mitigationMisses.set(c, { id: w.id, tick: c.tick, nextId: c.nextId });
     if (!w.save || w.mitigate) return false;
     // Is there room for it if only we could afford it? Then wait for the resources.
     const dry = findSpot(c, w.kind, { rots: w.rot ?? rots, ...spotFor(c, w), ignoreAffordability: true });

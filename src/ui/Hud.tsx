@@ -161,6 +161,16 @@ export function TopBar() {
         >
           <Icon name="home" />
         </button>
+        <button
+          type="button"
+          className={`btn-icon ${s.settings.sound ? '' : 'off'}`}
+          aria-label={s.settings.sound ? 'Mute sound' : 'Unmute sound'}
+          aria-pressed={!s.settings.sound}
+          data-testid="toggle-sound"
+          onClick={() => s.updateSettings({ sound: !s.settings.sound })}
+        >
+          <Icon name={s.settings.sound ? 'speaker' : 'speakerOff'} />
+        </button>
         <button type="button" className="btn-icon" aria-label="Help" onClick={() => s.togglePanel('help')}>
           <Icon name="help" />
         </button>
@@ -269,11 +279,13 @@ export function PlacementBar() {
   const def = BUILDINGS[p.kind as BuildingKind];
   const g = s.ghost;
   const ok = !!g && g.ok;
+  const sg = s.suggest && s.suggest.kind === p.kind && s.suggest.i >= 0 ? s.suggest : null;
+  const where = sg ? ` (site ${sg.i + 1} of ${sg.spots.length})` : '';
   const msg = !g
-    ? 'Tap the valley to choose a site.'
+    ? 'Tap the valley to choose a site, or press Next site.'
     : g.ok
-      ? `Ready — ${g.info.notes.join(' · ') || 'good ground'}`
-      : g.error.message;
+      ? `Ready — ${g.info.notes.join(' · ') || 'good ground'}${where}`
+      : `${g.error.message}${where}`;
   const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches;
   return (
     <div
@@ -292,6 +304,9 @@ export function PlacementBar() {
         </div>
       </div>
       <div className="place-actions">
+        <button type="button" className="btn" data-testid="next-spot" onClick={() => s.suggestNext()}>
+          <Icon name="next" size={20} /> Next site{touch ? '' : ' (N)'}
+        </button>
         {def.rotatable && (
           <button type="button" className="btn" data-testid="rotate" onClick={() => s.rotatePlacing()}>
             <Icon name="rotate" size={20} /> Rotate

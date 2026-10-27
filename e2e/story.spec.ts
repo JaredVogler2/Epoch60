@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { campaign, fastForward, openGame, placeBuilding, shot, startNewGame } from './helpers';
+import { campaign, fastForward, openGame, placeBuilding, startNewGame } from './helpers';
 
 /** A village the forecast genuinely threatens. */
 async function threatenedVillage(page: import('@playwright/test').Page, touch: boolean) {
@@ -22,8 +22,6 @@ test('a decision arises from the forecast, can be answered with a tap, and chang
   await expect(chip).toBeVisible();
   await expect(chip).toHaveAttribute('data-story', 'dry_wind');
   await expect(page.getByTestId('story-option-ignore')).toBeVisible();
-  await shot(page, info, 'story-chip');
-
   const before = await campaign(page, (c) => c.civ.res.timber);
   await page.getByTestId('story-option-clear_brush').click();
   await expect(chip).toHaveCount(0);

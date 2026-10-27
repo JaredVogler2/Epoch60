@@ -1,6 +1,6 @@
 import { CONTENT_VERSION, RULES_VERSION, SCHEMA_VERSION } from '../core/constants';
 import { hashValue } from '../core/hash';
-import type { Action, Campaign, LoggedAction } from '../core/types';
+import type { Action, Campaign, Difficulty, LoggedAction } from '../core/types';
 import { advanceFixedTick, createCampaign, dispatchAction } from '../campaign';
 
 export interface SaveFile {
@@ -52,6 +52,7 @@ export function deserialize(text: string): Campaign {
   const c = file.campaign;
   if (computeHash(c) !== file.hash) throw new SaveError('Save data failed its integrity check');
   c.prompts ??= []; // saves written before story decisions existed
+  c.difficulty ??= 'normal'; // ... or before difficulty tiers
   if (c.phase === 'ACTIVE') c.paused = true;
   return c;
 }
@@ -67,6 +68,7 @@ export interface Transcript {
   seed: number;
   scenario: string;
   mode: 'standard' | 'assisted';
+  difficulty?: Difficulty;
   actions: LoggedAction[];
   /** Total active ticks played; the replay ends here. */
   totalTicks: number;
@@ -81,6 +83,7 @@ export function transcriptOf(c: Campaign): Transcript {
     seed: c.seed,
     scenario: c.scenario,
     mode: c.mode,
+    difficulty: c.difficulty,
     actions: c.actionLog.map((a) => ({ ...a })),
     totalTicks: c.totalTicks,
     finalHash: computeHash(c),
@@ -89,7 +92,7 @@ export function transcriptOf(c: Campaign): Transcript {
 
 /** Rebuild a campaign from a seed and its accepted-action log, ticking in between actions. */
 export function replayCampaign(t: Transcript): Campaign {
-  const c = createCampaign(t.seed, t.mode, t.scenario);
+  const c = createCampaign(t.seed, t.mode, t.scenario, t.difficulty ?? 'normal');
   const apply = (a: Action) => dispatchAction(c, a);
   for (const entry of t.actions) {
     while (c.phase === 'ACTIVE' && c.tick < entry.tick) {

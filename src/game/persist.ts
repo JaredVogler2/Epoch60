@@ -9,7 +9,18 @@ export interface Settings {
   reducedMotion: boolean;
   quality: 'auto' | 'high' | 'medium' | 'low';
   sound: boolean;
+  musicVolume: number;
+  sfxVolume: number;
   showTutorial: boolean;
+}
+
+/** Honour the operating system's "reduce motion" preference until the player chooses otherwise. */
+function osReducedMotion(): boolean {
+  try {
+    return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +28,8 @@ export const DEFAULT_SETTINGS: Settings = {
   reducedMotion: false,
   quality: 'auto',
   sound: true,
+  musicVolume: 0.5,
+  sfxVolume: 0.7,
   showTutorial: true,
 };
 
@@ -76,7 +89,7 @@ export function loadSettings(): Settings {
   } catch {
     /* ignore */
   }
-  return { ...DEFAULT_SETTINGS };
+  return { ...DEFAULT_SETTINGS, reducedMotion: osReducedMotion() };
 }
 
 export function saveSettings(settings: Settings): void {
