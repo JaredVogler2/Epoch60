@@ -121,3 +121,13 @@ test('three epochs run to an ending, and Play again starts fresh', async ({ page
   await expect(page.getByTestId('prepare')).toBeVisible();
   expect(await campaign(page, (c) => c.epoch)).toBe(0);
 });
+
+test('the title offers a second scenario, and it starts the Ashen Winter', async ({ page }) => {
+  await openGame(page);
+  await expect(page.getByTestId('scenario-greenvale')).toHaveAttribute('aria-checked', 'true');
+  await page.getByTestId('scenario-ashen').click();
+  await expect(page.getByTestId('scenario-ashen')).toHaveAttribute('aria-checked', 'true');
+  await startNewGame(page);
+  const sc = await campaign(page, (c) => (c as unknown as { scenario: string }).scenario);
+  expect(sc).toBe('ashen');
+});

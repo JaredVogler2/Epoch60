@@ -116,6 +116,13 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
       <path d="M3 12h3l2-6 3 12 3-9 2 3h5" />
     </Svg>
   ),
+  ash: ({ size }) => (
+    <Svg size={size}>
+      <path d="M4 20 10 8h4l6 12z" />
+      <path d="M12 8V3M9 5l-2-2M15 5l2-2" />
+      <path d="M4 22h16" strokeDasharray="1 3" />
+    </Svg>
+  ),
   skull: ({ size }) => (
     <Svg size={size}>
       <path d="M12 3a8 8 0 0 0-8 8c0 3 1.500 4.500 3 5.500V20h10v-3.500c1.500-1 3-2.500 3-5.500a8 8 0 0 0-8-8Z" />
@@ -217,6 +224,12 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
         d="M12 8c-2.500 0-3.500-1.500-3.500-3.500 2.500 0 3.500 1 3.500 3.500Zm0 0c2.500 0 3.500-1.500 3.500-3.500-2.500 0-3.500 1-3.500 3.500Z"
         {...fill}
       />
+    </Svg>
+  ),
+  granary: ({ size }) => (
+    <Svg size={size}>
+      <path d="M6 20V10c0-3 3-5 6-5s6 2 6 5v10" />
+      <path d="M4 20h16M9 12h6M9 16h6" />
     </Svg>
   ),
   firebreak: ({ size }) => (

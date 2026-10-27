@@ -106,9 +106,9 @@ export class GameStore {
 
   /* ------------------------------ lifecycle ------------------------------ */
 
-  newGame(seed: number = CANON_SEED, mode?: GameMode): void {
+  newGame(seed: number = CANON_SEED, mode?: GameMode, scenarioId = 'greenvale'): void {
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
-    this.campaign = createCampaign(seed, m);
+    this.campaign = createCampaign(seed, m, scenarioId);
     this.afterReplace();
     this.clockResetSeq++;
     this.screen = 'game';

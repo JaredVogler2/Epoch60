@@ -190,27 +190,27 @@ Buildings unlock by **age** (the epoch index) and by **technology**; the build t
 Techs form a branching tree (industry · ecology · resilience) and cost knowledge; a hearth yields 0.12 per second of it, a fully staffed Archive 0.5 per second (+40 % with Writing),
 and idle labor does nothing for it unless the labor focus is set to Knowledge. Knowledge does **not** carry between epochs — only technologies do.
 
-| Tech (branch) | Needs | Effect |
-| --- | --- | --- |
-| Masonry (industry) | — | Quarries +25 %; unlocks Stone House |
-| Bronze Tools (industry) | Masonry | Builders +15 %; unlocks Bridge |
-| Ironworking (industry) | Bronze Tools | Unlocks Forge |
-| Irrigation (ecology) | — | Farms +25 % |
-| Crop Rotation (ecology) | Irrigation | Farms stop mining the soil and slowly restore it toward 72 % fertility |
-| Forestry (ecology) | — | Lumber camps fell 40 % fewer trees; unlocks Grove |
-| Writing (resilience) | — | Archives +40 % knowledge, carry 2 more techs |
-| Hydrology (resilience) | Writing | Unlocks Levee and Dam |
-| Seismic Engineering (resilience) | Writing, Masonry | All buildings +25 % quake resistance; unlocks Retaining Wall |
+| Tech (branch)                    | Needs            | Effect                                                                 |
+| -------------------------------- | ---------------- | ---------------------------------------------------------------------- |
+| Masonry (industry)               | —                | Quarries +25 %; unlocks Stone House                                    |
+| Bronze Tools (industry)          | Masonry          | Builders +15 %; unlocks Bridge                                         |
+| Ironworking (industry)           | Bronze Tools     | Unlocks Forge                                                          |
+| Irrigation (ecology)             | —                | Farms +25 %                                                            |
+| Crop Rotation (ecology)          | Irrigation       | Farms stop mining the soil and slowly restore it toward 72 % fertility |
+| Forestry (ecology)               | —                | Lumber camps fell 40 % fewer trees; unlocks Grove                      |
+| Writing (resilience)             | —                | Archives +40 % knowledge, carry 2 more techs                           |
+| Hydrology (resilience)           | Writing          | Unlocks Levee and Dam                                                  |
+| Seismic Engineering (resilience) | Writing, Masonry | All buildings +25 % quake resistance; unlocks Retaining Wall           |
 
-| Building | Age · tech | Mechanism |
-| --- | --- | --- |
-| Stone House | any · Masonry | 5 housing; fire 75 %, flood 50 %, quake 55 % resistance (cottage: 8 % / 25 % / 30 %) |
-| Levee | Bronze · Hydrology | 2.2 cells of barrier on its footprint; water goes around the ends, so placement matters (limit 6) |
-| Dam | Bronze · Hydrology | Spans the river; downstream flood peak ×0.62; farms within 8 cells get +15 % irrigation; a heritage landmark |
-| Bridge | Bronze · Bronze Tools | Walkable crossing, so the far bank becomes buildable; a heritage landmark |
-| Retaining Wall | Iron · Seismic Engineering | Buildings within 5 cells gain +25 % quake resistance (limit 4) |
-| Forge | Iron · Ironworking | Staffed: quarries and lumber camps within 8 cells work +30 %; its smoke lowers fertility within 4 cells by 3 per 6 s |
-| Grove | any · Forestry | Regrows +1.2 % forest per 2.5 s on its cells and calms erosion; slows floods; burns (fuel 70) |
+| Building       | Age · tech                 | Mechanism                                                                                                            |
+| -------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Stone House    | any · Masonry              | 5 housing; fire 75 %, flood 50 %, quake 55 % resistance (cottage: 8 % / 25 % / 30 %)                                 |
+| Levee          | Bronze · Hydrology         | 2.2 cells of barrier on its footprint; water goes around the ends, so placement matters (limit 6)                    |
+| Dam            | Bronze · Hydrology         | Spans the river; downstream flood peak ×0.62; farms within 8 cells get +15 % irrigation; a heritage landmark         |
+| Bridge         | Bronze · Bronze Tools      | Walkable crossing, so the far bank becomes buildable; a heritage landmark                                            |
+| Retaining Wall | Iron · Seismic Engineering | Buildings within 5 cells gain +25 % quake resistance (limit 4)                                                       |
+| Forge          | Iron · Ironworking         | Staffed: quarries and lumber camps within 8 cells work +30 %; its smoke lowers fertility within 4 cells by 3 per 6 s |
+| Grove          | any · Forestry             | Regrows +1.2 % forest per 2.5 s on its cells and calms erosion; slows floods; burns (fuel 70)                        |
 
 Every effect above is exercised by `tests/engine/ages.test.ts`; the hazard maths is shared by the forecast and the resolution.
 
@@ -231,14 +231,33 @@ Small decisions arise from the village's **actual state** — never as modals, n
 at least 10 s apart. Each is a compact chip with a 15 s countdown; if the deadline passes, the **free default** (always "do nothing") is applied.
 Answering is a normal timed action (`choose`), validated when sent and re-validated at the tick boundary; an unaffordable choice is refused and the decision stays open.
 
-| Decision | Offered when (state) | Options (cost) → real effect |
-| --- | --- | --- |
-| A dry wind (fire age, ≥ tick 150) | the fire forecast destroys or damages a building | Clear the brush (4 timber): forest/scrub within 3 cells of the hearth is removed, shrinking the forecast burn · Cut what we can: +8 timber · Trust the forecast |
-| The river is climbing (flood age, ≥ tick 250) | the flood forecast reaches a building | Sandbag (6 timber): buildings within 6 cells of the hearth gain +16 % flood resistance · Bring the harvest in: +10 food · Hold our nerve |
-| The ground trembles (quake age, ≥ tick 250) | the quake forecast reaches a building | Brace the worst-hit building (8 stone, +22 % quake resistance) · Shore up up to three at-risk homes (10 stone) · Wait and see |
-| Refugees (age ≥ 2, ≥ tick 100) | at least 3 free beds and 12 food | Welcome them (8 food): +3 people, +3 knowledge · Turn them away |
-| A historian (≥ tick 120) | an Archive is standing and sound | Fund her (6 timber, 4 food): +8 knowledge · Decline |
-| The dam is seeping (flood age, ≥ tick 200) | a sound Dam or Levee exists | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much) |
+| Decision                                      | Offered when (state)                             | Options (cost) → real effect                                                                                                                                    |
+| --------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A dry wind (fire age, ≥ tick 150)             | the fire forecast destroys or damages a building | Clear the brush (4 timber): forest/scrub within 3 cells of the hearth is removed, shrinking the forecast burn · Cut what we can: +8 timber · Trust the forecast |
+| The river is climbing (flood age, ≥ tick 250) | the flood forecast reaches a building            | Sandbag (6 timber): buildings within 6 cells of the hearth gain +16 % flood resistance · Bring the harvest in: +10 food · Hold our nerve                        |
+| The ground trembles (quake age, ≥ tick 250)   | the quake forecast reaches a building            | Brace the worst-hit building (8 stone, +22 % quake resistance) · Shore up up to three at-risk homes (10 stone) · Wait and see                                   |
+| Refugees (age ≥ 2, ≥ tick 100)                | at least 3 free beds and 12 food                 | Welcome them (8 food): +3 people, +3 knowledge · Turn them away                                                                                                 |
+| A historian (≥ tick 120)                      | an Archive is standing and sound                 | Fund her (6 timber, 4 food): +8 knowledge · Decline                                                                                                             |
+| The dam is seeping (flood age, ≥ tick 200)    | a sound Dam or Levee exists                      | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much)                                                                              |
 
 The outcome line states the measured result ("the predicted burn shrank by 18 cells") and appears in the debrief's important events.
 Impossible decisions are never offered (no dam leak without a dam, no refugees without beds). Covered by `tests/engine/story.test.ts` and `e2e/story.spec.ts`.
+
+## 13. Ashfall winter (the fourth disaster) and the Ashen Winter scenario
+
+A regional hazard with its own physics, unlike the three spreading fronts:
+
+- **Plume.** A vent lies upwind of the valley (`ventOf`: hearth − 13 × wind, 4 cells north). Ash depth at a cell is `strength × 70 / (70 + d²)` where `d²` stretches the distance
+  downwind (×0.45) and compresses it upwind (×2); river cells receive none. Cells with depth ≥ 120 are in the footprint; `arrival` is distance from the vent, so the overlay and the
+  cinematic sweep from the vent downwind. Nowhere is perfectly safe: it thins, it does not stop.
+- **Roofs.** `damage = depth × (1000 − ash resistance) × 1.5 / 1000` with the usual rubble ≥ 600 / damaged ≥ 250. Thatch (10 %) fails first; stone houses (60 %), archives (65 %) and
+  Granaries (55 %) shed it; the **Steep Roofs** tradition (+25 %), a **Deep Larders** tradition (+10 %), a reinforcement (+22 %) and the "Re-pitch the roofs" decision all help.
+- **Famine.** No harvest comes for 30 s. The village needs `population × 12 × 300 ticks ÷ 1000 = 3.6 food each`; it has the food on hand plus **25 per sealed Granary** (12 if damaged).
+  Each missing 3.6 food costs one life. The forecast shows it before the sky darkens, and the debrief states the larder it had.
+- **Legacy.** Ash raises pollution (it only halves per interregnum), lowers fertility by `depth/6` and thins forest; the terrain is tinted grey where it fell.
+- **Granary** (2×2, 10 timber + 6 stone, limit 2, any age) is the counterplay; so is food laid by earlier, farms, and trading timber for grain in the "grey sky" decision.
+- **The Ashen Winter** scenario (`ashen`): wildfire → great flood → ashfall winter on the same valley and victory conditions as Greenvale. Both tuned routes win it on seed 6001
+  (`fixtures/ashen/`); the Engineers lose it without a Granary (ablation test), a steward who ignores roofs and larders is buried.
+
+Combination effects covered by tests: a Grove planted against floods burns hotter in the next fire; Forge smoke and ash stack on the same soil; deforestation raises both flood
+peak and fire reach; a neglected dam weakens before the flood.

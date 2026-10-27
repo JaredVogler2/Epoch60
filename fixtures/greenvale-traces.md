@@ -10,10 +10,10 @@ same forecast and placement information a returning player has, and no hidden en
 
 | Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
 | --- | --- | --- | --- | --- | --- |
-| engineers | VICTORY | 10 → 8 → 9 | 9/8 · 1/1 · 3/3 | 45 | `10c3623d2ec39a` |
-| archivists | VICTORY | 9 → 11 → 14 | 14/8 · 3/1 · 4/3 | 53 | `15677c438dc6fa` |
-| builder | DEFEAT | 11 → 12 → 15 | 15/8 · 0/1 · 0/3 | 36 | `0bf66de9d784c5` |
-| noop | DEFEAT | 2 | 2/3 | 4 | `1cb21ebf543fad` |
+| engineers | VICTORY | 10 → 8 → 9 | 9/8 · 1/1 · 3/3 | 45 | `0251a959bb5926` |
+| archivists | VICTORY | 9 → 11 → 14 | 14/8 · 3/1 · 4/3 | 53 | `09ee106abc140e` |
+| builder | DEFEAT | 11 → 12 → 15 | 15/8 · 0/1 · 0/3 | 36 | `02775750e2cde2` |
+| noop | DEFEAT | 2 | 2/3 | 4 | `1780494abfca56` |
 
 ## What the two winning routes do differently
 
@@ -58,3 +58,43 @@ four retained technologies. Without research, or without an Archive, the same po
 - **Epoch 2 (flood)**: 11 survivors, 1 deaths. Techs: masonry, writing, hydrology. Decisions: historian:fund, river_rising:harvest_early. Standing after: Archive×2, Quarry×1, Seed Vault×1, Hearth×1, Farm×2, Lumber Camp×1, Cottage×2.
 - **Epoch 3 (quake)**: 14 survivors, 0 deaths. Techs: hydrology, masonry, writing, seismic_engineering. Decisions: historian:fund. Standing after: Archive×2, Quarry×1, Seed Vault×1, Hearth×1, Farm×2, Lumber Camp×1, Cottage×3.
 - **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
+
+# The Ashen Winter (second scenario) — EXECUTED
+
+Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatch roofs, no harvest comes, and the larder
+(food on hand plus 25 per sealed Granary) decides who eats. Transcripts in `fixtures/ashen/`, replayed by the same test file.
+
+| Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
+| --- | --- | --- | --- | --- | --- |
+| engineers | VICTORY | 10 → 8 → 11 | 11/8 · 1/1 · 3/3 | 48 | `183c1f9ce36424` |
+| archivists | VICTORY | 9 → 9 → 11 | 11/8 · 2/1 · 4/3 | 51 | `02d80f72796822` |
+| builder | DEFEAT | 11 → 12 → 4 | 4/8 · 0/1 · 0/3 | 36 | `1cb441a380aa54` |
+| steward | DEFEAT | 13 → 11 → 0 | 0/3 | 38 | `19aa8a626dc82b` |
+
+### engineers — VICTORY
+
+- **Epoch 1 (fire)**: 10 survivors, 0 deaths. Techs: masonry, writing. Decisions: historian:fund, dry_wind:clear_brush. Standing after: Hearth×1, Archive×1, Farm×1, Firebreak×1, Quarry×1, Cottage×2.
+- **Epoch 2 (flood)**: 8 survivors, 4 deaths. Techs: masonry, writing, seismic_engineering. Decisions: historian:fund, river_rising:sandbag. Standing after: Hearth×1, Archive×1, Quarry×1, Stone House×2, Lumber Camp×1, Farm×1.
+- **Epoch 3 (ash)**: 11 survivors, 0 deaths. Techs: seismic_engineering, masonry, writing. Decisions: ash_warning:ignore:auto. Standing after: Archive×1, Quarry×1, Stone House×1, Hearth×1, Farm×2, Lumber Camp×1, Granary×2.
+- **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
+
+### archivists — VICTORY
+
+- **Epoch 1 (fire)**: 9 survivors, 1 deaths. Techs: writing, masonry. Decisions: historian:fund, dry_wind:gather_timber. Standing after: Hearth×1, Archive×1, Farm×1, Quarry×1, Seed Vault×1, Cottage×2.
+- **Epoch 2 (flood)**: 9 survivors, 3 deaths. Techs: masonry, writing, hydrology. Decisions: historian:fund, river_rising:harvest_early. Standing after: Archive×1, Seed Vault×1, Hearth×1.
+- **Epoch 3 (ash)**: 11 survivors, 1 deaths. Techs: hydrology, masonry, writing, seismic_engineering. Decisions: historian:fund, ash_warning:trade_grain. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Farm×2, Lumber Camp×1, Granary×2, Cottage×1.
+- **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
+
+### builder — DEFEAT
+
+- **Epoch 1 (fire)**: 11 survivors, 1 deaths. Techs: none. Decisions: dry_wind:ignore:auto. Standing after: Hearth×1, Farm×2, Cottage×3, Quarry×1.
+- **Epoch 2 (flood)**: 12 survivors, 2 deaths. Techs: none. Decisions: river_rising:ignore:auto. Standing after: Quarry×1, Hearth×1, Cottage×1.
+- **Epoch 3 (ash)**: 4 survivors, 11 deaths. Techs: none. Decisions: ash_warning:ignore:auto. Standing after: Quarry×1, Hearth×1, Farm×2, Lumber Camp×1, Cottage×3, Archive×1.
+- **Verdict:** The valley is silent — Not enough of: surviving people; heritage landmarks from an earlier age still standing; technologies carried through the collapse.
+
+### steward — DEFEAT
+
+- **Epoch 1 (fire)**: 13 survivors, 1 deaths. Techs: none. Decisions: dry_wind:ignore:auto. Standing after: Hearth×1, Farm×1, Seed Vault×1, Cottage×3.
+- **Epoch 2 (flood)**: 11 survivors, 0 deaths. Techs: none. Decisions: river_rising:ignore:auto. Standing after: Seed Vault×1, Hearth×1, Cottage×2.
+- **Epoch 3 (ash)**: 0 survivors, 9 deaths. Techs: none. Decisions: ash_warning:ignore:auto. Standing after: Seed Vault×1, Hearth×1, Farm×1, Lumber Camp×1, Cottage×3, Archive×1.
+- **Verdict:** No one is left to remember — Only 0 survived. A society needs at least 3 founders to begin again.

@@ -17,6 +17,7 @@ export type BuildingKind =
   | 'workshop'
   | 'archive'
   | 'seed_vault'
+  | 'granary'
   | 'firebreak'
   | 'stone_house'
   | 'levee'
@@ -37,7 +38,7 @@ export type TechId =
   | 'hydrology'
   | 'seismic_engineering';
 
-export type HazardKind = 'fire' | 'flood' | 'quake';
+export type HazardKind = 'fire' | 'flood' | 'quake' | 'ash';
 
 export type TraditionId =
   | 'remember_fire'
@@ -48,6 +49,8 @@ export type TraditionId =
   | 'silt_farmers'
   | 'stone_hearted'
   | 'deep_foundations'
+  | 'deep_larders'
+  | 'steep_roofs'
   | 'open_hands';
 
 export type Material = 'wood' | 'thatch' | 'stone' | 'earth' | 'iron';
@@ -125,7 +128,7 @@ export interface Structure {
   /** 0..1000. */
   integrity: number;
   /** Extra per-hazard resistance bought by techs/reinforcement/walls (permille). */
-  bonus: { fire: number; flood: number; quake: number };
+  bonus: { fire: number; flood: number; quake: number; ash: number };
   /** Workers staffed this tick (render + UI). */
   workers: number;
   /** Production accumulators (milli) kept so tiny rates never truncate to zero. */
@@ -272,7 +275,8 @@ export type ActionResult = ActionOk | ActionError;
 /* Events, forecast, reports                                           */
 /* ------------------------------------------------------------------ */
 
-export type StoryId = 'dry_wind' | 'river_rising' | 'foreshock' | 'refugees' | 'historian' | 'dam_leak';
+export type StoryId =
+  'dry_wind' | 'river_rising' | 'foreshock' | 'ash_warning' | 'refugees' | 'historian' | 'dam_leak';
 
 export interface StoryOption {
   id: string;
@@ -364,6 +368,7 @@ export interface BeforeCells {
   forest: number[];
   scar: number[];
   silt: number[];
+  pollution: number[];
 }
 
 export interface CollapseReport {

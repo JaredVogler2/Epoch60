@@ -80,7 +80,12 @@ function decalMaterial(color: string, mode: number, alpha = 1): ShaderMaterial {
   });
 }
 
-const HAZARD_COLORS: Record<HazardKind, string> = { fire: '#ff5a1f', flood: '#2f86ff', quake: '#b36bff' };
+const HAZARD_COLORS: Record<HazardKind, string> = {
+  fire: '#ff5a1f',
+  flood: '#2f86ff',
+  quake: '#b36bff',
+  ash: '#c9c4b8',
+};
 
 /** A rectangle draped over the terrain. */
 function rectDecal(x: number, y: number, w: number, h: number, lift: number): BufferGeometry {

@@ -9,9 +9,10 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  PointsMaterial,
   ShaderMaterial,
 } from 'three';
-import { GRID_W } from '../engine';
+import { GRID_W, getScenario } from '../engine';
 import { store } from '../game/store';
 import { h01 } from './geo';
 import {
@@ -128,6 +129,14 @@ void main() {
     vec3 base = mix(vec3(0.33, 0.6, 0.66), vec3(0.16, 0.38, 0.5), clamp(vVal * 1.4, 0.0, 1.0));
     vec3 col = base + 0.06 * (r1 + r2) + vec3(0.04, 0.05, 0.05) * smoothstep(0.0, 0.4, vK);
     gl_FragColor = vec4(col, 0.78 * smoothstep(0.0, 0.25, vK) * uAlpha);
+  } else if (uMode > 2.5) {
+    // ash: a grey blanket settles on each cell once the plume's leading edge has passed, thickest near the vent
+    float k = smoothstep(vArr, vArr + 0.25, uFront);
+    if (k <= 0.003) discard;
+    vec2 q = floor(vWorld.xz * 6.0);
+    float n = fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453);
+    vec3 col = mix(vec3(0.74, 0.72, 0.68), vec3(0.46, 0.44, 0.42), clamp(vVal, 0.0, 1.0)) * (0.93 + 0.14 * n);
+    gl_FragColor = vec4(col, (0.34 + 0.5 * vVal) * k * uAlpha);
   } else {
     float ring = smoothstep(0.08, 0.0, abs(uFront - vArr));
     float after = step(vArr, uFront);
@@ -238,7 +247,14 @@ export function HazardFront() {
   useFrame((s) => {
     mat.uniforms.uTime!.value = s.clock.elapsedTime;
     mat.uniforms.uFront!.value = presentation.front;
-    mat.uniforms.uMode!.value = presentation.hazard === 'fire' ? 0 : presentation.hazard === 'flood' ? 1 : 2;
+    mat.uniforms.uMode!.value =
+      presentation.hazard === 'fire'
+        ? 0
+        : presentation.hazard === 'flood'
+          ? 1
+          : presentation.hazard === 'ash'
+            ? 3
+            : 2;
     // Fade the overlay out as the final (already-scarred) world takes over.
     mat.uniforms.uAlpha!.value =
       1 - Math.min(1, Math.max(0, (presentation.t - FRONT_END) / (1 - FRONT_END))) * 0.85;
@@ -348,4 +364,61 @@ export function DustPuff({ w, h, seed }: { w: number; h: number; seed: number })
       ))}
     </group>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Falling ash: flakes drift down and west while an ashfall is imminent */
+/* ------------------------------------------------------------------ */
+
+const FLAKES = 360;
+
+/** Grey flakes over the valley. Visible during an ash epoch's warnings and the whole collapse; calm otherwise. */
+export function AshFall() {
+  const geom = useMemo(() => {
+    const g = new BufferGeometry();
+    const p = new Float32Array(FLAKES * 3);
+    for (let i = 0; i < FLAKES; i++) {
+      p[i * 3] = h01(i, 1, 7) * 34 - 1;
+      p[i * 3 + 1] = h01(i, 2, 7) * 14;
+      p[i * 3 + 2] = h01(i, 3, 7) * 34 - 1;
+    }
+    g.setAttribute('position', new BufferAttribute(p, 3));
+    return g;
+  }, []);
+  const mat = useMemo(
+    () =>
+      new PointsMaterial({
+        color: '#cfcac0',
+        size: 0.09,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    [],
+  );
+  useFrame((_, dtRaw) => {
+    const c = store.campaign;
+    const dt = Math.min(dtRaw, 0.1);
+    let amount = 0;
+    if (c && store.screen === 'game') {
+      const ash = getScenario(c.scenario).epochs[c.epoch]?.hazard.kind === 'ash';
+      if (ash && c.phase === 'ACTIVE') amount = Math.min(1, Math.max(0, (c.tick - 350) / 200));
+      else if (ash && c.phase === 'COLLAPSING') amount = 1;
+      else if (presentation.active && presentation.hazard === 'ash') amount = 1;
+    }
+    mat.opacity += (amount * 0.85 - mat.opacity) * Math.min(1, dt * 2);
+    if (mat.opacity < 0.01) return;
+    const a = geom.getAttribute('position') as BufferAttribute;
+    const reduced = store.settings.reducedMotion;
+    for (let i = 0; i < FLAKES; i++) {
+      let y = a.getY(i) - dt * (reduced ? 0.4 : 0.9 + h01(i, 4, 7) * 0.9);
+      let x = a.getX(i) - dt * (reduced ? 0.1 : 0.5 + h01(i, 5, 7) * 0.4);
+      if (y < 0) y += 14;
+      if (x < -1) x += 34;
+      a.setXYZ(i, x, y, a.getZ(i));
+    }
+    a.needsUpdate = true;
+  });
+  return <points geometry={geom} material={mat} frustumCulled={false} renderOrder={7} />;
 }

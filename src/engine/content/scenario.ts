@@ -125,7 +125,44 @@ export const GREENVALE: ScenarioSpec = {
   ],
 };
 
-export const SCENARIOS: Record<string, ScenarioSpec> = { greenvale: GREENVALE };
+/**
+ * A second scenario on the same engine: the first two ages are Greenvale's (fire, flood), but the final age is an
+ * ashfall winter — wet ash breaks thatch roofs and no harvest comes, so the larders decide who lives.
+ */
+export const ASHEN: ScenarioSpec = {
+  id: 'ashen',
+  name: 'The Ashen Winter',
+  tagline: 'Fire, flood — and then the sky falls.',
+  victory: GREENVALE.victory,
+  epochs: [
+    GREENVALE.epochs[0]!,
+    GREENVALE.epochs[1]!,
+    {
+      ...GREENVALE.epochs[2]!,
+      id: 'ashen_winter',
+      name: 'The Ashen Winter',
+      ageName: 'Age of Iron',
+      hazard: {
+        kind: 'ash',
+        name: 'Ashfall winter',
+        headline: 'The Ashen Winter',
+        strength: 700,
+        warnings: [
+          'The ridge has been smoking for days. The sky to the east is turning the colour of lead.',
+          'Grey flakes are drifting into the valley — the ash is coming down!',
+          'The sun is gone. Roofs are groaning under the ash, and nothing will grow this year!',
+        ],
+      },
+      scarcity: 'food',
+      scarcityNote: 'Food is scarce, and for a whole winter no harvest will come.',
+      brief:
+        'Forge-smoke and iron towns, built over the old ruins. Far to the east a mountain has woken: when its ash falls the fields will fail.',
+      goal: 'Put food by before the sky darkens, keep the roofs steep and stone, and let something of yours stand through the winter.',
+    },
+  ],
+};
+
+export const SCENARIOS: Record<string, ScenarioSpec> = { greenvale: GREENVALE, ashen: ASHEN };
 
 export function getScenario(id: string): ScenarioSpec {
   const s = SCENARIOS[id];

@@ -227,6 +227,7 @@ export function buildTerrain(
       const scar = clamp(sampleBilinear(world.scar, fx, fy) / 1000, 0, 1);
       const silt = clamp(sampleBilinear(world.silt, fx, fy) / 1000, 0, 1);
       const eros = clamp(sampleBilinear(world.erosion, fx, fy) / 1000, 0, 1);
+      const fouled = clamp(sampleBilinear(world.pollution, fx, fy) / 350, 0, 0.72);
 
       const n1 = noise2(fx * 1.7, fy * 1.7, 11);
       const n2 = noise2(fx * 5.3, fy * 5.3, 23);
@@ -247,6 +248,8 @@ export function buildTerrain(
       c = mix(c, C.silt, silt * 0.7);
       c = mix(c, C.earth, eros * 0.55);
       c = mix(c, mix(C.ash, C.char, n2), scar * 0.9);
+      // Fallen ash: a pale grey blanket that outlasts the winter and poisons the soil beneath.
+      c = mix(c, mix(rgb('#aaa69d'), rgb('#8d8982'), n2), fouled);
       if (pathMask) c = mix(c, C.path, clamp(sampleBilinear(pathMask, fx, fy), 0, 1) * 0.8);
       const y = yardAt(fx, fy);
       if (y > 0) c = mix(c, mix(C.pad, PAL.earth, n2 * 0.4), y * 0.9);

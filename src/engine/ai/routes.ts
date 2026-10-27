@@ -1,5 +1,6 @@
 import type { Campaign, LaborFocus, StoryPrompt, TechId, TraditionId } from '../core/types';
 import { techCost } from '../economy/modifiers';
+import { getScenario } from '../content/scenario';
 import { bestExcavation, type Policy, type Want } from './bots';
 
 /* ------------------------------------------------------------------ */
@@ -7,6 +8,9 @@ import { bestExcavation, type Policy, type Want } from './bots';
 /* ------------------------------------------------------------------ */
 
 const wantsOnly = (ws: Want[]) => ws;
+
+/** The hazard the current age will bring (a veteran of the scenario knows it). */
+const hazardOf = (c: Campaign) => getScenario(c.scenario).epochs[c.epoch]?.hazard.kind;
 
 /** Put idle hands on the archive while a wanted technology is still unaffordable. */
 function scholarly(targets: (c: Campaign) => TechId[]): (c: Campaign) => LaborFocus {
@@ -35,11 +39,14 @@ function pick(prefs: TraditionId[]): (c: Campaign) => TraditionId {
 }
 
 /** Route A — Engineers: stay put, hold the line with stone and earthworks, let the forecast aim every defence. */
+const engineersScholar = scholarly((c) =>
+  c.epoch === 0 ? ['masonry', 'writing'] : c.epoch === 1 ? ['seismic_engineering'] : [],
+);
+
 export const engineers: Policy = {
   name: 'engineers',
-  focus: scholarly((c) =>
-    c.epoch === 0 ? ['masonry', 'writing'] : c.epoch === 1 ? ['seismic_engineering'] : [],
-  ),
+  // Before an ashfall winter the only thing that matters is the larder.
+  focus: (c) => (c.epoch === 2 && hazardOf(c) === 'ash' ? 'food' : engineersScholar(c)),
   wants: (c): Want[] => {
     const e = c.epoch;
     if (e === 0)
@@ -70,6 +77,15 @@ export const engineers: Policy = {
         { id: 'cottage', kind: 'cottage', count: 2, spot: { avoidHazard: true } },
         { id: 'repair', repair: true },
       ]);
+    if (hazardOf(c) === 'ash')
+      return wantsOnly([
+        { id: 'farm', kind: 'farm', count: 2, save: true, spot: { avoidHazard: true } },
+        { id: 'lumber', kind: 'lumber_camp', count: 1 },
+        { id: 'granary', kind: 'granary', count: 2, save: true, spot: { avoidHazard: true } },
+        { id: 'reinforce', reinforce: ['archive', 'stone_house', 'cottage'] },
+        { id: 'stone-house', kind: 'stone_house', count: 3, spot: { avoidHazard: true } },
+        { id: 'repair', repair: true },
+      ]);
     return wantsOnly([
       { id: 'walls', kind: 'retaining_wall', count: 2, mitigate: { stride: 2, maxDist: 24 } },
       { id: 'reinforce', reinforce: ['archive', 'stone_house', 'cottage'] },
@@ -82,6 +98,7 @@ export const engineers: Policy = {
     dry_wind: 'clear_brush',
     river_rising: 'sandbag',
     foreshock: 'brace_worst',
+    ash_warning: 'steep_roofs',
     dam_leak: 'repair_now',
     historian: 'fund',
     refugees: 'welcome',
@@ -141,6 +158,9 @@ export const archivists: Policy = {
     return wantsOnly([
       { id: 'farm', kind: 'farm', count: 2, spot: { avoidHazard: true } },
       { id: 'lumber', kind: 'lumber_camp', count: 1 },
+      ...(hazardOf(c) === 'ash'
+        ? [{ id: 'granary', kind: 'granary' as const, count: 2, save: true, spot: { avoidHazard: true } }]
+        : []),
       { id: 'cottage', kind: 'cottage', count: 3, spot: { avoidHazard: true } },
       { id: 'r-seismic', research: 'seismic_engineering' },
       { id: 'repair', repair: true },
@@ -150,6 +170,7 @@ export const archivists: Policy = {
     dry_wind: 'gather_timber',
     river_rising: 'harvest_early',
     foreshock: 'brace_homes',
+    ash_warning: 'trade_grain',
     historian: 'fund',
     refugees: 'welcome',
   }),

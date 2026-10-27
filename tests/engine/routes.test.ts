@@ -8,12 +8,12 @@ import { ROUTES } from '../../src/engine/ai/routes';
 const SEED = 6001;
 const TIMEOUT = 120_000;
 
-function fixture(name: string): Transcript {
-  return JSON.parse(readFileSync(`fixtures/greenvale/${name}.json`, 'utf8')) as Transcript;
+function fixture(name: string, dir = 'greenvale'): Transcript {
+  return JSON.parse(readFileSync(`fixtures/${dir}/${name}.json`, 'utf8')) as Transcript;
 }
 
-function play(p: Policy, seed = SEED): Campaign {
-  const c = createCampaign(seed);
+function play(p: Policy, seed = SEED, scenario = 'greenvale'): Campaign {
+  const c = createCampaign(seed, 'standard', scenario);
   playCampaign(c, p);
   return c;
 }
@@ -170,5 +170,49 @@ describe('random play does not win', () => {
 
   it('the do-nothing baseline never survives the first fire', () => {
     expect(play(noopPolicy).phase).toBe('DEFEAT');
+  });
+});
+
+describe('executed traces: The Ashen Winter (second scenario, fourth disaster)', () => {
+  const expected = {
+    engineers: 'VICTORY',
+    archivists: 'VICTORY',
+    builder: 'DEFEAT',
+    steward: 'DEFEAT',
+  } as const;
+  for (const [name, phase] of Object.entries(expected)) {
+    it(`${name}: the recorded transcript replays to ${phase} with the recorded hash`, () => {
+      const t = fixture(name, 'ashen');
+      expect(t.scenario).toBe('ashen');
+      const c = replayCampaign(t);
+      expect(c.phase).toBe(phase);
+      expect(computeHash(c)).toBe(t.finalHash);
+    });
+  }
+
+  for (const name of ['engineers', 'archivists'] as const) {
+    it(
+      `${name}: the policy still produces exactly the recorded ashen transcript`,
+      () => {
+        const t = fixture(name, 'ashen');
+        const live = transcriptOf(play(ROUTES[name]!, SEED, 'ashen'));
+        expect(live.finalHash).toBe(t.finalHash);
+      },
+      TIMEOUT,
+    );
+  }
+
+  it('the winter is decided by the larder: Engineers without a Granary starve and lose', () => {
+    const c = play(without(ROUTES.engineers!, ['granary']), SEED, 'ashen');
+    expect(c.phase).toBe('DEFEAT');
+    const people = c.report!.verdict!.conditions.find((x) => x.label === 'Surviving people')!;
+    expect(people.met).toBe(false);
+    expect(c.report!.causes.join(' ')).toMatch(/starved|put by/);
+  });
+
+  it('a steward who ignores roofs and larders is buried by the ash', () => {
+    const c = replayCampaign(fixture('steward', 'ashen'));
+    expect(c.report!.hazard).toBe('ash');
+    expect(c.report!.survivors).toBeLessThan(8);
   });
 });

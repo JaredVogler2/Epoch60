@@ -8,36 +8,50 @@ import { noopPolicy, playCampaign, type Policy } from '../src/engine/ai/bots';
 import { ROUTES } from '../src/engine/ai/routes';
 
 const SEED = 6001;
-const dir = 'fixtures/greenvale';
-mkdirSync(dir, { recursive: true });
 
-const policies: Policy[] = [ROUTES.engineers!, ROUTES.archivists!, ROUTES.builder!, noopPolicy];
-const rows: string[] = [];
-const sections: string[] = [];
-for (const p of policies) {
-  const c = createCampaign(SEED);
-  const run = playCampaign(c, p);
-  const t = transcriptOf(c);
-  const again = replayCampaign(t);
-  if (computeHash(again) !== t.finalHash) throw new Error(`${p.name}: replay diverged from the live run`);
-  writeFileSync(`${dir}/${p.name}.json`, JSON.stringify(t) + '\n');
-  const v = c.report?.verdict;
-  const cond = v ? v.conditions.map((x) => `${x.have}/${x.need}`).join(' · ') : '—';
-  rows.push(
-    `| ${p.name} | ${c.phase} | ${run.epochs.map((e) => e.survivors).join(' → ')} | ${cond} | ${t.actions.length} | \`${t.finalHash}\` |`,
-  );
-  const lines = [`### ${p.name} — ${c.phase}`, ''];
-  for (const e of run.epochs) {
-    const kinds = Object.entries(e.built)
-      .map(([k, n]) => `${BUILDINGS[k as keyof typeof BUILDINGS].name}×${n}`)
-      .join(', ');
-    lines.push(
-      `- **Epoch ${e.epoch + 1} (${e.hazard})**: ${e.survivors} survivors, ${e.deaths} deaths. Techs: ${e.techs.join(', ') || 'none'}. Decisions: ${e.stories.join(', ') || 'none'}. Standing after: ${kinds}.`,
+function record(scenario: string, dir: string, policies: Policy[]) {
+  mkdirSync(dir, { recursive: true });
+  const rows: string[] = [];
+  const sections: string[] = [];
+  for (const p of policies) {
+    const c = createCampaign(SEED, 'standard', scenario);
+    const run = playCampaign(c, p);
+    const t = transcriptOf(c);
+    const again = replayCampaign(t);
+    if (computeHash(again) !== t.finalHash) throw new Error(`${p.name}: replay diverged from the live run`);
+    writeFileSync(`${dir}/${p.name}.json`, JSON.stringify(t) + '\n');
+    const v = c.report?.verdict;
+    const cond = v ? v.conditions.map((x) => `${x.have}/${x.need}`).join(' · ') : '—';
+    rows.push(
+      `| ${p.name} | ${c.phase} | ${run.epochs.map((e) => e.survivors).join(' → ')} | ${cond} | ${t.actions.length} | \`${t.finalHash}\` |`,
     );
+    const lines = [`### ${p.name} — ${c.phase}`, ''];
+    for (const e of run.epochs) {
+      const kinds = Object.entries(e.built)
+        .map(([k, n]) => `${BUILDINGS[k as keyof typeof BUILDINGS].name}×${n}`)
+        .join(', ');
+      lines.push(
+        `- **Epoch ${e.epoch + 1} (${e.hazard})**: ${e.survivors} survivors, ${e.deaths} deaths. Techs: ${e.techs.join(', ') || 'none'}. Decisions: ${e.stories.join(', ') || 'none'}. Standing after: ${kinds}.`,
+      );
+    }
+    if (v) lines.push(`- **Verdict:** ${v.title} — ${v.reason}`);
+    sections.push(lines.join('\n'));
   }
-  if (v) lines.push(`- **Verdict:** ${v.title} — ${v.reason}`);
-  sections.push(lines.join('\n'));
+  return { rows, sections };
 }
+
+const { rows, sections } = record('greenvale', 'fixtures/greenvale', [
+  ROUTES.engineers!,
+  ROUTES.archivists!,
+  ROUTES.builder!,
+  noopPolicy,
+]);
+const ashen = record('ashen', 'fixtures/ashen', [
+  ROUTES.engineers!,
+  ROUTES.archivists!,
+  ROUTES.builder!,
+  ROUTES.steward!,
+]);
 
 const md = `# Greenvale route fixtures — EXECUTED
 
@@ -74,6 +88,17 @@ ${sections.slice(2).join('\n\n')}
 ## Full per-epoch accounts
 
 ${sections.slice(0, 2).join('\n\n')}
+
+# The Ashen Winter (second scenario) — EXECUTED
+
+Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatch roofs, no harvest comes, and the larder
+(food on hand plus 25 per sealed Granary) decides who eats. Transcripts in \`fixtures/ashen/\`, replayed by the same test file.
+
+| Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
+| --- | --- | --- | --- | --- | --- |
+${ashen.rows.join('\n')}
+
+${ashen.sections.join('\n\n')}
 `;
 writeFileSync('fixtures/greenvale-traces.md', md);
 console.log(rows.join('\n'));

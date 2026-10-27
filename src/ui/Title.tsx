@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { hasSave } from '../game/persist';
-import { getScenario } from '../engine';
+import { SCENARIOS, getScenario } from '../engine';
 import { Icon } from './icons';
 import { useStore } from './useStore';
 
@@ -8,7 +8,8 @@ export function TitleScreen() {
   const s = useStore();
   const [view, setView] = useState<'main' | 'help' | 'settings'>('main');
   const canContinue = hasSave();
-  const scenario = getScenario('greenvale');
+  const [scenarioId, setScenarioId] = useState('greenvale');
+  const scenario = getScenario(scenarioId);
   return (
     <div className="title-layer" data-testid="title">
       <div className="title-card">
@@ -17,11 +18,27 @@ export function TitleScreen() {
         <p className="promise">{scenario.tagline}</p>
         {view === 'main' && (
           <div className="title-actions">
+            <div className="scenario-pick" role="radiogroup" aria-label="Scenario">
+              {Object.values(SCENARIOS).map((sc) => (
+                <button
+                  key={sc.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={sc.id === scenarioId}
+                  className={`scenario ${sc.id === scenarioId ? 'on' : ''}`}
+                  data-testid={`scenario-${sc.id}`}
+                  onClick={() => setScenarioId(sc.id)}
+                >
+                  <b>{sc.name}</b>
+                  <small>{sc.epochs.map((e) => e.hazard.name.toLowerCase()).join(' · ')}</small>
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               className="btn primary big"
               data-testid="new-game"
-              onClick={() => s.newGame()}
+              onClick={() => s.newGame(undefined, undefined, scenarioId)}
             >
               <Icon name="play" size={22} /> New Lineage
             </button>

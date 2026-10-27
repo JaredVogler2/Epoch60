@@ -16,7 +16,7 @@ import type {
   Verdict,
 } from '../core/types';
 import { isStanding } from '../economy/modifiers';
-import { resolveHazard } from '../world/hazards';
+import { resolveHazard, winterLarder } from '../world/hazards';
 import { cellsOf, idx } from '../world/query';
 
 const SEVERITY: Record<StructureStatus, number> = {
@@ -30,7 +30,7 @@ const SEVERITY: Record<StructureStatus, number> = {
 /** Share of occupants lost when their home is destroyed / damaged. */
 const DEATH_DESTROYED = 550;
 const DEATH_DAMAGED = 120;
-const DEATH_OUTDOORS: Record<HazardKind, number> = { fire: 400, flood: 400, quake: 250 };
+const DEATH_OUTDOORS: Record<HazardKind, number> = { fire: 400, flood: 400, quake: 250, ash: 150 };
 
 /** How many technologies a society can carry out of a collapse, given each archive's post-hazard status. */
 export function techRetentionCapacity(
@@ -98,6 +98,17 @@ export function computeDeaths(
       `${dead} of ${overflow} people sleeping outdoors were caught in the open — there were not enough homes.`,
     );
   }
+  if (kind === 'ash') {
+    // No harvest comes: the village lives on what it has put by. Shortfall is paid in lives.
+    const { need, have, perPerson } = winterLarder(c);
+    if (have < need) {
+      const starved = Math.min(pop, Math.ceil((need - have) / perPerson));
+      deaths += starved;
+      lines.push(
+        `${starved} starved in the ash winter: ${have} food put by against ${need} needed for ${pop} people.`,
+      );
+    }
+  }
   return { deaths: Math.min(deaths, pop), lines };
 }
 
@@ -111,6 +122,11 @@ function applyWorldEffects(c: Campaign, result: HazardResult): void {
     } else if (result.kind === 'flood') {
       w.silt[i] = Math.min(1000, w.silt[i]! + Math.round(cell.intensity / 2));
       w.erosion[i] = Math.min(1000, w.erosion[i]! + 30);
+    } else if (result.kind === 'ash') {
+      // Ash poisons soil for generations: pollution lingers (it only halves per interregnum), fertility and trees suffer.
+      w.pollution[i] = Math.min(1000, w.pollution[i]! + Math.round(cell.intensity / 3));
+      w.fertility[i] = Math.max(60, w.fertility[i]! - Math.round(cell.intensity / 6));
+      w.forest[i] = Math.round(w.forest[i]! * (1 - Math.min(0.6, cell.intensity / 1600)));
     } else {
       if (cell.intensity >= 400)
         w.erosion[i] = Math.min(1000, w.erosion[i]! + Math.round(cell.intensity / 5));
@@ -217,6 +233,8 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   const result = resolveHazard(c, kind);
   const survivorsBefore = c.civ.pop;
   const { deaths, lines } = computeDeaths(c, result.impacts, kind);
+  // The larder as it stood before the winter: the report must explain the deaths, not the empty village after them.
+  const larder = kind === 'ash' ? winterLarder(c) : null;
 
   // Which technologies are written where, before anything falls.
   const archives = c.structures.filter((s) => BUILDINGS[s.kind].retains > 0 && s.status !== 'constructing');
@@ -288,6 +306,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
     forest: [] as number[],
     scar: [] as number[],
     silt: [] as number[],
+    pollution: [] as number[],
   };
   for (const cell of result.cells) {
     const i = idx(cell.x, cell.y, c.world.w);
@@ -295,6 +314,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
     before.forest.push(c.world.forest[i]!);
     before.scar.push(c.world.scar[i]!);
     before.silt.push(c.world.silt[i]!);
+    before.pollution.push(c.world.pollution[i]!);
   }
   applyWorldEffects(c, result);
   c.civ.pop = Math.max(0, c.civ.pop - deaths);
@@ -330,6 +350,16 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
     );
   if (kind === 'quake' && result.impacts.some((i) => i.after !== 'active'))
     causes.push('Braced frames, stone footings and retaining walls decide who stands after a quake.');
+  if (larder) {
+    const l = larder;
+    causes.push(
+      l.have >= l.need
+        ? `The larders held: ${l.have} food put by for the ${l.need} the winter needed.`
+        : `The winter needed ${l.need} food and only ${l.have} was put by. A sealed Granary, food saved before the ash, and a Seed Vault decide who eats.`,
+    );
+    if (result.impacts.some((i) => i.after !== 'active'))
+      causes.push('Wet ash is heavy. Thatch bowed and fell; steep stone and slate roofs shed it.');
+  }
   const near = result.impacts.filter(
     (i) => (i.damage >= 520 && i.damage < 600) || (i.damage >= 200 && i.damage < 250),
   );

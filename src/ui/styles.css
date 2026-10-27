@@ -377,6 +377,39 @@ h3 {
   border-color: var(--good);
 }
 
+/* ---------- scenario picker ---------- */
+.scenario-pick {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.scenario {
+  flex: 1 1 0;
+  min-height: 52px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--parchment);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.scenario b {
+  display: block;
+  font-size: 0.9rem;
+}
+.scenario small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--dim);
+}
+.scenario.on {
+  border-color: var(--gold);
+  background: rgba(232, 184, 74, 0.14);
+}
+
 /* ---------- story decisions ---------- */
 .story {
   width: min(100%, 560px);

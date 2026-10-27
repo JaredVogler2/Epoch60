@@ -15,7 +15,7 @@ import { store } from '../game/store';
 import { Foliage } from './Foliage';
 import { Structures } from './Structures';
 import { Citizens } from './Citizens';
-import { CollapseDirector, HazardFront } from './CollapseFx';
+import { AshFall, CollapseDirector, HazardFront } from './CollapseFx';
 import { Interaction } from './Interaction';
 import { ForecastOverlay, PlacementGhost, PlannedMarkers, RiskMarkers, SelectionRing } from './Overlays';
 import { CameraRig, DEFAULT_CAMERA, cameraApi } from './CameraRig';
@@ -78,6 +78,7 @@ const MOODS: Record<string, { sun: Color; sky: Color; dim: number }> = {
   fire: { sun: new Color('#ff9650'), sky: new Color('#ffb48a'), dim: 0.28 },
   flood: { sun: new Color('#a9bdd0'), sky: new Color('#8fa6bf'), dim: 0.32 },
   quake: { sun: new Color('#e6caa0'), sky: new Color('#c9b79a'), dim: 0.22 },
+  ash: { sun: new Color('#b8b2a6'), sky: new Color('#a39f98'), dim: 0.5 },
 };
 
 function Lights({ shadowMap }: { shadowMap: number }) {
@@ -171,6 +172,7 @@ export function GameCanvas() {
       <Structures />
       <Citizens />
       <HazardFront />
+      <AshFall />
       <CollapseDirector />
       <ForecastOverlay />
       <RiskMarkers />

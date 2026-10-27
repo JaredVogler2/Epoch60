@@ -527,6 +527,33 @@ function hearth(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number }
 }
 
 /* ------------------------------------------------------------------ */
+/* Granary: a round, sealed stone store with a steep roof              */
+/* ------------------------------------------------------------------ */
+
+function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const g = new GeoBuilder(seed);
+  const gl = new GeoBuilder(seed + 1);
+  const roof = era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
+  g.cyl(0, 0, 0, 0.92, 0.9, 0.14, 12, PAL.stoneDark);
+  g.cyl(0, 0.14, 0, 0.78, 0.74, 0.88, 12, PAL.stone, { wobble: 0.03 });
+  for (const y of [0.34, 0.58, 0.82])
+    g.cyl(0, y, 0, 0.785, 0.785, 0.025, 12, PAL.stoneDark, { capTop: false });
+  g.cyl(0, 1.0, 0, 0.9, 0.0, 0.78, 12, roof, { wobble: era >= 1 ? 0.01 : 0.08 });
+  g.cyl(0, 1.74, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+  door(g, 0, 0.74, 0.3, 0.46, 0.14);
+  g.box(0.1, 0.78, 0.7, 0.34, 0.22, 0.06, PAL.timberDark);
+  for (const [x, z] of [
+    [0.95, 0.5],
+    [-0.9, 0.7],
+  ] as [number, number][]) {
+    g.cyl(x, 0, z, 0.2, 0.18, 0.34, 8, PAL.sandstone);
+    g.cyl(x, 0.34, z, 0.07, 0.0, 0.1, 6, PAL.sandstone);
+  }
+  barrel(g, -0.9, -0.4);
+  return { g, gl, height: 1.8 };
+}
+
+/* ------------------------------------------------------------------ */
 /* Stone house: ashlar walls, tiled roof                               */
 /* ------------------------------------------------------------------ */
 
@@ -834,6 +861,9 @@ export function buildingModel(
       break;
     case 'hearth':
       r = hearth(seed);
+      break;
+    case 'granary':
+      r = granary(era, seed);
       break;
     case 'stone_house':
       r = stoneHouse(variant % 3, era, seed);

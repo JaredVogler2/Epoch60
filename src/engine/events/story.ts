@@ -12,7 +12,7 @@ import type {
   StoryPrompt,
 } from '../core/types';
 import { canAfford, housingCapacity, isStanding } from '../economy/modifiers';
-import { resolveHazard } from '../world/hazards';
+import { resolveHazard, winterLarder } from '../world/hazards';
 import { idx, inBounds } from '../world/query';
 
 /**
@@ -237,6 +237,60 @@ const FORESHOCK: StoryDef = {
   },
 };
 
+const ASH_WARNING: StoryDef = {
+  id: 'ash_warning',
+  at: 200,
+  when: (c) => epochHazard(c) === 'ash',
+  build: (c) => {
+    const l = winterLarder(c);
+    return {
+      title: 'The sky is turning grey',
+      body: `Ash will bury the harvest. The winter needs ${l.need} food; you have ${l.have} put by.`,
+      options: [
+        {
+          id: 'trade_grain',
+          label: 'Trade timber for grain',
+          detail: 'Costs 10 timber. Gain 14 food from the river towns before the roads close.',
+          cost: { timber: 10 },
+        },
+        {
+          id: 'steep_roofs',
+          label: 'Re-pitch the roofs',
+          detail: 'Costs 6 stone. Up to three homes at risk shed ash better (+22% ash resistance).',
+          cost: { stone: 6 },
+        },
+        { id: 'ignore', label: 'Trust the stores', detail: 'Do nothing.' },
+      ],
+      defaultOption: 'ignore',
+    };
+  },
+  apply: (c, option) => {
+    if (option === 'trade_grain') {
+      c.civ.res.food += 14 * UNIT;
+      const l = winterLarder(c);
+      return `14 food came in: ${l.have} now put by against ${l.need} needed.`;
+    }
+    if (option === 'steep_roofs') {
+      const r = resolveHazard(c);
+      const risky = endangered(c)
+        .map((s) => ({ s, d: r.impacts.find((i) => i.id === s.id)?.damage ?? 0 }))
+        .filter((x) => BUILDINGS[x.s.kind].housing > 0)
+        .sort((a, b) => b.d - a.d || a.s.id - b.s.id)
+        .slice(0, 3);
+      for (const t of risky) {
+        t.s.bonus.ash = Math.max(t.s.bonus.ash, 220);
+        t.s.provenance.push('Re-pitched against the ash.');
+      }
+      const was = r.impacts.filter((i) => i.after === 'rubble').length;
+      const after = resolveHazard(c).impacts.filter((i) => i.after === 'rubble').length;
+      return risky.length
+        ? `${risky.length} roof${risky.length > 1 ? 's' : ''} re-pitched; ${Math.max(0, was - after)} fewer now forecast to fall.`
+        : 'There were no homes left to re-pitch.';
+    }
+    return 'You trusted the stores.';
+  },
+};
+
 const REFUGEES: StoryDef = {
   id: 'refugees',
   at: 100,
@@ -338,12 +392,21 @@ export const STORIES: Record<StoryId, StoryDef> = {
   dry_wind: DRY_WIND,
   river_rising: RIVER_RISING,
   foreshock: FORESHOCK,
+  ash_warning: ASH_WARNING,
   refugees: REFUGEES,
   historian: HISTORIAN,
   dam_leak: DAM_LEAK,
 };
 
-const ORDER: StoryId[] = ['refugees', 'historian', 'dry_wind', 'dam_leak', 'river_rising', 'foreshock'];
+const ORDER: StoryId[] = [
+  'refugees',
+  'historian',
+  'dry_wind',
+  'dam_leak',
+  'ash_warning',
+  'river_rising',
+  'foreshock',
+];
 
 /* ------------------------------------------------------------------ */
 /* Engine hooks                                                        */
