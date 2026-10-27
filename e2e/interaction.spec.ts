@@ -1,7 +1,16 @@
 import { expect, test } from '@playwright/test';
 import { campaign, openGame, projectGround, settle, startNewGame } from './helpers';
 
-type HoverWindow = { __epoch: { store: { hoverId: number | null } } };
+type HoverWindow = {
+  __epoch: {
+    store: { hoverId: number | null };
+    camera: {
+      get: () => { x: number; z: number };
+      set: (p: Record<string, number>, instant?: boolean) => void;
+      render: () => void;
+    };
+  };
+};
 
 const hoverState = (page: import('@playwright/test').Page) =>
   page.evaluate(() => ({
@@ -27,4 +36,19 @@ test('the building under the mouse is highlighted and shows a pointer cursor', a
   const off = await projectGround(page, hearth.x + 5, hearth.z + 5);
   await page.mouse.move(off.x, off.y, { steps: 4 });
   await expect.poll(() => hoverState(page)).toEqual({ id: null, cursor: '' });
+
+  // The camera moves under a resting mouse: the highlight follows what is under it now, not what was.
+  await page.mouse.move(on.x, on.y, { steps: 4 });
+  await expect.poll(() => hoverState(page)).toEqual({ id: hearth.id, cursor: 'pointer' });
+  await page.evaluate(() => {
+    const cam = (window as unknown as HoverWindow).__epoch.camera;
+    const at = cam.get();
+    cam.set({ x: at.x + 5, z: at.z + 5 }, true);
+  });
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => (window as unknown as HoverWindow).__epoch.camera.render());
+      return hoverState(page);
+    })
+    .toEqual({ id: null, cursor: '' });
 });

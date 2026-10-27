@@ -1,6 +1,6 @@
-import { useThree } from '@react-three/fiber';
-import { useEffect } from 'react';
-import { Object3D, Raycaster, Vector2, Vector3 } from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import { Matrix4, Object3D, Raycaster, Vector2, Vector3 } from 'three';
 import { GRID_H, GRID_W } from '../engine';
 import { store } from '../game/store';
 import { cameraApi } from './CameraRig';
@@ -56,6 +56,15 @@ export function marchGround(origin: Vector3, dir: Vector3): GroundHit | null {
 
 export function Interaction() {
   const { gl, camera, scene } = useThree();
+  const repick = useRef<(() => void) | null>(null);
+  const seenCamera = useMemo(() => new Matrix4(), []);
+
+  // The camera can move under a resting mouse (keys, wheel, easing, shake): pick again where the mouse is.
+  useFrame(() => {
+    if (seenCamera.equals(camera.matrixWorld)) return;
+    seenCamera.copy(camera.matrixWorld);
+    repick.current?.();
+  });
 
   useEffect(() => {
     const el = gl.domElement;
@@ -87,27 +96,61 @@ export function Interaction() {
       return null;
     };
 
+    // Desktop affordance: the building under the mouse brightens and the cursor shows it can be clicked.
+    // Raycasts hit the structures only, at most every 50 ms, and the latest position is always picked in
+    // the end, so a highlight never stays behind when the mouse or the camera comes to rest.
     let lastHover = 0;
+    let lastMouse: PointerEvent | null = null;
+    let pendingHover: PointerEvent | null = null;
+    let hoverTimer = 0;
     const setHover = (id: number | null) => {
       store.hoverId = id;
-      el.style.cursor = id !== null ? 'pointer' : '';
+      const cursor = id !== null ? 'pointer' : '';
+      if (el.style.cursor !== cursor) el.style.cursor = cursor;
+    };
+    const hoverAt = (e: PointerEvent) => {
+      lastHover = performance.now();
+      pendingHover = null;
+      setHover(store.screen === 'game' && !store.placing ? pickStructure(e) : null);
+    };
+    const queueHover = (e: PointerEvent) => {
+      const wait = 50 - (performance.now() - lastHover);
+      if (wait <= 0) {
+        hoverAt(e);
+        return;
+      }
+      pendingHover = e;
+      if (!hoverTimer)
+        hoverTimer = window.setTimeout(() => {
+          hoverTimer = 0;
+          if (pendingHover) hoverAt(pendingHover);
+        }, wait);
+    };
+    const clearHover = () => {
+      lastMouse = null;
+      pendingHover = null;
+      if (store.hoverId !== null) setHover(null);
+    };
+    repick.current = () => {
+      if (lastMouse && !store.placing) queueHover(lastMouse);
     };
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' || e.buttons !== 0) return;
+      if (e.pointerType !== 'mouse') return;
+      // A held button is a camera drag (or the start of a click): no highlight while it lasts.
+      if (e.buttons !== 0) {
+        clearHover();
+        return;
+      }
+      lastMouse = e;
       if (store.placing) {
+        pendingHover = null;
         if (store.hoverId !== null) setHover(null);
         const g = groundAt(e);
         if (g) store.hoverCell(g.x, g.z);
         return;
       }
-      // Desktop affordance: the building under the cursor brightens and the cursor shows it can be clicked
-      // (raycast against the structures only, at most every 50 ms).
-      const now = performance.now();
-      if (now - lastHover < 50) return;
-      lastHover = now;
-      setHover(store.screen === 'game' ? pickStructure(e) : null);
+      queueHover(e);
     };
-    const onLeave = () => setHover(null);
     const onDown = (e: PointerEvent) => {
       down = { x: e.clientX, y: e.clientY, t: performance.now(), button: e.button, type: e.pointerType };
     };
@@ -158,12 +201,14 @@ export function Interaction() {
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointerleave', onLeave);
+    el.addEventListener('pointerleave', clearHover);
     return () => {
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
-      el.removeEventListener('pointerleave', onLeave);
+      el.removeEventListener('pointerleave', clearHover);
+      window.clearTimeout(hoverTimer);
+      repick.current = null;
       setHover(null);
     };
   }, [gl, camera, scene]);
