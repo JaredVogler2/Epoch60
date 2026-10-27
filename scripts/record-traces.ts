@@ -34,6 +34,7 @@ function record(scenario: string, dir: string, policies: Policy[]) {
         `- **Epoch ${e.epoch + 1} (${e.hazard})**: ${e.survivors} survivors, ${e.deaths} deaths. Techs: ${e.techs.join(', ') || 'none'}. Decisions: ${e.stories.join(', ') || 'none'}. Standing after: ${kinds}.`,
       );
     }
+    lines.push(`- **Traditions chosen:** ${c.lineage.traditions.join(' → ') || 'none'}.`);
     if (v) lines.push(`- **Verdict:** ${v.title} — ${v.reason}`);
     sections.push(lines.join('\n'));
   }
@@ -67,19 +68,29 @@ same forecast and placement information a returning player has, and no hidden en
 | --- | --- | --- | --- | --- | --- |
 ${rows.join('\n')}
 
-## What the two winning routes do differently
+## What the two winning routes do differently — and what they share
 
 **Route A — Engineers (hold the line).** Never leaves the ancestral valley floor. Founds the Archive on the
-north-east ridge — inside the future quake zone — and survives by *engineering*: Masonry and Writing in the Age of
+north-east ridge — inside the future quake zone — and protects it by *engineering*: Masonry and Writing in the Age of
 Thatch, **Seismic Engineering** in the Age of Bronze, then Retaining Walls, Stone Houses and reinforced stonework
-before the Great Quake. It answers story decisions defensively (clear the brush, sandbag, brace the landmark).
-Without Seismic Engineering the same policy loses (ablation test).
+before the Great Quake, and the Deep Foundations tradition when it is offered before the quake age. It answers story
+decisions defensively (clear the brush, sandbag, brace the landmark). On this seed, without Seismic Engineering the
+same policy loses (ablation test).
 
-**Route B — Archivists (scatter and relocate).** Puts its Archive and Seed Vault on ground no hazard of any age
-reaches, founds each later society on the High Ground, researches Writing → Masonry → Hydrology → Seismic
-Engineering, builds a second Archive, and digs up what was left behind. It answers story decisions by gathering
-(timber, harvest) and learning (funding the historian, welcoming refugees). It ends with three standing landmarks and
-four retained technologies. Without research, or without an Archive, the same policy loses (ablation test).
+**Route B — Archivists (scatter and relocate).** Sites its Archive and Seed Vault where it expects the *later* hazards
+to do least harm — not out of reach: on this seed the fire and the quake still cross its Archives and the ash its Seed
+Vault, and they stand on their resistance. It founds each later society on the High Ground, researches Writing →
+Masonry → Hydrology → Seismic Engineering, builds a second Archive, and digs up what was left behind. It answers story
+decisions by gathering (timber, harvest) and learning (funding the historian, welcoming refugees), and ends with
+three standing landmarks and four retained technologies. Without research, or without an Archive, the same policy
+loses (ablation test).
+
+**What they share.** The routes differ in what they *do*; on Greenvale/Normal they do not differ in what the game
+*demands*. A seven-step policy — one Archive sited away from the later flood and quake, one farm, one lumber camp,
+Writing, Masonry, Irrigation and three cottages — wins Greenvale/Normal on 40 of 40 seeds (1–40); the same policy
+with its Archive beside the hearth wins 0 of 40. So on Normal the decisive move is where the Archive stands. The
+recipe fails Hard (0/40: two landmarks and four technologies are needed) and The Ashen Winter (at most 1/40: the ash
+winter needs food put by). See \`docs/KNOWN_ISSUES.md\` K-003.
 
 ## Losing paths
 

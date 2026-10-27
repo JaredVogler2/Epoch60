@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   ACESFilmicToneMapping,
   AgXToneMapping,
@@ -15,15 +15,19 @@ import {
 import type { ToneMapping } from 'three';
 import { getScenario } from '../engine';
 import { store } from '../game/store';
-import { Foliage } from './Foliage';
+import { Foliage, crownMaterial } from './Foliage';
+import { Outskirts } from './Outskirts';
+import { Birds } from './Birds';
+import { Post, graphics } from './Post';
 import { Structures } from './Structures';
 import { Citizens } from './Citizens';
 import { AshFall, CollapseDirector, HazardFront } from './CollapseFx';
+import { FrontFx } from './FrontFx';
 import { Interaction } from './Interaction';
 import { ForecastOverlay, PlacementGhost, PlannedMarkers, RiskMarkers, SelectionRing } from './Overlays';
 import { CameraRig, DEFAULT_CAMERA, cameraApi } from './CameraRig';
 import { resolveQuality } from './quality';
-import { DprGovernor } from './governor';
+import { DprGovernor, MAX_SHED } from './governor';
 import { perfApi } from './perf';
 import { buildWalkable, roadMask } from './paths';
 import { buildSkirt, buildTerrain, buildWater, padsOf } from './terrain';
@@ -78,6 +82,9 @@ function Valley() {
   }, [revs]);
   const skirt = useMemo(() => buildSkirt(model), [model]);
   const waterGeom = useMemo(() => buildWater(model), [model]);
+  // The terrain rebuilds ~100 times an epoch (felling, fire, floods): free each superseded GPU buffer.
+  useEffect(() => () => skirt.dispose(), [skirt]);
+  useEffect(() => () => waterGeom.dispose(), [waterGeom]);
 
   return (
     <group>
@@ -216,6 +223,12 @@ function Governor({ maxDpr, adaptive, phone }: { maxDpr: number; adaptive: boole
     if (!adaptive) return;
     const next = gov.sample(dt * 1000);
     if (next !== null) setDpr(next);
+    // Still over budget at the lowest resolution: shed optional effects one step at a time (see MAX_SHED).
+    if (gov.strained >= 2 && graphics.shed < MAX_SHED) {
+      graphics.shed++;
+      graphics.post = false;
+      gov.strained = 0;
+    }
   });
   return null;
 }
@@ -240,50 +253,79 @@ export function GameCanvas() {
   // `?tone=` lets captures compare tone curves; the default is the one chosen by inspection.
   const tone = useMemo(() => new URLSearchParams(location.search).get('tone') ?? 'neutral', []);
   const still = useMemo(() => new URLSearchParams(location.search).has('still'), []);
+  // A lost WebGL context (GPU reset, iOS memory pressure) pauses the clock; on restore the renderer is rebuilt from
+  // scratch. All game state lives in the store, so nothing in the valley is lost.
+  const [generation, setGeneration] = useState(0);
+  const [lost, setLost] = useState(false);
   return (
-    <Canvas
-      className="game-canvas"
-      frameloop={still ? 'demand' : 'always'}
-      shadows={{ type: PCFShadowMap }}
-      dpr={quality.dpr}
-      gl={{
-        antialias: quality.antialias,
-        alpha: false,
-        powerPreference: 'high-performance',
-        preserveDrawingBuffer: true,
-      }}
-      camera={{ fov: 30, near: 0.5, far: 260, position: [20, 22, 40] }}
-      onCreated={({ gl }) => {
-        gl.toneMapping = TONES[tone] ?? NeutralToneMapping;
-        gl.toneMappingExposure = tone === 'agx' ? 1.15 : tone === 'aces' ? 0.9 : 0.95;
-        gl.outputColorSpace = SRGBColorSpace;
-        gl.localClippingEnabled = true;
-      }}
-    >
-      <Sky />
-      <Lights shadowMap={quality.shadowMap} />
-      <Valley />
-      <Foliage />
-      <Structures />
-      <SmokeField />
-      <Citizens />
-      <HazardFront />
-      <AshFall />
-      <CollapseDirector />
-      <ForecastOverlay />
-      <RiskMarkers />
-      <PlannedMarkers />
-      <SelectionRing />
-      <PlacementGhost />
-      <Interaction />
-      <CameraRig enabled />
-      <StillHook />
-      <Governor
-        maxDpr={quality.dpr}
-        adaptive={!still && store.settings.quality === 'auto'}
-        phone={quality.tier !== 'high'}
-      />
-    </Canvas>
+    <>
+      <Canvas
+        key={generation}
+        className="game-canvas"
+        frameloop={still ? 'demand' : 'always'}
+        shadows={{ type: PCFShadowMap }}
+        dpr={quality.dpr}
+        gl={{
+          antialias: quality.antialias,
+          alpha: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: true,
+        }}
+        camera={{ fov: 30, near: 0.5, far: 260, position: [20, 22, 40] }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = TONES[tone] ?? NeutralToneMapping;
+          gl.toneMappingExposure = tone === 'agx' ? 1.15 : tone === 'aces' ? 0.9 : 0.95;
+          gl.outputColorSpace = SRGBColorSpace;
+          gl.localClippingEnabled = true;
+          const el = gl.domElement;
+          el.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            store.pause('graphics');
+            setLost(true);
+          });
+          el.addEventListener('webglcontextrestored', () => {
+            setLost(false);
+            setGeneration((g) => g + 1);
+          });
+        }}
+      >
+        <Sky />
+        <Lights shadowMap={quality.shadowMap} />
+        <Valley />
+        {quality.outskirts > 0 && (
+          <Outskirts density={quality.outskirts} crown={crownMaterial(quality.wind)} />
+        )}
+        <Foliage />
+        <Structures />
+        <SmokeField />
+        <Citizens />
+        {quality.birds && <Birds />}
+        <HazardFront />
+        <FrontFx />
+        <AshFall />
+        <CollapseDirector />
+        <ForecastOverlay />
+        <RiskMarkers />
+        <PlannedMarkers />
+        <SelectionRing />
+        <PlacementGhost />
+        <Interaction />
+        <CameraRig enabled />
+        <StillHook />
+        {quality.post && <Post />}
+        <Governor
+          maxDpr={quality.dpr}
+          adaptive={!still && store.settings.quality === 'auto'}
+          phone={quality.tier !== 'high'}
+        />
+      </Canvas>
+      <div className="vignette" aria-hidden="true" />
+      {lost && (
+        <div className="gl-lost" role="status">
+          Restoring the valley&hellip; your civilization is paused.
+        </div>
+      )}
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 import { hashString } from '../engine/core/hash';
 import { DIFFICULTY, SCENARIOS } from '../engine';
-import type { Campaign, Difficulty } from '../engine';
+import type { Campaign, Difficulty, GameMode } from '../engine';
 
 /**
  * Ways to start a lineage beyond the story: a shared seed, today's Daily Ruins, or a random expedition.
@@ -81,6 +81,8 @@ export interface RunCard extends RunSpec {
   techs: number;
   epochs: number;
   hash: string;
+  /** Present for Assisted runs, which are ranked apart from standard ones (absent = standard). */
+  mode?: GameMode;
 }
 
 const RUNS_KEY = 'epoch60.runs.v1';
@@ -109,12 +111,18 @@ export function loadRuns(): RunCard[] {
 function isCard(x: unknown): x is RunCard {
   if (!x || typeof x !== 'object') return false;
   const c = x as Record<string, unknown>;
+  const finite = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  // A card from a newer or older build (unknown scenario/difficulty) is skipped, never allowed to break the title.
   return (
     typeof c.id === 'string' &&
-    typeof c.seed === 'number' &&
+    finite(c.seed) &&
     typeof c.scenario === 'string' &&
+    Object.prototype.hasOwnProperty.call(SCENARIOS, c.scenario) &&
+    (c.difficulty === undefined ||
+      (typeof c.difficulty === 'string' && Object.prototype.hasOwnProperty.call(DIFFICULTY, c.difficulty))) &&
     (c.outcome === 'victory' || c.outcome === 'defeat') &&
-    typeof c.survivors === 'number'
+    finite(c.survivors) &&
+    (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted')
   );
 }
 
@@ -136,6 +144,7 @@ export function cardOf(c: Campaign, daily: string | undefined, at: Date): RunCar
     techs: by(2),
     epochs: c.lineage.reports.length,
     hash: hashString(JSON.stringify([c.seed, c.scenario, c.difficulty, c.totalTicks, c.actionLog.length])),
+    ...(c.mode === 'assisted' ? { mode: 'assisted' as const } : {}),
   };
 }
 
@@ -150,13 +159,18 @@ export function saveRun(card: RunCard): RunCard[] {
   return all;
 }
 
-/** The best local result for a spec: victories beat defeats, then more survivors. */
+/** The best local result for a spec: victories beat defeats, then more survivors. Assisted runs rank only among themselves. */
 export function bestFor(
   runs: RunCard[],
-  spec: Pick<RunSpec, 'seed' | 'scenario' | 'difficulty'>,
+  spec: Pick<RunSpec, 'seed' | 'scenario' | 'difficulty'> & { mode?: GameMode },
 ): RunCard | null {
+  const mode = spec.mode ?? 'standard';
   const mine = runs.filter(
-    (r) => r.seed === spec.seed && r.scenario === spec.scenario && r.difficulty === spec.difficulty,
+    (r) =>
+      r.seed === spec.seed &&
+      r.scenario === spec.scenario &&
+      r.difficulty === spec.difficulty &&
+      (r.mode ?? 'standard') === mode,
   );
   mine.sort(
     (a, b) => Number(b.outcome === 'victory') - Number(a.outcome === 'victory') || b.survivors - a.survivors,

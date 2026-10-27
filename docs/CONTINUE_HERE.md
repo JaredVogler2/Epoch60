@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/3 (PRs #1 and #2 were merged; #2 merged a minute after it opened, so later commits needed a new PR) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/4 (PRs #1–#3 were merged; each time `main` was merged back into the branch and a new PR opened, because force-pushes are refused here) · Last verified commit: see `git log -1`.
 
 ## State
 

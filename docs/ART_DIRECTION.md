@@ -1,5 +1,10 @@
 # Art direction and current state
 
+> **Superseded for session 4 onward by [`3D_VISUAL_STANDARD.md`](3D_VISUAL_STANDARD.md)** (the binding art direction and quality bar),
+> [`3D_IMPLEMENTATION_PLAN.md`](3D_IMPLEMENTATION_PLAN.md) and the capture-by-capture log in [`3D_QUALITY_REPORT.md`](3D_QUALITY_REPORT.md).
+> The text below describes the pre-session-4 renderer and is kept as history: its faceted low-poly look, a sun placed behind the camera (front-lit, flat
+> relief) and per-chimney smoke meshes have since been replaced.
+
 ## Intent
 
 A handcrafted miniature diorama of a green valley, seen 3/4 from above: warm sun, soft shadows, faceted low-poly forms with painterly vertex colors,
@@ -32,7 +37,7 @@ a flowing teal river, thatched villages that visibly age into ruins and later er
 | Era transformation   | **2.5**    | Cottages and stone houses are re-roofed by the age they were raised in (thatch → fired tile → slate); stone houses, forge, dam, bridge, levee, retaining wall exist; no distinct Age III skyline or industrial district yet. Ruins persist and age.         |
 | Events & legacy      | 3.5        | Read-only cinematics for fire (front, embers, char), flood (rising surface) and quake (shockwave, camera shake); scorched ground, snags, charred and mossy ruins; story decisions with measured outcomes. Flood front edge is jagged; no fracture geometry. |
 | Camera & input       | 3.5        | Orbit/pan/zoom + touch + keyboard + reliable picking verified in E2E; no inertia tuning pass.                                                                                                                                                               |
-| HUD                  | 4          | World stays visible; compact top bar; usable at 390 px. 320 px layout not yet captured.                                                                                                                                                                     |
+| HUD                  | 4          | World stays visible; compact top bar; usable at 390 px. (Phones down to 320×568 and landscape 667×375 are now covered: see the 3D quality report.)                                                                                                          |
 | Phone performance    | unverified | No device measurement.                                                                                                                                                                                                                                      |
 
 **Verdict:** a convincing vertical-slice look for Ages I–II with a first Age III roofline, _not_ yet release quality. The gate's rejection rule is not triggered

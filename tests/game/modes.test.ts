@@ -99,6 +99,14 @@ describe('share URLs', () => {
     expect(parseShare('?' + 'a=b&'.repeat(200))).toEqual({});
     expect(parseShare('?seed=1.5')).toEqual({});
   });
+
+  it('ignores a link longer than 512 characters, even one that is otherwise valid', () => {
+    const valid = '?seed=42&scenario=ashen&difficulty=hard';
+    const padded = (length: number) => `${valid}&pad=${'x'.repeat(length - valid.length - 5)}`;
+    expect(padded(512)).toHaveLength(512);
+    expect(parseShare(padded(512))).toEqual({ seed: 42, scenario: 'ashen', difficulty: 'hard' });
+    expect(parseShare(padded(513))).toEqual({});
+  });
 });
 
 describe('run cards', () => {

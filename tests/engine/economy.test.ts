@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BUILDINGS, buildSpeedPm, checkPlacement, cloneCampaign, getCatalog, UNIT } from '../../src/engine';
 import { findSpot } from '../../src/engine/ai/spots';
+import { STARVE_TICKS } from '../../src/engine/economy/economy';
 import { act, begin, fresh, place, runTicks, U } from './helpers';
 
 describe('placement legality', () => {
@@ -151,10 +152,16 @@ describe('economy rules', () => {
     const c = fresh();
     c.civ.res.food = 0;
     begin(c);
-    runTicks(c, 200);
-    expect(c.civ.stats.starved).toBeGreaterThan(0);
-    expect(c.civ.pop).toBeGreaterThan(c.civ.pop - 10);
-    expect(c.civ.pop).toBeGreaterThanOrEqual(1);
+    // One person dies per STARVE_TICKS hungry ticks, never several at once.
+    for (let starved = 1; starved <= 4; starved++) {
+      const pop = c.civ.pop;
+      runTicks(c, STARVE_TICKS - 1);
+      expect(c.civ.pop).toBe(pop);
+      runTicks(c, 1);
+      expect(c.civ.pop).toBe(pop - 1);
+      expect(c.civ.stats.starved).toBe(starved);
+    }
+    expect(c.civ.pop).toBe(10 - 4);
   });
 
   it('a farm turns workers and fertile soil into food; the soil is drained as it is farmed', () => {

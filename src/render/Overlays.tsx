@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   BufferAttribute,
   BufferGeometry,
@@ -14,7 +14,7 @@ import { store } from '../game/store';
 import { buildingModel } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
-import { sampleBilinear } from './terrain';
+import { sampleSmooth } from './terrain';
 
 /* ------------------------------------------------------------------ */
 /* Decal shader: terrain-hugging translucent marks                     */
@@ -23,12 +23,15 @@ import { sampleBilinear } from './terrain';
 const decalVert = /* glsl */ `
 attribute vec2 aUv;
 attribute float aVal;
+attribute float aCover;
 varying vec2 vUv;
 varying float vVal;
+varying float vCover;
 varying vec3 vWorld;
 void main() {
   vUv = aUv;
   vVal = aVal;
+  vCover = aCover;
   vec4 w = modelMatrix * vec4(position, 1.0);
   vWorld = w.xyz;
   gl_Position = projectionMatrix * viewMatrix * w;
@@ -40,8 +43,10 @@ uniform vec3 uColor;
 uniform float uTime;
 uniform float uMode;
 uniform float uAlpha;
+uniform float uFill;
 varying vec2 vUv;
 varying float vVal;
+varying float vCover;
 varying vec3 vWorld;
 void main() {
   float stripe = step(0.5, fract((vWorld.x + vWorld.z) * 2.2 - uTime * 0.25));
@@ -51,10 +56,12 @@ void main() {
   float a;
   if (uMode < 0.5) {            // hazard forecast: soft fill, fine drifting stripes, a contour where the zone ends
     float v = vVal;
-    float fill = smoothstep(0.03, 0.4, v);
+    float inside = smoothstep(0.35, 0.65, vCover);
+    float fill = smoothstep(0.03, 0.4, v) * inside;
     float fine = smoothstep(0.42, 0.5, abs(fract((vWorld.x - vWorld.z) * 1.4 - uTime * 0.12) - 0.5));
-    float contour = 1.0 - smoothstep(0.0, 0.035, abs(v - 0.16));
-    a = fill * (0.05 + 0.13 * v) * (0.6 + 0.4 * fine) + contour * 0.62;
+    // The contour follows the zone's edge (the smoothed footprint crossing one half) and keeps a constant pixel width.
+    float contour = 1.0 - smoothstep(0.0, fwidth(vCover) * 1.6, abs(vCover - 0.5));
+    a = fill * (0.05 + 0.13 * v) * (0.6 + 0.4 * fine) * uFill + contour * 0.62;
   } else if (uMode < 1.5) {     // valid placement: soft fill + crisp border
     a = 0.28 + 0.6 * border;
   } else if (uMode < 2.5) {     // invalid: hatched fill + border
@@ -81,6 +88,7 @@ function decalMaterial(color: string, mode: number, alpha = 1): ShaderMaterial {
       uTime: { value: 0 },
       uMode: { value: mode },
       uAlpha: { value: alpha },
+      uFill: { value: 1 },
     },
   });
 }
@@ -120,6 +128,7 @@ function rectDecal(x: number, y: number, w: number, h: number, lift: number): Bu
   g.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3));
   g.setAttribute('aUv', new BufferAttribute(new Float32Array(uv), 2));
   g.setAttribute('aVal', new BufferAttribute(new Float32Array(val), 1));
+  g.setAttribute('aCover', new BufferAttribute(new Float32Array(val), 1));
   return g;
 }
 
@@ -132,28 +141,33 @@ function useRevs(): string {
 /* ------------------------------------------------------------------ */
 
 /**
- * The forecast as a smooth field draped on the terrain: per-cell intensities are blurred and sampled on a finer grid,
- * so the danger zone has a soft body and a clean contour instead of cell-sized squares.
+ * The forecast as a smooth field draped on the terrain: per-cell intensities and the zone's footprint are blurred and
+ * sampled (Catmull-Rom) on a finer grid, so the danger zone has a soft body and a clean contour along its edge instead
+ * of cell-sized squares.
  */
 function forecastGeometry(cells: { x: number; y: number; intensity: number }[]): BufferGeometry {
   const W = GRID_W;
   const H = GRID_H;
   const raw = new Float32Array(W * H);
+  const mask = new Float32Array(W * H);
   let x0 = W;
   let x1 = 0;
   let y0 = H;
   let y1 = 0;
   for (const c of cells) {
     raw[c.y * W + c.x] = Math.max(raw[c.y * W + c.x]!, Math.min(1, c.intensity / 1000));
+    mask[c.y * W + c.x] = 1;
     x0 = Math.min(x0, c.x);
     x1 = Math.max(x1, c.x + 1);
     y0 = Math.min(y0, c.y);
     y1 = Math.max(y1, c.y + 1);
   }
   const field = new Float32Array(W * H);
+  const cover = new Float32Array(W * H);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
       let sum = 0;
+      let msum = 0;
       let wsum = 0;
       for (let j = -1; j <= 1; j++)
         for (let i = -1; i <= 1; i++) {
@@ -162,13 +176,16 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
           if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
           const wgt = i === 0 && j === 0 ? 4 : i === 0 || j === 0 ? 2 : 1;
           sum += raw[yy * W + xx]! * wgt;
+          msum += mask[yy * W + xx]! * wgt;
           wsum += wgt;
         }
       field[y * W + x] = sum / wsum;
+      cover[y * W + x] = msum / wsum;
     }
   const pos: number[] = [];
   const uv: number[] = [];
   const val: number[] = [];
+  const cov: number[] = [];
   const idx: number[] = [];
   if (!cells.length) {
     const g = new BufferGeometry();
@@ -188,7 +205,8 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
       const pz = gy0 + j / S;
       pos.push(px, groundY(px, pz) + 0.06, pz);
       uv.push(0.5, 0.5);
-      val.push(Math.max(0, sampleBilinear(field, px, pz)));
+      val.push(Math.max(0, sampleSmooth(field, px, pz)));
+      cov.push(sampleSmooth(cover, px, pz));
     }
   for (let j = 0; j < nz; j++)
     for (let i = 0; i < nx; i++) {
@@ -196,7 +214,7 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
       const b = a + 1;
       const c2 = a + nx + 1;
       const d = c2 + 1;
-      if (val[a]! < 0.02 && val[b]! < 0.02 && val[c2]! < 0.02 && val[d]! < 0.02) continue;
+      if (cov[a]! < 0.03 && cov[b]! < 0.03 && cov[c2]! < 0.03 && cov[d]! < 0.03) continue;
       idx.push(a, c2, b, b, c2, d);
     }
   const g = new BufferGeometry();
@@ -204,6 +222,7 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
   g.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3));
   g.setAttribute('aUv', new BufferAttribute(new Float32Array(uv), 2));
   g.setAttribute('aVal', new BufferAttribute(new Float32Array(val), 1));
+  g.setAttribute('aCover', new BufferAttribute(new Float32Array(cov), 1));
   return g;
 }
 
@@ -214,7 +233,13 @@ export function ForecastOverlay() {
     !!c && store.screen === 'game' && store.showForecast && (c.phase === 'PREPARE' || c.phase === 'ACTIVE');
   const f = show ? store.getForecastCached() : null;
   const geom = useMemo(() => (f ? forecastGeometry(f.predicted.cells) : null), [f]);
-  const mat = useMemo(() => decalMaterial(HAZARD_COLORS[f?.kind ?? 'fire'], 0), [f?.kind]);
+  useEffect(() => () => geom?.dispose(), [geom]);
+  const mat = useMemo(() => {
+    const m = decalMaterial(HAZARD_COLORS[f?.kind ?? 'fire'], 0);
+    // Quakes and ashfalls threaten whole hillsides: their zone is drawn mostly by its contour, not a tint.
+    m.uniforms.uFill!.value = f?.kind === 'quake' ? 0.35 : f?.kind === 'ash' ? 0.6 : 1;
+    return m;
+  }, [f?.kind]);
   useFrame((s) => {
     mat.uniforms.uTime!.value = s.clock.elapsedTime;
     // Urgency: the overlay brightens as the clock runs down.
@@ -301,7 +326,9 @@ function Decal({
   lift?: number;
 }) {
   const geom = useMemo(() => rectDecal(x, y, w, h, lift), [x, y, w, h, lift]);
+  useEffect(() => () => geom.dispose(), [geom]);
   const mat = useMemo(() => decalMaterial(color, mode, alpha), [color, mode, alpha]);
+  useEffect(() => () => mat.dispose(), [mat]);
   useFrame((s) => {
     mat.uniforms.uTime!.value = s.clock.elapsedTime;
   });

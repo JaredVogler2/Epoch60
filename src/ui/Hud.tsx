@@ -204,6 +204,7 @@ export function BuildTray() {
               key={e.kind}
               type="button"
               className={`card ${sel ? 'selected' : ''} ${e.blocked ? 'blocked' : ''}`}
+              aria-pressed={sel}
               data-testid={`card-${e.kind}`}
               aria-disabled={!!e.blocked}
               aria-label={`${e.name}${e.blocked ? ` — ${e.blocked.message}` : ''}`}
@@ -233,6 +234,7 @@ export function BuildTray() {
         <button
           type="button"
           className={`card tool ${s.panel === 'research' ? 'selected' : ''}`}
+          aria-pressed={s.panel === 'research'}
           data-testid="card-research"
           onClick={() => {
             s.cancelPlacing();

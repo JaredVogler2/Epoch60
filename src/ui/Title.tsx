@@ -10,6 +10,7 @@ export function TitleScreen() {
   const s = useStore();
   const [view, setView] = useState<'main' | 'help' | 'settings'>('main');
   const canContinue = hasSave();
+  const [badSave, setBadSave] = useState(false);
   const [scenarioId, setScenarioId] = useState(() =>
     typeof location === 'undefined' ? 'greenvale' : (parseShare(location.search).scenario ?? 'greenvale'),
   );
@@ -21,10 +22,11 @@ export function TitleScreen() {
   const [seedText, setSeedText] = useState(shared.seed ? String(shared.seed) : '');
   const daily = dailyRun(utcDate(new Date()));
   const typed = seedFromText(seedText);
-  const spec = { seed: typed ?? 6001, scenario: scenarioId, difficulty };
+  const mode = s.settings.assisted ? ('assisted' as const) : ('standard' as const);
+  const spec = { seed: typed ?? 6001, scenario: scenarioId, difficulty, mode };
   const best = typed ? bestFor(s.runs, spec) : null;
   const scenario = getScenario(scenarioId);
-  const dailyBest = bestFor(s.runs, daily);
+  const dailyBest = bestFor(s.runs, { ...daily, mode });
   return (
     <div className="title-layer" data-testid="title">
       <div className="title-card">
@@ -124,28 +126,36 @@ export function TitleScreen() {
               className="btn big"
               data-testid="continue"
               disabled={!canContinue}
-              onClick={() => s.continueGame()}
+              onClick={() => {
+                if (!s.continueGame()) {
+                  // Unreadable or from an incompatible version: set it aside instead of failing silently forever.
+                  s.abandonSave();
+                  setBadSave(true);
+                }
+              }}
             >
               Continue
             </button>
-            <div className="title-row">
-              <button
-                type="button"
-                className="btn ghost"
-                data-testid="how-to"
-                onClick={() => setView('help')}
-              >
-                <Icon name="help" size={18} /> How to play
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                data-testid="settings"
-                onClick={() => setView('settings')}
-              >
-                Settings
-              </button>
-            </div>
+            {badSave && (
+              <p className="note-warn" role="status" data-testid="bad-save">
+                That save could not be read (damaged or from another version) and has been set aside.
+              </p>
+            )}
+          </div>
+        )}
+        {view === 'main' && (
+          <div className="title-row title-more">
+            <button type="button" className="btn ghost" data-testid="how-to" onClick={() => setView('help')}>
+              <Icon name="help" size={18} /> How to play
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              data-testid="settings"
+              onClick={() => setView('settings')}
+            >
+              Settings
+            </button>
           </div>
         )}
         {view === 'help' && (
@@ -258,8 +268,10 @@ export function TitleScreen() {
         <ul className="recent-runs" data-testid="recent-runs" aria-label="Recent lineages">
           {s.runs.slice(0, 3).map((r) => (
             <li key={r.id}>
-              {r.outcome === 'victory' ? '✓' : '✗'} {getScenario(r.scenario).name} · {r.difficulty} · seed{' '}
-              {r.seed} · {r.survivors} survivors{r.daily ? ` · daily ${r.daily}` : ''}
+              {r.outcome === 'victory' ? '✓' : '✗'} {SCENARIOS[r.scenario]?.name ?? r.scenario} ·{' '}
+              {r.difficulty}
+              {r.mode === 'assisted' ? ' · assisted' : ''} · seed {r.seed} · {r.survivors} survivors
+              {r.daily ? ` · daily ${r.daily}` : ''}
             </li>
           ))}
         </ul>

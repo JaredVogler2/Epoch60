@@ -15,6 +15,14 @@ function useShortcuts(): void {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       const c = s.campaign;
       if (!c || s.screen !== 'game') return;
+      // Behind the pause card only Space (resume) works; the dialog itself handles Escape and Tab.
+      if (c.phase === 'ACTIVE' && c.paused) {
+        if (e.key === ' ' && tag !== 'BUTTON') {
+          e.preventDefault();
+          s.togglePause();
+        }
+        return;
+      }
       if (e.key === 'Escape') {
         if (s.placing) s.cancelPlacing();
         else if (s.panel) s.closePanel();
@@ -27,6 +35,8 @@ function useShortcuts(): void {
         s.togglePause();
         return;
       }
+      // Placement and building keys only mean something while the minute is being planned or played.
+      if (c.phase !== 'PREPARE' && c.phase !== 'ACTIVE') return;
       if (e.key.toLowerCase() === 'r' && s.placing) {
         s.rotatePlacing();
         return;

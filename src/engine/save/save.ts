@@ -2,6 +2,7 @@ import { CONTENT_VERSION, RULES_VERSION, SCHEMA_VERSION } from '../core/constant
 import { hashValue } from '../core/hash';
 import type { Action, Campaign, Difficulty, LoggedAction } from '../core/types';
 import { advanceFixedTick, createCampaign, dispatchAction } from '../campaign';
+import { DIFFICULTY, SCENARIOS } from '../content/scenario';
 
 export interface SaveFile {
   schema: number;
@@ -36,6 +37,36 @@ export function serialize(c: Campaign): string {
 
 export class SaveError extends Error {}
 
+const PHASES = new Set([
+  'PREPARE',
+  'ACTIVE',
+  'COLLAPSE_PENDING',
+  'COLLAPSING',
+  'DEBRIEF',
+  'INTERREGNUM',
+  'VICTORY',
+  'DEFEAT',
+]);
+const own = (o: object, k: unknown) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+
+/**
+ * The integrity hash only catches accidents (it is not a signature), so a save must also describe a campaign this
+ * build can actually run: a known scenario, an epoch inside it, a known difficulty, mode and phase, sane numbers.
+ */
+function validateShape(c: Campaign): void {
+  const bad = (why: string): never => {
+    throw new SaveError(`Save data is not a campaign this version can run (${why})`);
+  };
+  if (!own(SCENARIOS, c.scenario)) bad('unknown scenario');
+  const epochs = SCENARIOS[c.scenario]!.epochs.length;
+  if (!Number.isInteger(c.epoch) || c.epoch < 0 || c.epoch >= epochs) bad('epoch out of range');
+  if (!own(DIFFICULTY, c.difficulty)) bad('unknown difficulty');
+  if (c.mode !== 'standard' && c.mode !== 'assisted') bad('unknown mode');
+  if (!PHASES.has(c.phase)) bad('unknown phase');
+  if (!Number.isInteger(c.tick) || c.tick < 0 || c.tick > 600) bad('tick out of range');
+  if (!Array.isArray(c.structures) || !c.world || !c.civ) bad('missing state');
+}
+
 /**
  * Restore a campaign. Unknown schema versions are rejected rather than silently misread. An ACTIVE game always
  * reloads paused so a refresh can never drain the clock.
@@ -53,6 +84,7 @@ export function deserialize(text: string): Campaign {
   if (computeHash(c) !== file.hash) throw new SaveError('Save data failed its integrity check');
   c.prompts ??= []; // saves written before story decisions existed
   c.difficulty ??= 'normal'; // ... or before difficulty tiers
+  validateShape(c);
   if (c.phase === 'ACTIVE') c.paused = true;
   return c;
 }

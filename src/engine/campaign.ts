@@ -303,6 +303,7 @@ export function dispatchAction(c: Campaign, action: Action): ActionResult {
       log(c, action);
       return { ok: true };
     }
+    if (c.queue.length >= MAX_QUEUE) return err('queue_full', 'Too many pending orders');
     c.queue.push({ seq: log(c, action), tick: c.tick, action, paid: false });
     return { ok: true, queued: true };
   }
@@ -337,12 +338,8 @@ export function dispatchAction(c: Campaign, action: Action): ActionResult {
     case 'repair': {
       const s = findStructure(c, action.id);
       if (!s) return err('no_such_structure', 'No such structure');
-      const restorable =
-        (s.status === 'rubble' || s.status === 'buried') &&
-        s.excavated &&
-        BUILDINGS[s.kind].material !== 'thatch';
-      if (s.status !== 'damaged' && !restorable)
-        return err('bad_target', 'Only damaged buildings or excavated ruins can be repaired');
+      const blocked = repairBlocked(c, s);
+      if (blocked) return blocked;
       const cost = repairCost(s);
       const eff = effectiveResources(c);
       const a = canAfford(eff, cost);
@@ -404,6 +401,22 @@ function hintOf(missing: Partial<Resources>): Record<string, number> {
   const h: Record<string, number> = {};
   for (const k of Object.keys(missing) as (keyof Resources)[]) h[k] = Math.ceil((missing[k] ?? 0) / UNIT);
   return h;
+}
+
+/**
+ * Why a structure cannot be repaired (or an excavated ruin restored) right now; null when it can, resources
+ * permitting. Restoring a ruin adds a building, so it counts against the kind's limit like a new one would. Each age
+ * lights its own hearth: an old hearth's ruin can be excavated, not relit.
+ */
+export function repairBlocked(c: Campaign, s: Structure): ActionError | null {
+  const def = BUILDINGS[s.kind];
+  const ruin = s.status === 'rubble' || s.status === 'buried';
+  if (s.status !== 'damaged' && !(ruin && s.excavated && def.material !== 'thatch'))
+    return err('bad_target', 'Only damaged buildings or excavated ruins can be repaired');
+  if (ruin && s.kind === 'hearth') return err('bad_target', 'An old hearth cannot be relit');
+  if (ruin && def.limit !== null && countKind(c, s.kind) >= def.limit)
+    return err('limit_reached', `Limit ${def.limit} reached`);
+  return null;
 }
 
 export function repairCost(s: Structure): Resources {
@@ -503,14 +516,18 @@ function applyAction(c: Campaign, action: Action): void {
     case 'repair': {
       const s = findStructure(c, action.id);
       if (!s) return;
+      // The world may have changed since the order was queued (a ruin restored twice, a limit reached meanwhile).
+      const blocked = repairBlocked(c, s);
+      if (blocked) return reject(c, blocked, 'Repair');
       const cost = repairCost(s);
       if (!canAfford(c.civ.res, cost).ok)
         return reject(c, err('not_enough', 'Not enough resources'), 'Repair');
       pay(c, cost);
       const def = BUILDINGS[s.kind];
       const fresh = s.status === 'damaged' ? 0.6 : 0.35;
-      s.status = 'constructing';
-      s.progress = Math.round(def.buildWork * 1000 * fresh);
+      // Something nobody builds (the hearth: no build work, no builders) is mended at once, never left half-built.
+      s.status = def.buildWork === 0 ? 'active' : 'constructing';
+      s.progress = Math.round(def.buildWork * 1000 * (def.buildWork === 0 ? 1 : fresh));
       s.integrity = 1000;
       s.cause = null;
       s.burial = 0;

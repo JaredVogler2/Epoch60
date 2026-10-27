@@ -5,8 +5,8 @@ Numbers for buildings, techs, traditions and epochs are **generated from the liv
 This file holds the formulas and flow that the tables plug into. If code and this file disagree, the code and its
 tests win and this file is a bug.
 
-Status: rules **v0.1.0** (`RULES_VERSION`), content **v0.1.0**. Implemented: the Greenvale 3-epoch slice engine.
-Win/lose routes are **proposed until traced** (see `fixtures/`), not claimed.
+Status: rules **v0.3.0** (`RULES_VERSION`), content **v0.2.0** (`CONTENT_VERSION`). Implemented: two 3-epoch scenarios (Greenvale; The Ashen Winter),
+four hazards and three difficulty tiers. Winning and losing routes are **executed** and replayed from `fixtures/` (see `fixtures/greenvale-traces.md`).
 
 ## 1. Time
 
@@ -92,8 +92,8 @@ All outputs are `def.output × staffing × modifiers`, using integer rounding on
 | Farm        | `105 × staffing × soil × tech × cond`, `soil = 400 + 0.8 × avgFertility`, `tech = 1000 + foodRate (+250 Irrigation)` |
 | Lumber Camp | `120 × staffing × eff × (1000 + timberRate) × cond`, `eff = min(1000, Σforest(r=3) / 9)`                             |
 | Quarry      | `85 × staffing × (1000 + stoneRate + 250 Masonry) × cond` while rock remains                                         |
-| Archive     | `36 × staffing × (1000 + knowledgeRate + 400 Writing) × cond`                                                        |
-| Hearth      | 10 knowledge/tick (storytelling)                                                                                     |
+| Archive     | `50 × staffing × (1000 + knowledgeRate + 400 Writing) × cond`                                                        |
+| Hearth      | `12 × cond × (1000 + knowledgeRate)` milli-knowledge/tick (storytelling)                                             |
 
 `cond` = 1000 active, 400 damaged. Resources cap at 900 units.
 
@@ -172,7 +172,8 @@ You cannot excavate the same ruin twice or dig everything.
 ### Founding the next society
 
 Choose one of up to three computed **sites** (ancestral hearth, fertile flats, high ground — each scored against the _next_ epoch's hazard) and one of three
-**traditions** (offered because of what just happened, plus Open Hands). Founders = `clamp(round(0.5 × spec.startPop + 0.7 × survivors) + tradition, 5, 16)`.
+**traditions**: a lesson from the hazard that just struck, a preparation for the hazard the next age brings, and Open Hands (topped up from the same two
+hazards once a tradition is already held). Within a hazard the offer rotates with `(seed + 7 × epoch)`, so every tradition comes up in some lineage. Founders = `clamp(round(0.5 × spec.startPop + 0.7 × survivors) + tradition, 5, 16)`.
 Starting resources = scenario base + tradition + excavated yield + 10 food from a surviving Seed Vault. Techs = retained + excavated.
 
 ## 9. Scoring and endings
@@ -285,9 +286,10 @@ learns hydrology in the third age, while the Archivists scatter a Seed Vault. Ba
 - **Seed / shared link** — type a number or any words (hashed to a stable uint32), or open `?seed=…&scenario=…&difficulty=…`. Links are validated: unknown scenarios, non-integer or
   out-of-range seeds, over-long queries and anything that is not a known value are dropped. Nothing in a link can run code or set state.
 - **Random valley** — a random seed in the UI layer (never in the engine); the seed is shown and shareable.
-- **Daily Ruins** — one seed and scenario per UTC calendar date, pinned to Normal, identical for everyone; a run that began on a date finishes as that date's run. There is no server
+- **Daily Ruins** — one seed and scenario per UTC calendar date, pinned to Normal, identical for everyone; a run that began on a date finishes as that date's run (the date is kept beside the save and trusted only if that date's daily really is the saved seed). There is no server
   and no global ranking: results are local run cards (newest first, at most 40) kept in the browser, with "best for this valley" shown on the title and a "Copy link to this valley" button.
-- **Explorer** — the existing Assisted setting (the same 60 simulated seconds at half speed, scored separately) with the Gentle tier.
+- **Assisted** — a setting, combinable with any tier (Gentle is the gentlest pairing): the same 60 simulated seconds at half speed. Assisted runs are marked on their run cards
+  and ranked only against other Assisted runs ("best for this valley").
 
 Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers, a replay viewer.
 

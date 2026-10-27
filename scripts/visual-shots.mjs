@@ -25,6 +25,7 @@ const VIEWPORTS = {
   'iphone-393x852': { width: 393, height: 852, dpr: 2, touch: true },
   'iphone-landscape-844x390': { width: 844, height: 390, dpr: 2, touch: true },
   'small-360x740': { width: 360, height: 740, dpr: 2, touch: true },
+  'small-landscape-667x375': { width: 667, height: 375, dpr: 2, touch: true },
 };
 const SETS = {
   core: ['laptop-1366x768', 'iphone-390x844', 'iphone-landscape-844x390'],
@@ -89,8 +90,23 @@ const SCENES = {
     await page.evaluate((c) => window.__epoch.camera.set(c, true), cam);
   },
   // An animated event: the wildfire front halfway through the collapse cinematic.
-  collapse: async (page, vp) => {
-    await page.evaluate(showcase);
+  collapse: (page, vp) => collapseOf('fire', page, vp),
+  'collapse-flood': (page, vp) => collapseOf('flood', page, vp),
+  'collapse-quake': (page, vp) => collapseOf('quake', page, vp),
+  'collapse-ash': (page, vp) => collapseOf('ash', page, vp),
+};
+
+/** Build the showcase village in the epoch whose hazard is wanted, run it into the collapse, freeze mid-front. */
+async function collapseOf(hazard, page, vp) {
+  {
+    const epoch = hazard === 'flood' ? 1 : hazard === 'quake' || hazard === 'ash' ? 2 : 0;
+    const scenario = hazard === 'ash' ? 'ashen' : 'greenvale';
+    await page.evaluate(
+      showcase.replace(
+        'e.store.newGame(6001);',
+        `e.store.newGame(6001, undefined, '${scenario}'); if (${epoch} > 0) { e.store.campaign.epoch = ${epoch}; }`,
+      ),
+    );
     await page.evaluate(() => {
       const e = window.__epoch;
       e.store.resume();
@@ -101,11 +117,15 @@ const SCENES = {
       ? { x: 17.5, z: 15.5, dist: 30, polar: 0.95, az: 0.3 }
       : { x: 17.5, z: 15.5, dist: 22, polar: 0.8, az: 0.3 };
     await page.evaluate((c) => window.__epoch.camera.set(c, true), cam);
-    await page.evaluate(() => {
-      window.__epoch.presentation.override = 0.45;
-    });
-  },
-};
+    // COLLAPSE_T picks the frozen moment of the cinematic (0..1; the front reaches everything at 0.82).
+    await page.evaluate(
+      (t) => {
+        window.__epoch.presentation.override = t;
+      },
+      Number(process.env.COLLAPSE_T ?? 0.45),
+    );
+  }
+}
 
 const browser = await chromium.launch({
   args: [
