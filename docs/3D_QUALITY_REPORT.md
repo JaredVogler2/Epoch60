@@ -115,3 +115,16 @@ the showcase village's stone house:
 The final pair shows the outline at the house's base and the roof still saturated. A browser test checks the highlight and the cursor,
 including the case where the camera moves under a resting mouse; deliberately removing the camera re-pick, or the throttle's trailing
 pick, makes it fail.
+
+### Session 5 — villagers by job and age (`v5-villagers.jpg`)
+
+| Seen in the capture                                                                      | Fix                                                                                                                 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Jobs told apart only by tunic colour; every working villager carried the same tool shape | A hat or cap per job (straw, felt, leather, red and dark hoods) and a tool per job (hoe, mallet, axe, pick, tablet) |
+| The same outfit in every age                                                             | Undyed linen in the first age, dyed cloth in the second, deeper wool and dark trousers in the third                 |
+| 21 idle villagers knotted around one hearth in the Age III village                       | Idle people spread wider as there are more of them                                                                  |
+
+Captured before and after at Age I and Age III, from 2.4, 6.5, 10 and 15 cells: the jobs read clearly up close and as coloured hats at
+play zoom; at the default distance villagers are still a few pixels tall, and they remain simple low-poly figures — this addresses the
+"citizens are tiny and blocky" note under Geometry & materials without changing its score (4). Cost: five more draw calls
+(`docs/PERF.md`).

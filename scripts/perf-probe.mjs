@@ -76,6 +76,8 @@ ${rows
 - For comparison, before session 4's visual overhaul the same scene cost 118 draw calls and 344k / 440k / 549k triangles (low / medium /
   high). The overhaul cut draw calls (one instanced smoke system instead of per-chimney meshes) and added triangles, mostly the
   smooth-shaded trees and the valley beyond the board; the latter uses far-detail trees (56–160 triangles instead of 240–344).
+- Session 5 gave the villagers headwear and a tool by job (seven instanced meshes of at most 40 each in place of one): 5 more draw calls and about 6k
+  more triangles than the session-4 record (81 / 84 draw calls). Hats and tools skip the shadow pass, where they would be invisible.
 `;
   writeFileSync(reportPath, md);
   console.log('wrote', reportPath);

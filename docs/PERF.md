@@ -8,12 +8,12 @@ Scene: the Age showcase village (16 building kinds, citizens, roads, foliage), c
 
 | Viewport | Tier | Frames | FPS (software) | p50 ms | p95 ms | Draw calls | Triangles | Geometries | Textures | Programs | Pixel ratio | JS heap MB |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| desktop 1366×768 | low | 12 | 5.3 | 16.9 | 973.2 | 81 | 704806 | 55 | 4 | 28 | 1 | 25 |
-| desktop 1366×768 | medium | 25 | 28.4 | 16.6 | 147.3 | 81 | 948810 | 55 | 4 | 28 | 1 | 40 |
-| desktop 1366×768 | high | 27 | 29.6 | 16.8 | 205.1 | 84 | 1168929 | 56 | 6 | 30 | 1 | 26 |
-| iPhone 390×844 @2x | low | 31 | 7.6 | 17 | 559.8 | 81 | 704806 | 55 | 4 | 28 | 1.25 | 36 |
-| iPhone 390×844 @2x | medium | 27 | 54.8 | 16.7 | 20.2 | 81 | 948810 | 55 | 4 | 28 | 1.75 | 28 |
-| iPhone 390×844 @2x | high | 26 | 22.9 | 17.2 | 137.6 | 84 | 1168929 | 56 | 6 | 30 | 2 | 43 |
+| desktop 1366×768 | low | 28 | 9.1 | 17.4 | 727.9 | 86 | 710694 | 61 | 4 | 28 | 1 | 40 |
+| desktop 1366×768 | medium | 26 | 31.2 | 16.6 | 91.2 | 86 | 954698 | 61 | 4 | 28 | 1 | 58 |
+| desktop 1366×768 | high | 25 | 9.3 | 16.6 | 786.3 | 89 | 1174817 | 62 | 6 | 30 | 1 | 48 |
+| iPhone 390×844 @2x | low | 21 | 3.6 | 93.5 | 951.8 | 86 | 710694 | 61 | 4 | 28 | 1.06 | 43 |
+| iPhone 390×844 @2x | medium | 25 | 25.2 | 16.7 | 113.7 | 86 | 954698 | 61 | 4 | 28 | 1.75 | 54 |
+| iPhone 390×844 @2x | high | 26 | 18.8 | 16.6 | 106.4 | 89 | 1174817 | 62 | 6 | 30 | 2 | 48 |
 
 ## What is and is not claimed
 
@@ -25,3 +25,5 @@ Scene: the Age showcase village (16 building kinds, citizens, roads, foliage), c
 - For comparison, before session 4's visual overhaul the same scene cost 118 draw calls and 344k / 440k / 549k triangles (low / medium /
   high). The overhaul cut draw calls (one instanced smoke system instead of per-chimney meshes) and added triangles, mostly the
   smooth-shaded trees and the valley beyond the board; the latter uses far-detail trees (56–160 triangles instead of 240–344).
+- Session 5 gave the villagers headwear and a tool by job (seven instanced meshes of at most 40 each in place of one): 5 more draw calls and about 6k
+  more triangles than the session-4 record (81 / 84 draw calls). Hats and tools skip the shadow pass, where they would be invisible.
