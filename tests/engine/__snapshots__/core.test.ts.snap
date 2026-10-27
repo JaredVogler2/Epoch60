@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`prng > matches a frozen reference sequence (cross-platform determinism guard) 1`] = `
+[
+  4064316376,
+  878681802,
+  1443159481,
+  3985334611,
+]
+`;
