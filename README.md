@@ -8,7 +8,7 @@ This repository is currently a **Claude Code Opus 5.5 Max implementation specifi
 
 **Start:** [prompts/README.md](prompts/README.md)  
 **Master goal:** [prompts/00_MASTER_GOAL.md](prompts/00_MASTER_GOAL.md)  
-**Game rules:** [prompts/01_GAME_DESIGN_BIBLE.md](prompts/01_GAME_DESIGN_AND_CORE_LOOP.md)
+**Game rules:** [prompts/01_GAME_DESIGN_BIBLE.md](prompts/01_GAME_DESIGN_BIBLE.md)
 
 In Claude Code, open this repo and paste:
 
@@ -34,7 +34,7 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 
 ## Status
 
-- [x] Implementation prompt program initiated.
+- [x] Complete 20-stage (00–19) implementation prompt program committed.
 - [ ] Executable game implemented by Claude Code.
 - [ ] First complete 60-second civilization playtested.
 - [ ] 3D art quality acceptance passed.
