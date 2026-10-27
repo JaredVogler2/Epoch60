@@ -9,6 +9,7 @@ import {
   getScenario,
   ruinYield,
   unplan,
+  victoryFor,
 } from '../engine';
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
@@ -36,6 +37,10 @@ export function PrepareCard() {
   const inherited = c.structures.filter((x) => x.originEpoch < c.epoch);
   const ruins = inherited.filter((x) => x.status === 'rubble' || x.status === 'buried').length;
   const standing = inherited.filter((x) => x.status === 'active' || x.status === 'damaged').length;
+  const win = victoryFor(scenario, c.difficulty);
+  const landmarksNow = inherited.filter(
+    (x) => BUILDINGS[x.kind].heritage && (x.status === 'active' || x.status === 'damaged'),
+  ).length;
   return (
     <section className={`prepare ${open ? 'open' : ''}`} data-testid="prepare" aria-label="Epoch briefing">
       <button type="button" className="prepare-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -105,6 +110,23 @@ export function PrepareCard() {
               </button>
             </div>
           ))}
+        </div>
+        <div className="victory-goals" data-testid="victory-goals">
+          <b>To break the cycle, after {scenario.epochs.at(-1)!.hazard.headline}:</b>
+          <ul>
+            <li>
+              <Icon name="people" size={14} /> {win.minSurvivors} people alive
+            </li>
+            <li>
+              <Icon name="hearth" size={14} /> {win.minHeritage} landmark{win.minHeritage === 1 ? '' : 's'}{' '}
+              from an earlier age: a hearth you keep, a Seed Vault, a Dam or a Bridge
+              {c.epoch > 0 && <span className="dim"> ({landmarksNow} now)</span>}
+            </li>
+            <li>
+              <Icon name="archive" size={14} /> {win.minRetainedTechs} technologies carried through: memory
+              keeps one, a standing hearth one, an Archive the rest
+            </li>
+          </ul>
         </div>
         <p className="dim small">
           {scenario.name} · epoch {c.epoch + 1} of {scenario.epochs.length} · preparing takes no time.

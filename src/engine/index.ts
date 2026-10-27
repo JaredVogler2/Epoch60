@@ -35,7 +35,7 @@ export type { PlacementOk } from './economy/placement';
 export { housingCapacity, techCost, mods } from './economy/modifiers';
 export { buildSpeedPm, farmFertilityPm } from './economy/economy';
 export { ruinYield } from './legacy/inheritance';
-export { collapseEpoch } from './legacy/collapse';
+export { collapseEpoch, LANDMARK_HINT, LANDMARK_LABEL } from './legacy/collapse';
 export { generateWorld, validateWorld } from './world/generate';
 export { resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
 export {

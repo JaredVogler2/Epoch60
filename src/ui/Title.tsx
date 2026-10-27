@@ -174,8 +174,8 @@ export function TitleScreen() {
                 people.
               </li>
               <li>
-                Three ages, one valley. Break the cycle: keep people alive, a landmark standing, and knowledge
-                remembered.
+                Three ages, one valley. Break the cycle: keep people alive, a landmark standing (a hearth you
+                keep, a Seed Vault, a Dam or a Bridge) and knowledge remembered in an Archive.
               </li>
             </ol>
             <button type="button" className="btn" onClick={() => setView('main')}>

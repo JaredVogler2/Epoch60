@@ -49,6 +49,11 @@ test('the collapse is inherited: epoch two is the same valley with ruins, scars 
   const touch = info.project.name === 'iphone';
   await openGame(page);
   await startNewGame(page);
+  // The planning card states what winning takes, in the scenario's own numbers.
+  const goals = page.getByTestId('victory-goals');
+  await expect(goals).toContainText('8 people alive');
+  await expect(goals).toContainText('1 landmark from an earlier age');
+  await expect(goals).toContainText('3 technologies carried through');
   const scarBefore = await campaign(page, (c) => c.world.anchors.hearth.x);
   void scarBefore;
   await playOneEpochToDebrief(page, touch, true);
@@ -77,6 +82,8 @@ test('the collapse is inherited: epoch two is the same valley with ruins, scars 
   await page.getByTestId('found').click();
   await expect(page.getByTestId('prepare')).toBeVisible();
   await expect(page.getByTestId('inherit-summary')).toBeAttached();
+  // Founding elsewhere abandoned the old hearth, and nothing else from the first age is a landmark.
+  await expect(page.getByTestId('victory-goals')).toContainText('(0 now)');
   const after = await campaign(page, (c) => ({
     epoch: c.epoch,
     kept: c.structures.filter((s) => s.id !== undefined).length,

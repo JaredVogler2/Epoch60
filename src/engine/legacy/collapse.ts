@@ -4,6 +4,7 @@ import { TECHS } from '../content/techs';
 import { UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type {
+  BuildingKind,
   Campaign,
   CollapseReport,
   HazardKind,
@@ -177,6 +178,14 @@ function scoreOf(c: Campaign, survivors: number, retained: TechId[], heritage: n
   };
 }
 
+export const LANDMARK_LABEL = 'Landmarks from an earlier age still standing';
+/** What counts as a landmark, in words: every heritage building. */
+export const LANDMARK_HINT = `Landmarks are ${(Object.keys(BUILDINGS) as BuildingKind[])
+  .filter((k) => BUILDINGS[k].heritage && BUILDINGS[k].enabled)
+  .map((k) => (k === 'hearth' ? 'a Hearth the later societies kept' : `a ${BUILDINGS[k].name}`))
+  .join(', ')
+  .replace(/, ([^,]*)$/, ' or $1')}; an Archive carries knowledge, not a landmark.`;
+
 export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId[]): Verdict | null {
   const scenario = getScenario(c.scenario);
   const final = c.epoch >= scenario.epochs.length - 1;
@@ -196,7 +205,7 @@ export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId
   const conditions = [
     { label: 'Surviving people', have: survivors, need: v.minSurvivors, met: survivors >= v.minSurvivors },
     {
-      label: 'Heritage landmarks from an earlier age still standing',
+      label: LANDMARK_LABEL,
       have: crossEra,
       need: v.minHeritage,
       met: crossEra >= v.minHeritage,
@@ -216,7 +225,7 @@ export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId
     conditions,
     reason: ok
       ? 'Your people, your landmarks and your knowledge outlasted three collapses.'
-      : `Not enough of: ${missed.join('; ')}.`,
+      : `Not enough of: ${missed.join('; ')}.${conditions[1]!.met ? '' : ` ${LANDMARK_HINT}`}`,
   };
 }
 

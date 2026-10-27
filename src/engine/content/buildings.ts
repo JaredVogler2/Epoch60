@@ -37,6 +37,10 @@ export interface BuildingDef {
   resist: Record<HazardKind, number>;
   /** Flammability contribution to the fire map (0..100). */
   fuel: number;
+  /**
+   * A landmark: counts toward the victory's "landmarks from an earlier age" (and the heritage score). The Archive is
+   * not one — it carries knowledge, which the victory counts separately, so one building cannot answer both.
+   */
   heritage: boolean;
   limit: number | null;
   /** How many technologies this structure can carry through a collapse. */
@@ -272,7 +276,7 @@ export const BUILDINGS: Record<BuildingKind, BuildingDef> = {
     material: 'stone',
     resist: { fire: 850, flood: 450, quake: 450, ash: 650 },
     fuel: 6,
-    heritage: true,
+    heritage: false,
     limit: 2,
     retains: 3,
     refund: 600,
