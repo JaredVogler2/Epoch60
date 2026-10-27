@@ -2,7 +2,7 @@
 
 **One minute to build. Centuries to inherit. Infinite ways to change history.**
 
-This repository is currently a **Claude Code Opus 5.5 Max implementation specification**, not a completed game. It contains executable, sequenced prompts to create a beautiful and genuinely playable 3D desktop/iPhone browser strategy roguelite in which **every 60-second civilization changes the same persistent world**.
+This repository is an **in-progress build** of a game specified by a Claude Code implementation program (the `prompts/` folder). The deterministic engine exists and is tested; the browser game is under construction — see [docs/PROGRESS.md](docs/PROGRESS.md) for exact, evidence-backed status. It contains executable, sequenced prompts to create a beautiful and genuinely playable 3D desktop/iPhone browser strategy roguelite in which **every 60-second civilization changes the same persistent world**.
 
 ## Begin implementation
 
@@ -35,7 +35,7 @@ This is not a four-minute building game accelerated into a timer. **The one-minu
 ## Status
 
 - [x] Complete 20-stage (00–19) implementation prompt program committed.
-- [ ] Executable game implemented by Claude Code.
+- [~] Headless deterministic engine (valley, economy, fire/flood/quake, collapse, inheritance, saves, replays) — 70 tests passing. Browser game: **not yet**.
 - [ ] First complete 60-second civilization playtested.
 - [ ] 3D art quality acceptance passed.
 - [ ] Deterministic multi-epoch inheritance verified.
