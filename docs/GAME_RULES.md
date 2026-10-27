@@ -182,7 +182,7 @@ Score (debrief): `people = 100 × survivors`, `livelihood = 2 × food made + 10 
 `ecology = (meanForest + meanFertility)/10`, `heritage = 150 × heritage structures standing`.
 
 - **Defeat (any epoch):** fewer than 3 survivors — "no one is left to remember".
-- **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 heritage structure (Hearth, Archive, Seed Vault, Dam, Bridge) from an _earlier_ epoch still standing **and** ≥ 3 technologies carried through the final collapse (a surviving people keeps 1 by oral tradition and 1 more through the Hearth, so an Archive must stand to reach 3).
+- **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 **landmark** from an _earlier_ epoch still standing — a Hearth a later society kept (refounding on the same spot), a Seed Vault, a Dam or a Bridge — **and** ≥ 3 technologies carried through the final collapse (a surviving people keeps 1 by oral tradition and 1 more through the Hearth, so an Archive must stand to reach 3). Since rules 0.4.0 an **Archive is not a landmark**: it carries the knowledge, so no single building answers two conditions (before, one well-sited Archive won Greenvale/Normal on every seed; K-003). The planning card lists the three conditions with a live landmark count.
 - Otherwise defeat with the unmet conditions listed.
 
 ## 10. Ages, technology and what each building does
@@ -220,11 +220,12 @@ Every effect above is exercised by `tests/engine/ages.test.ts`; the hazard maths
 Two policies written in `src/engine/ai/routes.ts` win Greenvale on seed 6001 by different mechanisms, and their transcripts are replayed by
 `tests/engine/routes.test.ts` (see `fixtures/greenvale-traces.md`):
 
-- **Engineers** stay on the ancestral valley floor, keep their Archive on the north-east ridge inside the quake zone, and survive the Great Quake by Seismic
-  Engineering, Retaining Walls and Stone Houses.
-- **Archivists** keep Archive and Seed Vault on ground no age's hazard reaches, found each later society on the High Ground, research for retention and dig up what was left.
+- **Engineers** refound above the flood line after the fire and keep that hearth through the quake — it is their landmark — keep their Archive on the
+  north-east ridge inside the quake zone, and survive the Great Quake by Seismic Engineering, Retaining Walls and Stone Houses.
+- **Archivists** keep Archive and Seed Vault (their landmark) on ground no age's hazard reaches, found each later society on the High Ground, research for retention and dig up what was left.
 
-A do-nothing village loses to the first fire; twelve random policies never win; a thriving builder that never researches or plans a landmark loses.
+A do-nothing village loses to the first fire; twelve random policies never win; a thriving builder that never researches or plans a landmark loses; one
+well-sited Archive with nothing else that lasts loses (`minimalRecipe`, `scripts/recipes.ts`).
 
 ## 12. Story decisions (agency during the 60 seconds)
 
@@ -271,14 +272,16 @@ Difficulty changes what the world does and what winning asks for — never the r
 | ------ | --------------- | --------- | ------------------- | --------------------- |
 | Gentle | ×0.88           | 6         | 1                   | 2                     |
 | Normal | ×1.00           | 8         | 1                   | 3                     |
-| Hard   | ×1.15           | 10        | 2                   | 4                     |
+| Hard   | ×1.15           | 10        | 1                   | 4                     |
 
 Strength is applied once, inside `resolveHazard`, so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
 
-**Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): on Normal both tuned routes win every Greenvale seed and
-every Ashen seed sampled, so Normal does not stop a player who has found a recipe. On Hard the routes separate (rules 0.3.0, seeds 1–40): Greenvale Engineers win 85% and Archivists 100%;
-Ashen Engineers 40% and Archivists 78%. Hard asks for a second landmark and a fourth technology, which is why the Engineers route there builds a second Archive (a landmark that also doubles knowledge) and
-learns hydrology in the third age, while the Archivists scatter a Seed Vault. Baselines (no action, random, builder, maximizer) win nothing on Normal or Hard.
+**Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): under rules 0.4.0 both tuned routes win
+Greenvale/Normal on 98–100 of 100 seeds and every Ashen/Normal seed sampled, and on Hard the Engineers win 39/40 on both scenarios and the Archivists 40/40 on
+Greenvale and 31/40 on The Ashen Winter. Hard asks for ten survivors and a fourth technology on top of fiercer hazards, which is why the Engineers there raise a
+second Archive (more knowledge), learn hydrology in the third age and take Open Hands after the flood. Baselines (no action, random, builder, maximizer) win
+nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal still forgives — a player who knows the two moves — is measured by
+`scripts/recipes.ts` (K-003).
 
 ## 15. Ways to start a lineage
 
