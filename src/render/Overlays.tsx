@@ -1,10 +1,11 @@
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   BufferAttribute,
   BufferGeometry,
   Color,
   DoubleSide,
+  Mesh,
   MeshStandardMaterial,
   ShaderMaterial,
 } from 'three';
@@ -60,7 +61,8 @@ void main() {
     float fill = smoothstep(0.03, 0.4, v) * inside;
     float fine = smoothstep(0.42, 0.5, abs(fract((vWorld.x - vWorld.z) * 1.4 - uTime * 0.12) - 0.5));
     // The contour follows the zone's edge (the smoothed footprint crossing one half) and keeps a constant pixel width.
-    float contour = 1.0 - smoothstep(0.0, fwidth(vCover) * 1.6, abs(vCover - 0.5));
+    // fwidth is exactly 0 where the footprint is flat, and smoothstep is undefined when its edges meet: keep them apart.
+    float contour = 1.0 - smoothstep(0.0, max(fwidth(vCover) * 1.6, 1e-4), abs(vCover - 0.5));
     a = fill * (0.05 + 0.13 * v) * (0.6 + 0.4 * fine) * uFill + contour * 0.62;
   } else if (uMode < 1.5) {     // valid placement: soft fill + crisp border
     a = 0.28 + 0.6 * border;
@@ -68,8 +70,10 @@ void main() {
     a = (0.22 + 0.3 * stripe) + 0.55 * border;
   } else if (uMode < 3.5) {     // selection ring
     a = border * (0.7 + 0.3 * pulse);
-  } else {                      // at-risk marker
+  } else if (uMode < 4.5) {     // at-risk marker
     a = (0.18 + 0.55 * border) * pulse;
+  } else {                      // hover: a faint, steady outline
+    a = border * 0.6;
   }
   gl_FragColor = vec4(uColor, a * uAlpha);
   #include <colorspace_fragment>
@@ -140,6 +144,49 @@ function useRevs(): string {
 /* Hazard forecast on the terrain                                      */
 /* ------------------------------------------------------------------ */
 
+/** 3×3 binomial blur (weights 4/2/1), renormalised at the board edge. */
+function blur3(src: Float32Array, W: number, H: number): Float32Array {
+  const out = new Float32Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      let sum = 0;
+      let wsum = 0;
+      for (let j = -1; j <= 1; j++)
+        for (let i = -1; i <= 1; i++) {
+          const xx = x + i;
+          const yy = y + j;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const wgt = i === 0 && j === 0 ? 4 : i === 0 || j === 0 ? 2 : 1;
+          sum += src[yy * W + xx]! * wgt;
+          wsum += wgt;
+        }
+      out[y * W + x] = sum / wsum;
+    }
+  return out;
+}
+
+/** Morphological closing (3×3 dilate, then erode): fills one-cell holes and gaps without growing the outline. */
+function closeMask(m: Float32Array, W: number, H: number): Float32Array {
+  const pass = (src: Float32Array, dilate: boolean) => {
+    const out = new Float32Array(W * H);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) {
+        let v = dilate ? 0 : 1;
+        for (let j = -1; j <= 1; j++)
+          for (let i = -1; i <= 1; i++) {
+            const xx = x + i;
+            const yy = y + j;
+            // Off the board counts as inside when eroding, so the board edge never eats into a zone.
+            const s = xx < 0 || yy < 0 || xx >= W || yy >= H ? (dilate ? 0 : 1) : src[yy * W + xx]!;
+            v = dilate ? Math.max(v, s) : Math.min(v, s);
+          }
+        out[y * W + x] = v;
+      }
+    return out;
+  };
+  return pass(pass(m, true), false);
+}
+
 /**
  * The forecast as a smooth field draped on the terrain: per-cell intensities and the zone's footprint are blurred and
  * sampled (Catmull-Rom) on a finer grid, so the danger zone has a soft body and a clean contour along its edge instead
@@ -162,26 +209,10 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
     y0 = Math.min(y0, c.y);
     y1 = Math.max(y1, c.y + 1);
   }
-  const field = new Float32Array(W * H);
-  const cover = new Float32Array(W * H);
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      let sum = 0;
-      let msum = 0;
-      let wsum = 0;
-      for (let j = -1; j <= 1; j++)
-        for (let i = -1; i <= 1; i++) {
-          const xx = x + i;
-          const yy = y + j;
-          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
-          const wgt = i === 0 && j === 0 ? 4 : i === 0 || j === 0 ? 2 : 1;
-          sum += raw[yy * W + xx]! * wgt;
-          msum += mask[yy * W + xx]! * wgt;
-          wsum += wgt;
-        }
-      field[y * W + x] = sum / wsum;
-      cover[y * W + x] = msum / wsum;
-    }
+  const field = blur3(raw, W, H);
+  // The footprint can be patchy (a fire spreads only through forest): close one-cell gaps so the zone reads as one
+  // shape, then blur twice, so its edge is a single clean contour instead of speckle wherever the mask flickers.
+  const cover = blur3(blur3(closeMask(mask, W, H), W, H), W, H);
   const pos: number[] = [];
   const uv: number[] = [];
   const val: number[] = [];
@@ -193,10 +224,10 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
     return g;
   }
   const S = 3;
-  const gx0 = Math.max(0, x0 - 1);
-  const gy0 = Math.max(0, y0 - 1);
-  const gx1 = Math.min(W, x1 + 1);
-  const gy1 = Math.min(H, y1 + 1);
+  const gx0 = Math.max(0, x0 - 2);
+  const gy0 = Math.max(0, y0 - 2);
+  const gx1 = Math.min(W, x1 + 2);
+  const gy1 = Math.min(H, y1 + 2);
   const nx = (gx1 - gx0) * S;
   const nz = (gy1 - gy0) * S;
   for (let j = 0; j <= nz; j++)
@@ -396,6 +427,38 @@ export function SelectionRing() {
   return (
     <Decal x={s.x - 0.1} y={s.y - 0.1} w={s.w + 0.2} h={s.h + 0.2} color="#ffd25a" mode={3} lift={0.09} />
   );
+}
+
+/**
+ * A faint, steady outline under the building the mouse is over (desktop): a quieter cousin of the selection ring.
+ * Hover is render-only state, so this follows it frame by frame instead of re-rendering through the store.
+ */
+export function HoverRing() {
+  const mesh = useRef<Mesh>(null);
+  const mat = useMemo(() => decalMaterial('#fff3d6', 5), []);
+  // The outline is rebuilt only when the hovered building changes.
+  const ring = useMemo(() => ({ id: null as number | null, geom: null as BufferGeometry | null }), []);
+  useEffect(
+    () => () => {
+      ring.geom?.dispose();
+      mat.dispose();
+    },
+    [mat, ring],
+  );
+  useFrame(() => {
+    const m = mesh.current;
+    if (!m) return;
+    const id = store.hoverId !== store.selectedId && !store.placing ? store.hoverId : null;
+    if (id !== ring.id) {
+      ring.id = id;
+      ring.geom?.dispose();
+      const s = id !== null ? store.campaign?.structures.find((st) => st.id === id) : undefined;
+      ring.geom = s ? rectDecal(s.x - 0.08, s.y - 0.08, s.w + 0.16, s.h + 0.16, 0.085) : null;
+      if (ring.geom) m.geometry = ring.geom;
+    }
+    m.visible = ring.geom !== null;
+  });
+  return <mesh ref={mesh} material={mat} renderOrder={5} frustumCulled={false} visible={false} />;
 }
 
 /** Pulsing markers on buildings the coming hazard will damage or destroy. */

@@ -5,16 +5,28 @@ All commands run in this repository on Node 22.22 with the pinned dependency set
 
 ## Latest verified run
 
-| Command                                                   | Result                                                                                                                                                                                                                                                                                                      |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run typecheck`                                       | clean (strict, `noUncheckedIndexedAccess`)                                                                                                                                                                                                                                                                  |
-| `npm run lint`                                            | 0 findings (engine forbids `Math.random`/`Date.now`/`performance.now`)                                                                                                                                                                                                                                      |
-| `npm test` (Vitest)                                       | **25 files, 247 tests passed**                                                                                                                                                                                                                                                                              |
-| `npm run build`                                           | success (JS 486 kB + R3F/three chunk 924 kB; gzip 157 kB + 246 kB)                                                                                                                                                                                                                                          |
-| `npx playwright test` (Chromium, SwiftShader software GL) | full suite on the visual-pass build before the review fixes: **53 passed, 2 skipped, 1 failed** (22.3 min) — the failure was a test artefact (see below); then on this build: context loss, persistence and campaign specs on both profiles and the four browser victory replays on desktop, **all passed** |
-| `npx vite-node scripts/record-traces.ts`                  | all eight transcripts re-recorded under rules 0.3.0 and re-read: every verdict unchanged (`fixtures/greenvale-traces.md`)                                                                                                                                                                                   |
+| Command                                                   | Result                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                       | clean (strict, `noUncheckedIndexedAccess`)                                                                                                                                                                                                                  |
+| `npm run lint`                                            | 0 findings (engine forbids `Math.random`/`Date.now`/`performance.now`)                                                                                                                                                                                      |
+| `npm test` (Vitest)                                       | **25 files, 247 tests passed**                                                                                                                                                                                                                              |
+| `npm run build`                                           | success (JS 489 kB + R3F/three chunk 924 kB; gzip 158 kB + 246 kB)                                                                                                                                                                                          |
+| `npx playwright test` (Chromium, SwiftShader software GL) | full suite after visual iteration 3 and the first hover version: **57 passed, 3 skipped, 0 failed** (18.2 min); then on the final build (hover outline, trailing pick, camera re-pick) the hover, journey and layout specs on both profiles: **all passed** |
+| hover mutation checks                                     | the hover test **fails** with the camera re-pick removed (the highlight stays on the hearth after a pan) and with the throttle's trailing pick removed (the last steps onto the hearth are dropped)                                                         |
+| `npx vite-node scripts/sim.ts`                            | rules 0.3.0: Greenvale/Normal 100 seeds × 7 policies and 40 seeds on Gentle, Hard and Ashen — 0 invariant violations, 0 soft-locks; results in `docs/BALANCE_REPORT.md` and `docs/balance/`                                                                 |
+| `npx vite-node scripts/record-traces.ts`                  | all eight transcripts re-recorded under rules 0.3.0 and re-read: every verdict unchanged (`fixtures/greenvale-traces.md`)                                                                                                                                   |
 
-The two skipped Playwright cases are deliberately desktop-only: the keyboard-only first epoch (a hardware-keyboard path) and the hover-ghost invalid-placement test (hover is a desktop affordance).
+The three skipped Playwright cases are deliberately desktop-only: the keyboard-only first epoch (a hardware-keyboard path), the hover-ghost invalid-placement test and the building hover highlight (hover is a mouse affordance).
+
+### What the checks found after iteration 3
+
+- The full suite found nothing new. The hover highlight was then inspected in captures (`docs/3D_QUALITY_REPORT.md`): too faint on pale
+  stone, washed out on a red roof; it became an outline plus a multiplied brightening. Reading the hover code found that the 50 ms
+  throttle dropped the last pointer move (a highlight could stay on a building the mouse had left) and that a camera moving under a
+  resting mouse never re-picked; both fixed, and the browser test now covers them.
+- A first mutation run of that test passed even with the camera re-pick removed. Playwright reuses any server already listening on port
+  4173 (`reuseExistingServer`), so it most likely tested a stale build; against a preview server started on the mutated build it failed
+  as it should. Mutation checks now start their own server.
 
 ### What the browser suite found in session 4
 
@@ -52,6 +64,8 @@ The two skipped Playwright cases are deliberately desktop-only: the keyboard-onl
 - Audio: nothing starts before a gesture, exactly one `AudioContext`, mute persists across reload, separate music/effects volume.
 - Modes: share links pre-select valley/scenario/difficulty, hostile or malformed links are ignored, any words give a stable seed, Daily Ruins and local run cards.
 - Reduced motion: honoured from the OS by default; the catastrophe card appears at once with the facts kept.
+- Graphics: a lost WebGL context pauses the epoch and the valley is redrawn when it returns.
+- Hover (desktop): the building under the mouse is highlighted with a pointer cursor, the highlight follows the camera under a resting mouse, and it never stays behind.
 
 ## Not yet verified (honest list)
 
@@ -60,5 +74,5 @@ The two skipped Playwright cases are deliberately desktop-only: the keyboard-onl
 - **Visual quality judged only by me via software-GL screenshots** (`docs/review/`); no independent art review yet.
 - **Audio has never been heard by a person**; the tests prove wiring and gesture rules, not taste.
 - **Screen-reader behaviour is untested with a real screen reader**; the live-region content and ARIA structure are asserted, not their spoken output.
-- No human playtest; 320 px landscape and very small phones have been inspected by screenshot only at 320×568 portrait.
+- No human playtest. Phones were inspected by screenshot (390×844, 393×852, 360×740, 844×390, 667×375, 320×568) and measured for touch targets with an emulated coarse pointer, never used by hand.
 - No automated visual-diff baseline.

@@ -24,7 +24,14 @@ import { Citizens } from './Citizens';
 import { AshFall, CollapseDirector, HazardFront } from './CollapseFx';
 import { FrontFx } from './FrontFx';
 import { Interaction } from './Interaction';
-import { ForecastOverlay, PlacementGhost, PlannedMarkers, RiskMarkers, SelectionRing } from './Overlays';
+import {
+  ForecastOverlay,
+  HoverRing,
+  PlacementGhost,
+  PlannedMarkers,
+  RiskMarkers,
+  SelectionRing,
+} from './Overlays';
 import { CameraRig, DEFAULT_CAMERA, cameraApi } from './CameraRig';
 import { resolveQuality } from './quality';
 import { DprGovernor, MAX_SHED } from './governor';
@@ -308,6 +315,7 @@ export function GameCanvas() {
         <RiskMarkers />
         <PlannedMarkers />
         <SelectionRing />
+        <HoverRing />
         <PlacementGhost />
         <Interaction />
         <CameraRig enabled />

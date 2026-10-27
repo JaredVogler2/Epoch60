@@ -8,14 +8,20 @@ Scene: the Age showcase village (16 building kinds, citizens, roads, foliage), c
 
 | Viewport | Tier | Frames | FPS (software) | p50 ms | p95 ms | Draw calls | Triangles | Geometries | Textures | Programs | Pixel ratio | JS heap MB |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| desktop 1366×768 | low | 33 | 9.8 | 16.9 | 526.6 | 118 | 344292 | 115 | 4 | 21 | 1 | 48 |
-| desktop 1366×768 | medium | 30 | 7.9 | 16.8 | 788.5 | 118 | 439748 | 113 | 4 | 21 | 1 | 36 |
-| desktop 1366×768 | high | 27 | 13.9 | 16.6 | 424.1 | 118 | 549380 | 113 | 4 | 21 | 1 | 43 |
-| iPhone 390×844 @2x | low | 27 | 5 | 255.1 | 507 | 118 | 344292 | 121 | 4 | 21 | 1.25 | 58 |
-| iPhone 390×844 @2x | medium | 7 | 2.1 | 641.8 | 766.6 | 118 | 439748 | 117 | 4 | 21 | 1.75 | 45 |
-| iPhone 390×844 @2x | high | 30 | 9.3 | 17.1 | 968.6 | 118 | 549380 | 111 | 4 | 21 | 2 | 43 |
+| desktop 1366×768 | low | 12 | 5.3 | 16.9 | 973.2 | 81 | 704806 | 55 | 4 | 28 | 1 | 25 |
+| desktop 1366×768 | medium | 25 | 28.4 | 16.6 | 147.3 | 81 | 948810 | 55 | 4 | 28 | 1 | 40 |
+| desktop 1366×768 | high | 27 | 29.6 | 16.8 | 205.1 | 84 | 1168929 | 56 | 6 | 30 | 1 | 26 |
+| iPhone 390×844 @2x | low | 31 | 7.6 | 17 | 559.8 | 81 | 704806 | 55 | 4 | 28 | 1.25 | 36 |
+| iPhone 390×844 @2x | medium | 27 | 54.8 | 16.7 | 20.2 | 81 | 948810 | 55 | 4 | 28 | 1.75 | 28 |
+| iPhone 390×844 @2x | high | 26 | 22.9 | 17.2 | 137.6 | 84 | 1168929 | 56 | 6 | 30 | 2 | 43 |
 
 ## What is and is not claimed
 
-- Targets (60 fps on a midrange laptop, 30 fps on a midrange iPhone) are **unproven**: no real-device measurement exists. The adaptive pixel-ratio governor (`src/render/governor.ts`, unit-tested) is the mitigation, and it never removes geometry or forecast information.
-- Draw-call and triangle budgets above are real counts from `renderer.info` for the last rendered frame.
+- Targets (60 fps on a midrange laptop, 30 fps on a midrange iPhone) are **unproven**: no real-device measurement exists. The adaptive
+  governor (`src/render/governor.ts`, unit-tested) is the mitigation: it lowers the pixel ratio first, then sheds post-processing and
+  finally the birds and the decorative valley beyond the board. It never removes geometry the player needs or any forecast information.
+- Draw-call and triangle counts are real counts from `renderer.info` for one whole frame, including the shadow pass and, on the high tier,
+  every post-processing pass.
+- For comparison, before session 4's visual overhaul the same scene cost 118 draw calls and 344k / 440k / 549k triangles (low / medium /
+  high). The overhaul cut draw calls (one instanced smoke system instead of per-chimney meshes) and added triangles, mostly the
+  smooth-shaded trees and the valley beyond the board; the latter uses far-detail trees (56–160 triangles instead of 240–344).

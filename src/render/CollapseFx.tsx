@@ -186,7 +186,7 @@ void main() {
     // Fissures: a warped noise contour, kept only in short runs and only where the shaking was strong.
     vec2 wq = p * 1.6 + vec2(atmoNoise(p * 4.0), atmoNoise(p * 4.0 + 7.0)) * 0.8;
     float c = atmoNoise(wq);
-    float line = 1.0 - smoothstep(0.0, fwidth(c) * 1.1, abs(c - 0.5));
+    float line = 1.0 - smoothstep(0.0, max(fwidth(c) * 1.1, 1e-4), abs(c - 0.5));
     float crack = line * smoothstep(0.55, 0.7, atmoNoise(p * 0.8 + 19.0)) * smoothstep(0.5, 0.85, vVal) * after;
     float aDust = ring * (0.22 + 0.45 * vVal) + after * vVal * 0.1 * (0.6 + 0.4 * n);
     float aCrack = crack * 0.65;

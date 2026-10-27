@@ -326,6 +326,7 @@ h3 {
 }
 .timer-hazard .risk {
   color: var(--warn);
+  white-space: nowrap;
 }
 .timer.watch .timer-digits {
   color: #ffd27a;
@@ -1102,6 +1103,15 @@ h3 {
   padding-top: calc(var(--safe-t) + 80px);
   background: none;
 }
+/* Below ~1100 px the centred banner would sit on the resource chips (and on phones the top is full anyway): during the cinematic
+   the bottom is free, so the banner and its Skip button sit there, under the thumb. */
+@media (max-width: 1100px), (max-height: 520px) {
+  .collapse-overlay.playing {
+    justify-content: flex-end;
+    padding-top: 0;
+    padding-bottom: calc(var(--safe-b) + 24px);
+  }
+}
 .collapse-banner {
   display: flex;
   align-items: center;
@@ -1302,9 +1312,10 @@ h3 {
   border: 1px solid var(--line);
 }
 .logo {
-  font-size: clamp(3.4rem, 17vw, 6rem);
-  letter-spacing: 0.28em;
-  margin: 0 0 0 0.28em;
+  /* sized so the five spaced capitals stay inside the card's padding (they overflowed it at 6rem / 0.28em) */
+  font-size: clamp(3.4rem, 13vw, 5rem);
+  letter-spacing: 0.22em;
+  margin: 0 0 0 0.22em;
   color: var(--gold);
   text-shadow: 0 3px 20px rgba(0, 0, 0, 0.7);
 }
@@ -1406,6 +1417,16 @@ h3 {
   .timer-hazard {
     font-size: 0.74rem;
   }
+  /* With a risk count the line would wrap in a phone-sized timer: the icon names the hazard (the name stays for screen readers). */
+  .timer-hazard:has(.risk) .hz-name,
+  .timer-hazard:has(.risk) .hz-sep {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
   /* Help is the one control phones can drop (it is also on the title screen); sound must stay reachable. */
   .top-right .btn-icon[aria-label='Help'] {
     display: none;
@@ -1502,6 +1523,9 @@ h3 {
   .chip-rate {
     display: none;
   }
+}
+/* Icon buttons keep a 44 px touch target down to 341 px wide; only the narrowest phones (320 px) trade 4 px for room. */
+@media (max-width: 340px) {
   .btn-icon {
     width: 40px;
     height: 40px;
@@ -1580,6 +1604,10 @@ h3 {
   .promise {
     display: block;
     font-size: 0.8rem;
+  }
+  .title-more .btn {
+    white-space: nowrap;
+    padding-inline: 12px;
   }
   .title-actions {
     gap: 6px;

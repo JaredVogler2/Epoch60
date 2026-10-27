@@ -207,6 +207,9 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     } else {
       mat.color.copy(white);
     }
+    // The building under the mouse brightens a little (desktop hover affordance; `HoverRing` draws its outline).
+    // A multiplied lift keeps the shading's contrast, where added light would wash the walls and roof out.
+    if (store.hoverId === s.id && !store.placing) mat.color.multiplyScalar(1.15);
     // Crops ripen while a staffed farm is active.
     if (s.kind === 'farm') {
       const target =

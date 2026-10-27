@@ -144,31 +144,32 @@ function crown(b: TreeBuilder, lobes: Lobe[], seed: number, detail = 1, lump = 0
   });
 }
 
-/** Round broadleaf (oak/beech): short trunk, three to four soft lobes. ~2.1 tall. */
-export function broadleafGeometry(): BufferGeometry {
+/**
+ * Round broadleaf (oak/beech): short trunk, three to four soft lobes. ~2.1 tall. `far` builds the version for the valley
+ * beyond the board, seen only through haze: two coarse lobes and a four-sided trunk (≈ 50 triangles instead of 344).
+ */
+export function broadleafGeometry(far = false): BufferGeometry {
   const b = new TreeBuilder();
-  trunk(b, 0.9, 0.11, 0.07, BARK);
-  crown(
-    b,
-    [
-      { c: [0, 1.38, 0], r: [0.62, 0.55, 0.62] },
-      { c: [0.38, 1.12, 0.12], r: [0.42, 0.38, 0.42] },
-      { c: [-0.34, 1.16, -0.16], r: [0.44, 0.4, 0.44] },
-      { c: [0.04, 1.8, 0.05], r: [0.38, 0.34, 0.38] },
-    ],
-    11,
-  );
+  trunk(b, 0.9, 0.11, 0.07, BARK, far ? 4 : 6);
+  const lobes: Lobe[] = [
+    { c: [0, 1.38, 0], r: [0.62, 0.55, 0.62] },
+    { c: [0.38, 1.12, 0.12], r: [0.42, 0.38, 0.42] },
+    { c: [-0.34, 1.16, -0.16], r: [0.44, 0.4, 0.44] },
+    { c: [0.04, 1.8, 0.05], r: [0.38, 0.34, 0.38] },
+  ];
+  crown(b, far ? [{ c: [0, 1.4, 0], r: [0.7, 0.62, 0.7] }, lobes[3]!] : lobes, 11, far ? 0 : 1);
   return b.build();
 }
 
 /** Tall Italian cypress / poplar: a narrow flame-shaped crown. ~2.6 tall. */
-export function cypressGeometry(): BufferGeometry {
+export function cypressGeometry(far = false): BufferGeometry {
   const b = new TreeBuilder();
-  trunk(b, 0.45, 0.07, 0.05, BARK_DARK);
+  trunk(b, 0.45, 0.07, 0.05, BARK_DARK, far ? 4 : 6);
   const pts: Vector2[] = [];
   const H = 2.2;
-  for (let i = 0; i <= 12; i++) {
-    const t = i / 12;
+  const rows = far ? 6 : 12;
+  for (let i = 0; i <= rows; i++) {
+    const t = i / rows;
     // poplar silhouette: full in the lower third, rounded (not pointed) at the crown
     const e = (t - 0.42) / 0.58;
     const r =
@@ -177,7 +178,7 @@ export function cypressGeometry(): BufferGeometry {
       (t < 0.42 ? 0.86 + 0.14 * Math.sin((t / 0.42) * Math.PI * 0.5) : 1);
     pts.push(new Vector2(Math.max(0.001, r), 0.3 + t * H));
   }
-  const g = new LatheGeometry(pts, 10);
+  const g = new LatheGeometry(pts, far ? 6 : 10);
   const y0 = 0.3;
   const y1 = 0.3 + H;
   b.add(
@@ -202,9 +203,9 @@ export function cypressGeometry(): BufferGeometry {
 }
 
 /** Conifer: three soft stacked tiers. ~2.3 tall. */
-export function coniferGeometry(): BufferGeometry {
+export function coniferGeometry(far = false): BufferGeometry {
   const b = new TreeBuilder();
-  trunk(b, 0.55, 0.08, 0.05, BARK_DARK);
+  trunk(b, 0.55, 0.08, 0.05, BARK_DARK, far ? 4 : 6);
   const tiers = [
     { y: 0.35, r: 0.62, h: 0.95 },
     { y: 0.85, r: 0.48, h: 0.85 },
@@ -220,7 +221,7 @@ export function coniferGeometry(): BufferGeometry {
       new Vector2(t.r * 0.5, t.y + t.h * 0.55),
       new Vector2(0.001, t.y + t.h),
     ];
-    const g = new LatheGeometry(pts, 9);
+    const g = new LatheGeometry(pts, far ? 6 : 9);
     b.add(
       g,
       (p) => {
@@ -244,9 +245,9 @@ export function coniferGeometry(): BufferGeometry {
 }
 
 /** Birch: slim pale trunk with dark marks and a light, airy crown. ~2.0 tall. */
-export function birchTreeGeometry(): BufferGeometry {
+export function birchTreeGeometry(far = false): BufferGeometry {
   const b = new TreeBuilder();
-  const g = new CylinderGeometry(0.035, 0.055, 1.3, 6, 6, true);
+  const g = new CylinderGeometry(0.035, 0.055, 1.3, far ? 4 : 6, far ? 1 : 6, true);
   b.add(
     g,
     (p) => p.set(p.x, p.y + 0.65, p.z),
@@ -262,7 +263,7 @@ export function birchTreeGeometry(): BufferGeometry {
       { c: [-0.18, 1.28, -0.12], r: [0.27, 0.3, 0.27] },
     ],
     61,
-    1,
+    far ? 0 : 1,
     0.14,
   );
   return b.build();
@@ -300,7 +301,7 @@ export function stoneGeometry(): BufferGeometry {
   const c = new Vector3();
   const n = new Vector3();
   parts.forEach((l, i) => {
-    const g = new IcosahedronGeometry(1, 0);
+    const g = new IcosahedronGeometry(1, 1);
     const P = g.getAttribute('position');
     const pts: Vector3[] = [];
     for (let k = 0; k < P.count; k++) {
@@ -324,7 +325,14 @@ export function stoneGeometry(): BufferGeometry {
       const cc = [0, 1, 2].map((j) => (rock[j]! + (moss[j]! - rock[j]!) * top * 0.75) * v);
       for (const q of [a, b2, c]) {
         pos.push(q.x, q.y, q.z);
-        nor.push(n.x, n.y, n.z);
+        // Soft facets: half the face normal, half the lobe's ellipsoid normal, so the stone shades like the crowns.
+        const rn = new Vector3(
+          (q.x - l.c[0]) / (l.r[0] * l.r[0]),
+          (q.y - l.c[1]) / (l.r[1] * l.r[1]),
+          (q.z - l.c[2]) / (l.r[2] * l.r[2]),
+        ).normalize();
+        const vn = n.clone().multiplyScalar(0.45).addScaledVector(rn, 0.55).normalize();
+        nor.push(vn.x, vn.y, vn.z);
         col.push(cc[0]!, cc[1]!, cc[2]!);
       }
     }

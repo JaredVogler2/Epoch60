@@ -36,7 +36,7 @@ Gameplay, the deterministic engine, saves, replays and every existing test must 
 8. [x] **Post (high tier)** — composer with MSAA, gentle tilt-shift, grade; CSS vignette on all tiers; single tone-mapping step.
 9. [x] **Tiers & robustness** — centralised tier table incl. post/atmosphere switches, software-renderer detection, governor step-down,
        context loss/restore, resize/orientation.
-10. [ ] **Verification** — three or more capture → inspect → fix iterations recorded in `docs/3D_QUALITY_REPORT.md`; perf probe; full unit + e2e
+10. [x] **Verification** — three or more capture → inspect → fix iterations recorded in `docs/3D_QUALITY_REPORT.md`; perf probe; full unit + e2e
         suites; review copies in `docs/review/`.
 
 ## Constraints and honest limits

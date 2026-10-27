@@ -276,8 +276,8 @@ Difficulty changes what the world does and what winning asks for — never the r
 Strength is applied once, inside `resolveHazard`, so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
 
 **Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): on Normal both tuned routes win every Greenvale seed and
-every Ashen seed sampled, so Normal does not stop a player who has found a recipe. On Hard the routes separate: Greenvale Engineers win 80% and Archivists 100%; Ashen Engineers 15% and
-Archivists 78%. Hard asks for a second landmark and a fourth technology, which is why the Engineers route there builds a second Archive (a landmark that also doubles knowledge) and
+every Ashen seed sampled, so Normal does not stop a player who has found a recipe. On Hard the routes separate (rules 0.3.0, seeds 1–40): Greenvale Engineers win 85% and Archivists 100%;
+Ashen Engineers 40% and Archivists 78%. Hard asks for a second landmark and a fourth technology, which is why the Engineers route there builds a second Archive (a landmark that also doubles knowledge) and
 learns hydrology in the third age, while the Archivists scatter a Seed Vault. Baselines (no action, random, builder, maximizer) win nothing on Normal or Hard.
 
 ## 15. Ways to start a lineage
