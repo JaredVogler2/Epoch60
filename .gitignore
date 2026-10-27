@@ -11,3 +11,6 @@ tmp/
 
 # raw e2e screenshots (large); curated compressed copies live in docs/review
 docs/screenshots/
+
+# local agent worktrees (Claude Code)
+.claude/worktrees/

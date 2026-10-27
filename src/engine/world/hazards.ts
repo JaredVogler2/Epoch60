@@ -339,7 +339,10 @@ function simulateAsh(c: Campaign, strength: number): HazardCell[] {
       const depth = ashDepthAt(c, x, y, strength);
       if (depth < 120) continue;
       const v = ventOf(c);
-      cells.push({ x, y, arrival: Math.round(Math.hypot(x - v.x, y - v.y) * 6), intensity: depth });
+      const dx = x - v.x;
+      const dy = y - v.y;
+      // Math.sqrt of an integer is exact-rounded everywhere (Math.hypot is not guaranteed to be).
+      cells.push({ x, y, arrival: Math.round(Math.sqrt(dx * dx + dy * dy) * 6), intensity: depth });
     }
   }
   return cells;

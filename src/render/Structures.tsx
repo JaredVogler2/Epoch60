@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { memo, useMemo, useRef, useSyncExternalStore } from 'react';
+import { memo, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Color, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Plane, Vector3 } from 'three';
 import type { BufferGeometry } from 'three';
 import { BUILDINGS } from '../engine';
@@ -101,6 +101,11 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
   const cropRef = useRef<Mesh>(null);
   const glowMat = useRef<MeshBasicMaterial>(null);
   const growth = useRef(0);
+  // A finished building settles with a small bounce and a puff of sawdust.
+  const finishedAt = useRef<number | null>(null);
+  const prevStatus = useRef(visualStatus(s));
+  const [settle, setSettle] = useState(0);
+  const settleOn = useRef(false);
   // During the collapse cinematic a building looks as it did until the hazard front reaches it.
   const status = visualStatus(s);
   const statusRef = useRef(status);
@@ -174,6 +179,22 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     const now = state.clock.elapsedTime;
     const total = def.buildWork * 1000;
     const st = statusRef.current;
+    if (prevStatus.current === 'constructing' && st === 'active' && !presentation.active) {
+      finishedAt.current = now;
+      if (!store.settings.reducedMotion) {
+        settleOn.current = true;
+        setSettle((n) => n + 1);
+      }
+    }
+    prevStatus.current = st;
+    const since = finishedAt.current === null ? Infinity : now - finishedAt.current;
+    const bounce =
+      since < 0.9 && !store.settings.reducedMotion ? Math.exp(-since * 5) * Math.sin(since * 20) : 0;
+    g.scale.set(1 - 0.035 * bounce, 1 + 0.07 * bounce, 1 - 0.035 * bounce);
+    if (settleOn.current && since > 1.7) {
+      settleOn.current = false;
+      setSettle(0);
+    }
     const frac = st === 'constructing' ? Math.min(1, s.progress / Math.max(1, total)) : 1;
     // Sweep the clip plane up through the model as it is assembled.
     const height = model.height * 1.08;
@@ -231,6 +252,7 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
       {s.kind === 'hearth' && !ruin && <Flame />}
       {burning && <BurnFx w={s.w} h={s.h} seed={s.id} />}
       {puff && <DustPuff w={s.w} h={s.h} seed={s.id} />}
+      {settle > 0 && <DustPuff key={settle} w={s.w} h={s.h} seed={s.id + settle} light />}
     </group>
   );
 });

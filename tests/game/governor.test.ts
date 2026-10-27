@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DprGovernor, percentile } from '../../src/render/governor';
+import { DprGovernor, SLOW_RUN, percentile } from '../../src/render/governor';
 
 const desktop = { budgetMs: 1000 / 60, minDpr: 0.6, maxDpr: 2 };
 const phone = { budgetMs: 1000 / 30, minDpr: 0.6, maxDpr: 1.75 };
@@ -24,15 +24,32 @@ describe('adaptive pixel ratio', () => {
     expect(feed(g, 50, 900)).toEqual([]);
   });
 
+  it('reports sustained strain only once resolution is already at the floor, and forgets it when frames recover', () => {
+    const g = new DprGovernor(desktop);
+    feed(g, 50, 90 * 20);
+    expect(g.dpr).toBe(0.6);
+    const before = g.strained;
+    feed(g, 50, 90 * 3);
+    expect(g.strained).toBe(before + 3);
+    feed(g, 15, 90);
+    expect(g.strained).toBe(0);
+    const fresh = new DprGovernor(desktop);
+    feed(fresh, 50, 90);
+    expect(fresh.strained).toBe(0); // the first answer to slow frames is lower resolution, not fewer effects
+  });
+
   it('leaves a healthy device alone', () => {
     const g = new DprGovernor(desktop);
     expect(feed(g, 15, 900)).toEqual([]);
     expect(g.dpr).toBe(2);
   });
 
-  it('ignores hitches: one slow window, tab-switch gaps and garbage values never trigger a change', () => {
+  it('ignores hitches: isolated tab-switch gaps and garbage values never trigger a change', () => {
     const g = new DprGovernor(phone);
-    expect(feed(g, 1000, 500)).toEqual([]);
+    for (let i = 0; i < 100; i++) {
+      expect(feed(g, 1000, 1)).toEqual([]);
+      expect(feed(g, 33, 3)).toEqual([]);
+    }
     expect(g.sample(Number.NaN)).toBeNull();
     expect(g.sample(-5)).toBeNull();
     expect(g.sample(0)).toBeNull();
@@ -48,6 +65,26 @@ describe('adaptive pixel ratio', () => {
     expect(g.dpr).toBe(low); // not yet: recovery needs a sustained calm
     feed(g, 8, 90 * 40);
     expect(g.dpr).toBe(1.75);
+  });
+
+  it('a device far below budget (every frame over 250 ms) still steps down, then strains at the floor', () => {
+    const g = new DprGovernor(phone);
+    const steps = feed(g, 400, SLOW_RUN * 12);
+    expect(steps.length).toBeGreaterThan(3);
+    expect(g.dpr).toBe(0.6);
+    const before = g.strained;
+    feed(g, 400, SLOW_RUN * 2);
+    expect(g.strained).toBe(before + 2);
+  });
+
+  it('a lone long frame is a hitch, not a trend', () => {
+    const g = new DprGovernor(desktop);
+    for (let i = 0; i < 40; i++) {
+      expect(feed(g, 900, SLOW_RUN - 1)).toEqual([]);
+      expect(feed(g, 10, 5)).toEqual([]);
+    }
+    expect(g.dpr).toBe(2);
+    expect(g.strained).toBe(0);
   });
 
   it('holds when frame time sits between the thresholds (no flapping)', () => {

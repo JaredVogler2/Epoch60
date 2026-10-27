@@ -12,13 +12,16 @@ const opt = (name, d) => {
 };
 const w = Number(opt('w', 900));
 const h = Number(opt('h', 640));
-const only = opt('only', '')
-  .split(',')
-  .filter(Boolean);
+const only = opt('only', '').split(',').filter(Boolean);
 const showcaseAges = readFileSync(new URL('./showcase-ages.js', import.meta.url), 'utf8');
 
 const browser = await chromium.launch({
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: [
+    '--use-gl=angle',
+    '--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader',
+    '--ignore-gpu-blocklist',
+  ],
 });
 const page = await (await browser.newContext({ viewport: { width: w, height: h } })).newPage();
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
@@ -43,10 +46,13 @@ for (const s of list) {
   if (only.length && !only.includes(s.kind)) continue;
   if (seen.has(s.kind) && s.kind !== 'cottage' && s.kind !== 'stone_house') continue;
   seen.add(s.kind);
-  await page.evaluate(
-    (c) => window.__epoch.camera.set(c, true),
-    { x: s.x, z: s.z, dist: 4.5 + s.size * 1.6, polar: 0.62, az: 0.55 },
-  );
+  await page.evaluate((c) => window.__epoch.camera.set(c, true), {
+    x: s.x,
+    z: s.z,
+    dist: 4.5 + s.size * 1.6,
+    polar: 0.62,
+    az: 0.55,
+  });
   for (let i = 0; i < 2; i++) {
     await page.evaluate(() => window.__epoch.camera.render());
     await page.waitForTimeout(2200);

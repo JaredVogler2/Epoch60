@@ -1,10 +1,20 @@
-import { useEffect } from 'react';
-import { BUILDINGS, REINFORCE_BONUS, TECHS, UNIT, repairCost, ruinYield, techCost } from '../engine';
+import { useEffect, useRef } from 'react';
+import {
+  BUILDINGS,
+  REINFORCE_BONUS,
+  TECHS,
+  UNIT,
+  repairBlocked,
+  repairCost,
+  ruinYield,
+  techCost,
+} from '../engine';
 import type { HazardKind, LaborFocus, ResourceKey, Structure, TechId } from '../engine';
 import { currentSpec } from '../engine';
 import { Icon, RESOURCE_ICON, hazardIcon } from './icons';
 import { units } from './format';
 import { useStore } from './useStore';
+import { useDialog } from './useDialog';
 
 function CostLine({ cost }: { cost: Record<ResourceKey, number> }) {
   const keys = (Object.keys(cost) as ResourceKey[]).filter((k) => cost[k] > 0);
@@ -54,7 +64,9 @@ export function Inspector() {
   const timed = c.phase === 'ACTIVE' || c.phase === 'PREPARE';
   const hz = currentSpec(c).hazard.kind as HazardKind;
   const rc = repairCost(st);
-  const canRepair = (st.status === 'damaged' || (ruin && st.excavated && d.material !== 'thatch')) && timed;
+  // A restorable ruin over its kind's limit still shows the button, disabled, so the reason is visible.
+  const repairWhy = repairBlocked(c, st);
+  const canRepair = timed && (!repairWhy || repairWhy.code === 'limit_reached');
   const canReinforce =
     (st.status === 'active' || st.status === 'damaged') && st.bonus[hz] < REINFORCE_BONUS && timed;
   const resist = (k: HazardKind) => Math.round((d.resist[k] + st.bonus[k]) / 10);
@@ -138,6 +150,8 @@ export function Inspector() {
             type="button"
             className="btn"
             data-testid="act-repair"
+            disabled={!!repairWhy}
+            title={repairWhy?.message}
             onClick={() => s.dispatch({ type: 'repair', id: st.id })}
           >
             <Icon name="wrench" size={18} /> {ruin ? 'Restore' : 'Repair'} <CostLine cost={rc} />
@@ -338,21 +352,43 @@ const PAUSE_TEXT: Record<string, string> = {
   hidden: 'Paused while you were away. No time passed in the valley.',
   stalled: 'Paused because the device stalled. No time was lost.',
   reload: 'Welcome back. Your civilization is waiting at exactly the second you left it.',
+  graphics: 'Paused while the graphics restarted. No time was lost.',
 };
 
 export function PauseOverlay() {
   const s = useStore();
   const c = s.campaign!;
   if (!(c.phase === 'ACTIVE' && c.paused)) return null;
+  return <PauseDialog />;
+}
+
+function PauseDialog() {
+  const s = useStore();
+  const c = s.campaign!;
+  const ref = useRef<HTMLDivElement>(null);
+  useDialog(ref, () => s.resume());
   return (
-    <div className="overlay pause" data-testid="pause-overlay" role="dialog" aria-label="Paused">
+    <div
+      ref={ref}
+      className="overlay pause"
+      data-testid="pause-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Paused"
+    >
       <div className="card-modal">
         <h2>Paused</h2>
         <p>{PAUSE_TEXT[s.pauseReason ?? 'user']}</p>
         <p className="dim">
           {(c.tick / 10).toFixed(1)} s elapsed · {((600 - c.tick) / 10).toFixed(1)} s left
         </p>
-        <button type="button" className="btn primary big" data-testid="resume" onClick={() => s.resume()}>
+        <button
+          type="button"
+          className="btn primary big"
+          data-testid="resume"
+          data-autofocus
+          onClick={() => s.resume()}
+        >
           <Icon name="play" size={22} /> Resume
         </button>
         <button type="button" className="btn ghost" onClick={() => s.quitToTitle()}>

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkPlacement, dispatchAction, getCatalog, resolveHazard, runTicks, UNIT } from '../../src/engine';
 import { findSpot } from '../../src/engine/ai/spots';
-import { BUILDINGS } from '../../src/engine/content/buildings';
 import { TECHS } from '../../src/engine/content/techs';
 import { createStructure } from '../../src/engine/economy/structures';
 import { idx } from '../../src/engine/world/query';
@@ -151,14 +150,37 @@ describe('quake engineering', () => {
   });
 
   it('stone houses shelter more people and resist fire and quake better than cottages', () => {
-    const c = stage(0, ['masonry']);
-    const cot = createStructure(c, 'cottage', 5, 5, 0, 'active');
-    const stone = createStructure(c, 'stone_house', 9, 5, 0, 'active');
-    const m = BUILDINGS;
-    expect(m.stone_house.housing).toBeGreaterThan(m.cottage.housing);
-    expect(m.stone_house.resist.fire).toBeGreaterThan(m.cottage.resist.fire * 4);
-    expect(m.stone_house.resist.quake).toBeGreaterThan(m.cottage.resist.quake);
-    expect(cot.kind).not.toBe(stone.kind);
+    // The same plot, built once as a cottage and once as a stone house.
+    type Home = 'cottage' | 'stone_house';
+    const grown = (kind: Home) => {
+      const c = stage(0, ['masonry']);
+      const spot = findSpot(c, 'cottage', { ignoreAffordability: true })!;
+      createStructure(c, kind, spot.x, spot.y, 0, 'active');
+      c.civ.pop = 8;
+      begin(c);
+      runTicks(c, 400);
+      return c.civ.pop;
+    };
+    expect(grown('cottage')).toBe(6 + 4); // the village grows until the hearth's and the home's beds are full
+    expect(grown('stone_house')).toBe(6 + 5);
+
+    const damage = (kind: Home, epoch: number, at: { x: number; y: number }) => {
+      const c = stage(epoch, ['masonry']);
+      const home = createStructure(c, kind, at.x, at.y, 0, 'active');
+      return resolveHazard(c).impacts.find((i) => i.id === home.id)!.damage;
+    };
+    const { hearth, fireOrigin, quakeEpicenter } = fresh().world.anchors;
+    const inFire = {
+      x: Math.round((hearth.x + fireOrigin.x) / 2),
+      y: Math.round((hearth.y + fireOrigin.y) / 2),
+    };
+    const nearQuake = findSpot(stage(2), 'cottage', {
+      near: quakeEpicenter,
+      maxDist: 12,
+      ignoreAffordability: true,
+    })!;
+    expect(damage('stone_house', 0, inFire)).toBeLessThan(damage('cottage', 0, inFire));
+    expect(damage('stone_house', 2, nearQuake)).toBeLessThan(damage('cottage', 2, nearQuake));
   });
 });
 

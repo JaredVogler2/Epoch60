@@ -43,7 +43,11 @@ test('reloading mid-epoch resumes paused at the exact tick, and the catastrophe 
   await page.getByTestId('begin').click();
   await expect.poll(() => phase(page)).toBe('ACTIVE');
   await fastForward(page, 314); // 28.6 s left
-  await page.getByTestId('pause').click();
+  // Pause through the store, not the HUD button: under software GL the frame after a 314-tick jump can take longer
+  // than the 2.5 s stall guard, which pauses the epoch itself and covers the button with the pause dialog.
+  await page.evaluate(() =>
+    (window as unknown as { __epoch: { store: { pause: (r: string) => void } } }).__epoch.store.pause('user'),
+  );
   const before = await campaign(page, (c) => ({
     tick: c.tick,
     food: c.civ.res.food,

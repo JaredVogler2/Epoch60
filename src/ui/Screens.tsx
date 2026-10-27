@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BUILDINGS,
   DIFFICULTY,
@@ -17,6 +17,7 @@ import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
 import { useStore } from './useStore';
+import { useDialog } from './useDialog';
 
 /* ------------------------------ PREPARE ------------------------------ */
 
@@ -178,12 +179,20 @@ export function CollapseOverlay() {
 export function DebriefScreen() {
   const s = useStore();
   const c = s.campaign!;
+  const ref = useRef<HTMLDivElement>(null);
+  useDialog(ref, undefined, true, c.phase === 'DEBRIEF' && !!c.report);
   if (c.phase !== 'DEBRIEF' || !c.report) return null;
   const r = c.report;
   const final = r.verdict;
-  const losers = r.result.impacts.filter((i) => i.after === 'rubble').length;
   return (
-    <div className="overlay debrief" data-testid="debrief" role="dialog" aria-label="Collapse report">
+    <div
+      ref={ref}
+      className="overlay debrief"
+      data-testid="debrief"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Collapse report"
+    >
       <div className="card-modal wide">
         <p className="eyebrow">
           Epoch {ROMAN[r.epoch]} · {currentSpec(c).name}
@@ -203,7 +212,7 @@ export function DebriefScreen() {
           </div>
           <div className="stat">
             <Icon name="cottage" size={22} />
-            <b>{losers}</b>
+            <b>{r.structuresLost}</b>
             <small>destroyed · {r.structuresDamaged} damaged</small>
           </div>
           <div className="stat">
@@ -257,6 +266,7 @@ export function DebriefScreen() {
           type="button"
           className="btn primary big"
           data-testid="debrief-continue"
+          data-autofocus
           onClick={() => s.dispatch({ type: 'continue' })}
         >
           {final
@@ -343,6 +353,9 @@ export function InterregnumScreen() {
   const s = useStore();
   const c = s.campaign!;
   const inter = c.lineage.interregnum;
+  // Not modal (the valley stays explorable), but keyboard focus lands on the first choice when the age ends.
+  const interRef = useRef<HTMLElement>(null);
+  useDialog(interRef, undefined, false, c.phase === 'INTERREGNUM' && !!inter);
   useEffect(() => {
     if (c.phase === 'INTERREGNUM' && inter && inter.sites[s.inter.site]) {
       const st = inter.sites[s.inter.site]!;
@@ -358,7 +371,7 @@ export function InterregnumScreen() {
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
   const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
   return (
-    <aside className="interregnum" data-testid="interregnum" aria-label="Between ages">
+    <aside ref={interRef} className="interregnum" data-testid="interregnum" aria-label="Between ages">
       <header>
         <p className="eyebrow">{inter.years} years pass</p>
         <h2>The valley sleeps</h2>
@@ -389,6 +402,7 @@ export function InterregnumScreen() {
             key={i}
             type="button"
             className={`site ${s.inter.site === i ? 'selected' : ''}`}
+            aria-pressed={s.inter.site === i}
             data-testid={`site-${i}`}
             onClick={() => {
               s.setInter({ site: i });
@@ -418,6 +432,7 @@ export function InterregnumScreen() {
               key={t.id}
               type="button"
               className={`trad ${tradition === t.id ? 'selected' : ''}`}
+              aria-pressed={tradition === t.id}
               data-testid={`trad-${t.id}`}
               onClick={() => {
                 s.setInter({ tradition: t.id });
@@ -454,14 +469,18 @@ export function InterregnumScreen() {
 export function EndScreen() {
   const s = useStore();
   const c = s.campaign!;
+  const ref = useRef<HTMLDivElement>(null);
+  useDialog(ref, undefined, true, c.phase === 'VICTORY' || c.phase === 'DEFEAT');
   if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return null;
   const win = c.phase === 'VICTORY';
   const v = c.report?.verdict;
   return (
     <div
+      ref={ref}
       className={`overlay end ${win ? 'win' : 'lose'}`}
       data-testid="end"
       role="dialog"
+      aria-modal="true"
       aria-label="Ending"
     >
       <div className="card-modal wide">
@@ -495,6 +514,7 @@ export function EndScreen() {
             type="button"
             className="btn primary big"
             data-testid="play-again"
+            data-autofocus
             onClick={() => {
               clearSave();
               s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined);

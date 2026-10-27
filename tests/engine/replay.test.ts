@@ -64,6 +64,7 @@ describe('determinism', () => {
   });
 
   it('is independent of how ticks are batched (a stand-in for frame rate)', () => {
+    // Same advanceFixedTick calls in every variant; the frame-rate guard is tests/game/clock.test.ts.
     // 30, 60 and 120 FPS all reduce to the same ordered fixed ticks; batching must never matter.
     const run = (batch: number) => {
       const c = fresh();

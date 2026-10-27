@@ -20,6 +20,7 @@ import { presentation, renderWorld } from './presentation';
 import { worldModel } from './world';
 
 type Kind = 'broadleaf' | 'cypress' | 'conifer' | 'birch' | 'shrub' | 'snag' | 'stone' | 'grass' | 'flower';
+export type FoliageKind = Kind;
 
 interface Inst {
   x: number;
@@ -216,7 +217,7 @@ const BIRCH_GOLD = hues(['#e0c04a', '#d9a83a']);
 /** Share of each species wearing autumn colour: the warm accents that make the forest read as painted. */
 const AUTUMN_SHARE: Partial<Record<Kind, number>> = { broadleaf: 0.14, birch: 0.25, shrub: 0.08 };
 
-function hueFor(kind: Kind, it: Inst): Color {
+export function hueFor(kind: Kind, it: Inst): Color {
   const base = HUE[kind];
   if (!base) return tintA.setRGB(1, 1, 1);
   const r = it.tint;
@@ -254,6 +255,20 @@ function useRevs(): string {
   );
 }
 
+const crownMats = new Map<boolean, MeshStandardMaterial>();
+/** One crown material per wind setting, shared by the valley and its outskirts (one compiled program). */
+export function crownMaterial(wind: boolean): MeshStandardMaterial {
+  let m = crownMats.get(wind);
+  if (!m) {
+    m = atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }), {
+      sway: wind ? 0.011 : 0,
+      foliageMask: true,
+    });
+    crownMats.set(wind, m);
+  }
+  return m;
+}
+
 export function Foliage() {
   const revs = useRevs();
   const quality = useMemo(() => resolveQuality(store.settings.quality), []);
@@ -273,14 +288,7 @@ export function Foliage() {
     [],
   );
   // Crowns: hue per instance (trunks masked out), wind growing with height, cloud shadows.
-  const crownMat = useMemo(
-    () =>
-      atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }), {
-        sway: quality.wind ? 0.011 : 0,
-        foliageMask: true,
-      }),
-    [quality.wind],
-  );
+  const crownMat = useMemo(() => crownMaterial(quality.wind), [quality.wind]);
   const grassMat = useMemo(
     () =>
       atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }), {

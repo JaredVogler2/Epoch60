@@ -11,31 +11,31 @@ and a world that keeps moving — smoke, wind, water, people, clouds — until t
 
 ## 2. Style rules
 
-| Rule                                                            | Why                                                                                                     |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Smooth-shaded organics, crisp-edged architecture.**           | Trees and terrain read as soft and painted; buildings keep clean silhouettes so they stay legible.      |
-| **Colour lives in hue, not in facet noise.**                    | Per-facet brightness jitter made everything look like a low-poly asset pack. Variation is now per-object (instance hue) and per-area (painted ground). |
-| **Value structure: dark forest masses, light open ground, bright roofs.** | The eye lands on the village first, the forest frames it, the river leads through it.          |
-| **Warm light, cool shadow.**                                    | Depth without darkness; shadows are blue-green, never black.                                            |
-| **Atmosphere over detail at distance.**                         | Warm haze and a slight miniature blur make the far valley recede instead of competing.                 |
-| **Motion is ambient and purposeful.**                           | Wind, smoke, water and cloud shadows are always present but slow; disasters are the only fast motion.  |
+| Rule                                                                      | Why                                                                                                                                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Smooth-shaded organics, crisp-edged architecture.**                     | Trees and terrain read as soft and painted; buildings keep clean silhouettes so they stay legible.                                                     |
+| **Colour lives in hue, not in facet noise.**                              | Per-facet brightness jitter made everything look like a low-poly asset pack. Variation is now per-object (instance hue) and per-area (painted ground). |
+| **Value structure: dark forest masses, light open ground, bright roofs.** | The eye lands on the village first, the forest frames it, the river leads through it.                                                                  |
+| **Warm light, cool shadow.**                                              | Depth without darkness; shadows are blue-green, never black.                                                                                           |
+| **Atmosphere over detail at distance.**                                   | Warm haze and a slight miniature blur make the far valley recede instead of competing.                                                                 |
+| **Motion is ambient and purposeful.**                                     | Wind, smoke, water and cloud shadows are always present but slow; disasters are the only fast motion.                                                  |
 
 ## 3. Palette (sRGB)
 
-| Role                 | Colours                                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| Meadow               | `#7e9a4c` (base), `#9aa858` (dry), `#5f8a3e` (lush), `#8fa45a` (hill)                     |
-| Forest floor / shade | `#4f6a35`, `#3f5a2e`                                                                         |
-| Conifer / cypress    | `#3b5a31` → `#5f8040` (top light)                                                            |
-| Broadleaf            | `#5d8a3c` → `#8db552`; birch `#9cb85a` → `#c6d47a`                                           |
-| Autumn accents (≈12%)| `#d9862b`, `#e3a83a`, `#c4612d`, `#b8913a`                                                   |
-| Earth / lanes / yards| `#9a7450`, `#b08a5e`, packed yard `#a98a62`                                                  |
-| Fields               | wheat `#d9a441`, young crop `#9cb658`, ploughed `#8a6040`, flax/pink `#d49a8a`              |
-| Water                | shallow `#62b3ad`, deep `#2b6f7e`, foam `#f1efe2`                                            |
-| Roofs by age         | Age I thatch `#d6a64e`/`#c8943e`; Age II tile `#c4553c`, `#d8743a`, `#b84a3a`; Age III slate `#4f7f92`, `#5aa3a8`, `#56677a` |
-| Walls                | cream `#eadcc0`, warm plaster `#dcbd8c`, timber `#6b4a2e`, stone `#b5a993`, brick `#a8584a` |
-| Sky / haze           | zenith `#9cc3e2`, horizon `#f1e2c6`, haze `#e9dcc4`                                          |
-| UI                   | ink `#1e1912` panels at 78–88% opacity with blur, gold `#e8b84a`, warn `#f0a24a`, bad `#e0614a` |
+| Role                  | Colours                                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Meadow                | `#7e9a4c` (base), `#9aa858` (dry), `#5f8a3e` (lush), `#8fa45a` (hill)                                                        |
+| Forest floor / shade  | `#4f6a35`, `#3f5a2e`                                                                                                         |
+| Conifer / cypress     | `#3b5a31` → `#5f8040` (top light)                                                                                            |
+| Broadleaf             | `#5d8a3c` → `#8db552`; birch `#9cb85a` → `#c6d47a`                                                                           |
+| Autumn accents (≈12%) | `#d9862b`, `#e3a83a`, `#c4612d`, `#b8913a`                                                                                   |
+| Earth / lanes / yards | `#9a7450`, `#b08a5e`, packed yard `#a98a62`                                                                                  |
+| Fields                | wheat `#d9a441`, young crop `#9cb658`, ploughed `#8a6040`, flax/pink `#d49a8a`                                               |
+| Water                 | shallow `#62b3ad`, deep `#2b6f7e`, foam `#f1efe2`                                                                            |
+| Roofs by age          | Age I thatch `#d6a64e`/`#c8943e`; Age II tile `#c4553c`, `#d8743a`, `#b84a3a`; Age III slate `#4f7f92`, `#5aa3a8`, `#56677a` |
+| Walls                 | cream `#eadcc0`, warm plaster `#dcbd8c`, timber `#6b4a2e`, stone `#b5a993`, brick `#a8584a`                                  |
+| Sky / haze            | zenith `#9cc3e2`, horizon `#f1e2c6`, haze `#e9dcc4`                                                                          |
+| UI                    | ink `#1e1912` panels at 78–88% opacity with blur, gold `#e8b84a`, warn `#f0a24a`, bad `#e0614a`                              |
 
 Hazard colours stay functional and saturated (fire orange, flood blue, quake ochre, ash grey) so the forecast is never confused with scenery.
 
@@ -71,32 +71,34 @@ Hazard colours stay functional and saturated (fire orange, flood blue, quake och
 
 ## 7. Motion language
 
-| Element         | Motion                                                     | Speed / amplitude                    |
-| --------------- | ---------------------------------------------------------- | ------------------------------------ |
-| Trees, grass    | sway grows with height, phase varies by position           | 0.25–0.5 Hz, ≤ 3° (canopy)           |
-| Smoke           | puffs rise, drift with the wind, swell and fade             | 4–6 s per puff                       |
-| Water           | ripples flow downstream; foam breathes at banks             | slow, continuous                     |
-| Clouds          | shadows cross the valley                                     | ≈ 1 cell / 3 s                       |
-| Birds           | small flocks circle the valley                               | wing beat 3 Hz, slow orbit           |
-| Citizens        | walk/work/idle from the engine's real labour allocation      | as simulated                         |
-| Camera          | eased orbit/pan/zoom; framing moves on age change and focus | critically damped                    |
-| Disasters       | the only fast motion: fire fronts, flood rise, shockwaves   | event-driven                         |
+| Element      | Motion                                                      | Speed / amplitude          |
+| ------------ | ----------------------------------------------------------- | -------------------------- |
+| Trees, grass | sway grows with height, phase varies by position            | 0.25–0.5 Hz, ≤ 3° (canopy) |
+| Smoke        | puffs rise, drift with the wind, swell and fade             | 4–6 s per puff             |
+| Water        | ripples flow downstream; foam breathes at banks             | slow, continuous           |
+| Clouds       | shadows cross the valley                                    | ≈ 1 cell / 3 s             |
+| Birds        | small flocks circle the valley                              | wing beat 3 Hz, slow orbit |
+| Citizens     | walk/work/idle from the engine's real labour allocation     | as simulated               |
+| Camera       | eased orbit/pan/zoom; framing moves on age change and focus | critically damped          |
+| Disasters    | the only fast motion: fire fronts, flood rise, shockwaves   | event-driven               |
 
 `prefers-reduced-motion` (and the in-game setting) stops wind, birds, cloud drift and camera shake; smoke and water slow to a near-still state.
 
 ## 8. Quality tiers (same art direction at every tier)
 
-| Feature                         | High              | Medium             | Low                  |
-| ------------------------------- | ----------------- | ------------------ | -------------------- |
-| Pixel ratio cap / adaptive      | 2 / yes           | 1.75 / yes         | 1.25 / yes           |
-| Shadow map                      | 2048 soft         | 1024 soft          | 1024 hard            |
-| Foliage / grass density         | 100% / 100%       | 80% / 55%          | 60% / 25%            |
-| Wind, cloud shadows, birds      | yes               | yes                | wind + clouds only   |
-| Tilt-shift blur + grade (post)  | yes               | no                 | no                   |
-| Vignette                        | CSS (all tiers)   | CSS                | CSS                  |
+| Feature                        | High            | Medium     | Low                |
+| ------------------------------ | --------------- | ---------- | ------------------ |
+| Pixel ratio cap / adaptive     | 2 / yes         | 1.75 / yes | 1.25 / yes         |
+| Shadow map (PCF)               | 2048            | 1024       | 1024               |
+| Foliage / grass density        | 100% / 100%     | 80% / 55%  | 60% / 25%          |
+| Wind, cloud shadows, birds     | yes             | yes        | wind + clouds only |
+| Tilt-shift blur + grade (post) | yes             | no         | no                 |
+| Vignette                       | CSS (all tiers) | CSS        | CSS                |
 
-Auto selection: desktops high, touch devices medium, software rasterisers low; the frame-time governor lowers the pixel ratio first and then steps
-the tier down if frames stay over budget. The player can override in Settings.
+Auto selection: desktops high, touch devices medium, software rasterisers low. The frame-time governor lowers the pixel ratio first (a run of
+frames over 250 ms counts as over budget; a lone long frame is a hitch and is ignored); if frames stay over budget at the lowest ratio it sheds,
+one step per two strained windows, first the post chain and then the birds and the valley beyond the board. It never removes geometry the
+player needs or any information. The player can override the tier in Settings.
 
 ## 9. Acceptance (each scored 1–5 by inspection of real captures; target ≥ 4)
 

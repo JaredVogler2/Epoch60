@@ -21,6 +21,7 @@ export {
   dispatchAction,
   getCatalog,
   getForecast,
+  repairBlocked,
   repairCost,
   runTicks,
   secondsLeft,

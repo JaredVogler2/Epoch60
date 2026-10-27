@@ -8,6 +8,7 @@ import type {
   ActionResult,
   Campaign,
   Civ,
+  CollapseReport,
   FoundingSite,
   HazardKind,
   Interregnum,
@@ -36,6 +37,21 @@ function blankResources(): Resources {
 
 function centuriesOf(years: number): number {
   return years / 100;
+}
+
+/**
+ * Share of rubble salvage that survives `years`, in 1/100000, by integer arithmetic only (no Math.pow: its result
+ * may differ in the last bit between browsers, and salvage is part of the hashed state). Timber halves and stone loses
+ * a tenth every century, linearly within a century, until the table runs out.
+ */
+const TIMBER_KEEP = [100000, 50000, 25000, 12500];
+const STONE_KEEP = [100000, 90000, 81000, 72900, 65610, 59049];
+function keepShare(table: number[], years: number): number {
+  const y = Math.min((table.length - 1) * 100, Math.max(0, Math.round(years)));
+  const n = Math.floor(y / 100);
+  const r = y - n * 100;
+  if (r === 0) return table[n]!;
+  return Math.round((table[n]! * (100 - r) + table[n + 1]! * r) / 100);
 }
 
 function silted(c: Campaign, s: Structure): boolean {
@@ -75,8 +91,9 @@ function decayStructures(c: Campaign, centuries: number, log: string[]): void {
       }
     } else {
       // Rubble: wood rots, stone endures; silt and soil bury it.
-      s.salvage.timber = Math.round(s.salvage.timber * Math.pow(0.5, Math.min(3, centuries)));
-      s.salvage.stone = Math.round(s.salvage.stone * Math.pow(0.9, Math.min(5, centuries)));
+      const years = centuries * 100;
+      s.salvage.timber = Math.round((s.salvage.timber * keepShare(TIMBER_KEEP, years)) / 100000);
+      s.salvage.stone = Math.round((s.salvage.stone * keepShare(STONE_KEEP, years)) / 100000);
       s.burial = Math.min(3, s.burial + Math.floor(centuries / 2) + (silted(c, s) ? 1 : 0));
       if (s.burial >= 3 && s.status === 'rubble') {
         s.status = 'buried';
@@ -290,31 +307,58 @@ function findSites(c: Campaign): FoundingSite[] {
   return sites;
 }
 
+/** What the elders say when a tradition prepares for the catastrophe the next age will bring. */
+const FORESIGHT: Record<HazardKind, string> = {
+  fire: 'Because the summers are getting drier, and the old burn scars remember.',
+  flood: 'Because the river has risen higher every spring.',
+  quake: 'Because the old walls have begun to crack, and the wells taste of stone.',
+  ash: 'Because the mountain to the east has begun to smoke.',
+};
+
+function lessonOf(rep: CollapseReport): string {
+  if (rep.hazard === 'fire')
+    return `Because ${rep.deaths} died and ${rep.structuresLost} buildings burned in ${rep.hazardName}.`;
+  if (rep.hazard === 'flood') return `Because ${rep.hazardName} swallowed the low ground.`;
+  if (rep.hazard === 'quake') return `Because ${rep.hazardName} broke the valley's walls.`;
+  return `Because ${rep.hazardName} buried the fields for a whole winter.`;
+}
+
+/**
+ * Three ways to carry the collapse forward: a lesson from the catastrophe that just struck, a preparation for the one
+ * the next age will bring, and more hands. Within a hazard the offer rotates with the seed and the age, so every
+ * tradition can come up in some lineage (fixed order used to hide six of the eleven).
+ */
 function traditionOptions(c: Campaign): TraditionOption[] {
   const rep = c.report;
-  const kind = rep?.hazard ?? null;
-  const out: TraditionOption[] = [];
+  const struck = rep?.hazard ?? null;
+  const next = getScenario(c.scenario).epochs[c.epoch + 1]?.hazard.kind ?? null;
   const have = c.lineage.traditions;
-  for (const id of Object.keys(TRADITIONS) as TraditionId[]) {
-    const t = TRADITIONS[id];
-    if (have.includes(id)) continue;
-    if (t.after === kind && out.length < 2) {
-      const because =
-        kind === 'fire'
-          ? `Because ${rep!.deaths} died and ${rep!.structuresLost} buildings burned in ${rep!.hazardName}.`
-          : kind === 'flood'
-            ? `Because ${rep!.hazardName} swallowed the low ground.`
-            : `Because ${rep!.hazardName} broke the valley's walls.`;
-      out.push({ id, because });
+  const out: TraditionOption[] = [];
+  const free = (id: TraditionId) => !have.includes(id) && !out.some((o) => o.id === id);
+  const pick = (kind: HazardKind | null, salt: number): TraditionId | null => {
+    if (!kind) return null;
+    const ids = (Object.keys(TRADITIONS) as TraditionId[]).filter(
+      (id) => TRADITIONS[id].after === kind && free(id),
+    );
+    return ids.length ? ids[(c.seed + c.epoch * 7 + salt) % ids.length]! : null;
+  };
+  const lesson = pick(struck, 0);
+  if (lesson && rep) out.push({ id: lesson, because: lessonOf(rep) });
+  const omen = pick(next, 3);
+  if (omen && next) out.push({ id: omen, because: FORESIGHT[next] });
+  if (free('open_hands'))
+    out.push({ id: 'open_hands', because: 'Because more hands rebuild faster than careful ones.' });
+  // Top up so there is always a real choice: first from the same two hazards, then from anything left.
+  for (const kind of [struck, next]) {
+    while (out.length < 3) {
+      const id = pick(kind, out.length + 5);
+      if (!id) break;
+      out.push({ id, because: kind === struck && rep ? lessonOf(rep) : FORESIGHT[kind!] });
     }
   }
-  if (!have.includes('open_hands'))
-    out.push({ id: 'open_hands', because: 'Because more hands rebuild faster than careful ones.' });
-  // Top up from other eligible traditions so there is always a real choice.
   for (const id of Object.keys(TRADITIONS) as TraditionId[]) {
     if (out.length >= 3) break;
-    if (have.includes(id) || out.some((o) => o.id === id)) continue;
-    out.push({ id, because: 'Because a people shaped by older sorrows still remembers them.' });
+    if (free(id)) out.push({ id, because: 'Because a people shaped by older sorrows still remembers them.' });
   }
   return out.slice(0, 3);
 }

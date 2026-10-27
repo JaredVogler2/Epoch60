@@ -20,11 +20,15 @@ export function installDebug(): void {
     perf: { reset: () => perfApi.reset(), stats: () => perfApi.stats() },
     /** Integrity hash of the live campaign, for comparing a browser run with a recorded transcript. */
     hash: () => (store.campaign ? computeHash(store.campaign) : null),
-    /** Run `n` ticks instantly (tests only) and refresh the UI exactly as the real clock would. */
+    /**
+     * Run `n` ticks instantly (tests only) and refresh the UI exactly as the real clock would. The frame that
+     * straddles this synchronous jump is ignored by the clock, like a begin or resume, so it never reads as a stall.
+     */
     fastForward: (n: number) => {
       const c = store.campaign;
       if (!c) return 0;
       const ran = runTicks(c, n);
+      store.clockResetSeq++;
       store.notifyTicks(ran);
       return ran;
     },

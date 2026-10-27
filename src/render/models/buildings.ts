@@ -178,6 +178,13 @@ function farm(seed: number): { g: GeoBuilder; gl: GeoBuilder; crops: GeoBuilder;
   const g = new GeoBuilder(seed);
   const gl = new GeoBuilder(seed + 1);
   const crops = new GeoBuilder(seed + 2);
+  // Each farm grows its own crop, so several farms read as a patchwork: barley, wheat, or late ochre grain.
+  const CROPS: [RGB, RGB][] = [
+    [rgb('#8fb24e'), rgb('#b9c25a')],
+    [rgb('#d9b84a'), rgb('#e6c45e')],
+    [rgb('#d99a45'), rgb('#e0b25a')],
+  ];
+  const [cropA, cropB] = CROPS[seed % 3]!;
   g.box(0, 0, 0, 2.7, 0.05, 2.7, PAL.soil);
   const rows = 6;
   for (let r = 0; r < rows; r++) {
@@ -185,7 +192,7 @@ function farm(seed: number): { g: GeoBuilder; gl: GeoBuilder; crops: GeoBuilder;
     g.box(0, 0.05, z, 2.4, 0.07, 0.2, r % 2 ? PAL.furrow : shade(PAL.soil, 1.15));
     for (let i = 0; i < 8; i++) {
       const x = -1.05 + i * 0.3 + (h01(seed, r, i) - 0.5) * 0.06;
-      const col = mix(PAL.crop, PAL.cropGold, h01(seed, i, r + 9) * 0.6 + (r % 2) * 0.1);
+      const col = mix(cropA, cropB, h01(seed, i, r + 9) * 0.6 + (r % 2) * 0.1);
       crops.lump(x, 0.12, z, 0.1, 0.12, 0.1, col, {
         rough: 0.08,
         detail: 1,

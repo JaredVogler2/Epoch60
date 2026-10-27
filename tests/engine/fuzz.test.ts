@@ -165,6 +165,18 @@ describe('exploit probes', () => {
     runTicks(c, 300);
     const a = c.structures.find((x) => x.kind === 'archive' && x.status === 'active')!;
     expect(a).toBeDefined();
+    // Damaged and repaired again and again: every repair costs timber and stone, none pays anything back.
+    for (let round = 0; round < 3; round++) {
+      a.status = 'damaged';
+      const before = { ...c.civ.res };
+      expect(dispatchAction(c, { type: 'repair', id: a.id }).ok).toBe(true);
+      runTicks(c, 1);
+      expect(a.status).toBe('constructing');
+      expect(c.civ.res.timber).toBeLessThan(before.timber);
+      expect(c.civ.res.stone).toBeLessThan(before.stone);
+      runTicks(c, 60);
+      expect(a.status).toBe('active');
+    }
     expect(dispatchAction(c, { type: 'reinforce', id: a.id, hazard: 'fire' }).ok).toBe(true);
     runTicks(c, 1);
     expect(dispatchAction(c, { type: 'reinforce', id: a.id, hazard: 'fire' }).ok).toBe(false);

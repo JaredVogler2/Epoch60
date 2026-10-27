@@ -198,6 +198,7 @@ describe('G. normal speed versus assisted half-speed', () => {
 
 describe('H. graphics quality and frame rate', () => {
   it('batching ticks any way at all (a stand-in for FPS and quality tiers) yields the same hash', () => {
+    // Same advanceFixedTick calls for every batch size; the frame-rate guard is tests/game/clock.test.ts.
     const run = (batch: number) => {
       const c = createCampaign(6001);
       const spot = findSpot(c, 'farm', { maxDist: 8 })!;

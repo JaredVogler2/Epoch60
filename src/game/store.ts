@@ -23,20 +23,22 @@ import type {
   ActionError,
 } from '../engine';
 import { createDemoCampaign } from './demo';
-import { cardOf, loadRuns, saveRun } from './modes';
+import { cardOf, dailyRun, loadRuns, saveRun } from './modes';
 import type { RunCard } from './modes';
 import { explain } from './messages';
 import {
   DEFAULT_SETTINGS,
   clearSave,
   loadCampaign,
+  loadDailyTag,
   loadSettings,
   saveCampaign,
+  saveDailyTag,
   saveSettings,
 } from './persist';
 import type { Settings } from './persist';
 
-export type PauseReason = 'user' | 'hidden' | 'stalled' | 'reload';
+export type PauseReason = 'user' | 'hidden' | 'stalled' | 'reload' | 'graphics';
 export type Screen = 'title' | 'game';
 export type Panel = 'research' | 'focus' | 'help' | 'settings' | null;
 
@@ -112,7 +114,14 @@ export class GameStore {
 
   private emit(): void {
     this.version++;
-    for (const l of this.listeners) l();
+    // One failing listener (audio, a view) must never starve the others or the clock.
+    for (const l of this.listeners) {
+      try {
+        l();
+      } catch (e) {
+        console.error('[epoch60] listener failed', e);
+      }
+    }
   }
 
   /* ------------------------------ lifecycle ------------------------------ */
@@ -127,6 +136,7 @@ export class GameStore {
     this.runDaily = daily ?? null;
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
     this.campaign = createCampaign(seed, m, scenarioId, difficulty);
+    saveDailyTag(seed, this.runDaily);
     this.afterReplace();
     this.clockResetSeq++;
     this.screen = 'game';
@@ -152,6 +162,7 @@ export class GameStore {
     const c = loadCampaign();
     if (!c) return false;
     this.campaign = c;
+    this.runDaily = loadDailyTag(c.seed, (day) => dailyRun(day).seed);
     this.afterReplace();
     this.screen = 'game';
     if (c.phase === 'ACTIVE') this.pauseReason = 'reload';
@@ -168,8 +179,10 @@ export class GameStore {
   }
 
   quitToTitle(): void {
-    if (this.campaign) {
-      if (this.campaign.phase === 'ACTIVE') this.pause('user');
+    const c = this.campaign;
+    // A finished lineage is already on its run card; saving it again would bring the ending back as "Continue".
+    if (c && c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') {
+      if (c.phase === 'ACTIVE') this.pause('user');
       this.autosave(true);
     }
     this.screen = 'title';
@@ -284,7 +297,7 @@ export class GameStore {
     }
     let s = `${c.epoch}|`;
     for (const st of c.structures)
-      s += `${st.id}:${st.status}:${st.bonus.fire + st.bonus.flood + st.bonus.quake};`;
+      s += `${st.id}:${st.status}:${st.bonus.fire}:${st.bonus.flood}:${st.bonus.quake}:${st.bonus.ash};`;
     if (s !== this.lastStructSig) {
       this.lastStructSig = s;
       this.structRev++;
