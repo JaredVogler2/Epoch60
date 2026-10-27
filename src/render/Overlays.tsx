@@ -1,10 +1,11 @@
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   BufferAttribute,
   BufferGeometry,
   Color,
   DoubleSide,
+  Mesh,
   MeshStandardMaterial,
   ShaderMaterial,
 } from 'three';
@@ -69,8 +70,10 @@ void main() {
     a = (0.22 + 0.3 * stripe) + 0.55 * border;
   } else if (uMode < 3.5) {     // selection ring
     a = border * (0.7 + 0.3 * pulse);
-  } else {                      // at-risk marker
+  } else if (uMode < 4.5) {     // at-risk marker
     a = (0.18 + 0.55 * border) * pulse;
+  } else {                      // hover: a faint, steady outline
+    a = border * 0.6;
   }
   gl_FragColor = vec4(uColor, a * uAlpha);
   #include <colorspace_fragment>
@@ -424,6 +427,38 @@ export function SelectionRing() {
   return (
     <Decal x={s.x - 0.1} y={s.y - 0.1} w={s.w + 0.2} h={s.h + 0.2} color="#ffd25a" mode={3} lift={0.09} />
   );
+}
+
+/**
+ * A faint, steady outline under the building the mouse is over (desktop): a quieter cousin of the selection ring.
+ * Hover is render-only state, so this follows it frame by frame instead of re-rendering through the store.
+ */
+export function HoverRing() {
+  const mesh = useRef<Mesh>(null);
+  const mat = useMemo(() => decalMaterial('#fff3d6', 5), []);
+  // The outline is rebuilt only when the hovered building changes.
+  const ring = useMemo(() => ({ id: null as number | null, geom: null as BufferGeometry | null }), []);
+  useEffect(
+    () => () => {
+      ring.geom?.dispose();
+      mat.dispose();
+    },
+    [mat, ring],
+  );
+  useFrame(() => {
+    const m = mesh.current;
+    if (!m) return;
+    const id = store.hoverId !== store.selectedId && !store.placing ? store.hoverId : null;
+    if (id !== ring.id) {
+      ring.id = id;
+      ring.geom?.dispose();
+      const s = id !== null ? store.campaign?.structures.find((st) => st.id === id) : undefined;
+      ring.geom = s ? rectDecal(s.x - 0.08, s.y - 0.08, s.w + 0.16, s.h + 0.16, 0.085) : null;
+      if (ring.geom) m.geometry = ring.geom;
+    }
+    m.visible = ring.geom !== null;
+  });
+  return <mesh ref={mesh} material={mat} renderOrder={5} frustumCulled={false} visible={false} />;
 }
 
 /** Pulsing markers on buildings the coming hazard will damage or destroy. */

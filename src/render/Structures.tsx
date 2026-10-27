@@ -199,9 +199,6 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     // Sweep the clip plane up through the model as it is assembled.
     const height = model.height * 1.08;
     plane.constant = st === 'constructing' ? baseY + 0.04 + frac * height : 1e4;
-    // The building under the mouse lifts a little toward warm light (desktop hover affordance).
-    const lift = store.hoverId === s.id && !store.placing ? 0.07 : 0;
-    mat.emissive.setRGB(lift, lift * 0.8, lift * 0.5);
     // Damaged buildings are scorched and dimmed.
     if (st === 'damaged') {
       const k = Math.max(0.35, s.integrity / 1000);
@@ -210,6 +207,9 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
     } else {
       mat.color.copy(white);
     }
+    // The building under the mouse brightens a little (desktop hover affordance; `HoverRing` draws its outline).
+    // A multiplied lift keeps the shading's contrast, where added light would wash the walls and roof out.
+    if (store.hoverId === s.id && !store.placing) mat.color.multiplyScalar(1.15);
     // Crops ripen while a staffed farm is active.
     if (s.kind === 'farm') {
       const target =

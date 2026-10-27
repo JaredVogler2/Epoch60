@@ -37,9 +37,12 @@ test('the building under the mouse is highlighted and shows a pointer cursor', a
   await page.mouse.move(off.x, off.y, { steps: 4 });
   await expect.poll(() => hoverState(page)).toEqual({ id: null, cursor: '' });
 
-  // The camera moves under a resting mouse: the highlight follows what is under it now, not what was.
+  // Back onto the hearth in quick steps: picks are throttled to one per 50 ms and the last steps land
+  // inside that window, but the position the mouse comes to rest at always wins.
   await page.mouse.move(on.x, on.y, { steps: 4 });
   await expect.poll(() => hoverState(page)).toEqual({ id: hearth.id, cursor: 'pointer' });
+
+  // The camera moves under a resting mouse: the highlight follows what is under it now, not what was.
   await page.evaluate(() => {
     const cam = (window as unknown as HoverWindow).__epoch.camera;
     const at = cam.get();
