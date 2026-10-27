@@ -1,10 +1,15 @@
 # Known issues
 
-| ID | Severity | Issue | Next action |
-|---|---|---|---|
-| K-001 | high | No browser application yet (phase 03). | Build Vite/R3F scaffold next. |
-| K-002 | medium | Balance is untuned: a bot that avoids the forecast footprint suffers almost no losses. | Phase 12/15: shrink safe land, tune hazard strengths with tournaments. |
-| K-003 | medium | Victory routes A/B are proposed only; no executed winning trace. | Phase 12. |
-| K-004 | low | Defeat tests rely on forcing population at the last tick. | Add a natural no-action loss trace in phase 12. |
-| K-005 | low | Hazard `HazardCell.arrival` units differ per hazard (fire: cost, flood: steps, quake: distance×4); the presentation must normalize by `span`. | Handle in renderer. |
-| K-006 | low | Tradition choice text is generated from the report; copy review pending. | Phase 14 polish. |
+| ID    | Severity | Issue                                                                                                                                                                                           | Next action                                                     |
+| ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| K-001 | medium   | No WebKit/Safari verification; Chromium only (software GL).                                                                                                                                     | Enable `EPOCH_WEBKIT=1` where a WebKit build exists; phase 17.  |
+| K-002 | medium   | **No citizens or building animation beyond smoke/flame/crops** (art gate "Life" = 1).                                                                                                           | Phase 08.                                                       |
+| K-003 | medium   | Balance untuned: a bot that avoids the forecast footprint suffers almost no losses; victory routes A/B proposed only.                                                                           | Phase 12/15.                                                    |
+| K-004 | medium   | Only Age I architecture; Stone House/Levee/Dam/Bridge/Retaining Wall/Forge/Grove and later techs are data only (`enabled:false`).                                                               | Phases 10–11.                                                   |
+| K-005 | medium   | Collapse presentation is a title card over the final state (no propagating fire/flood/quake animation).                                                                                         | Phase 09.                                                       |
+| K-006 | low      | Flood/quake have forecast overlays but no 3D water surface or fracture visuals.                                                                                                                 | Phase 09/11.                                                    |
+| K-007 | low      | `HazardCell.arrival` units differ per hazard (fire: cost, flood: steps, quake: distance×4); presentation must normalize by `span`.                                                              | Phase 09.                                                       |
+| K-008 | low      | Phone layout at 320×568 not yet captured/inspected (390×844 is).                                                                                                                                | Phase 07/17.                                                    |
+| K-009 | low      | `?still` on-demand render mode and software GL are test conveniences; real-GPU frame rate unmeasured.                                                                                           | Phase 17.                                                       |
+| K-010 | low      | Resource chips wrap to two rows on phones.                                                                                                                                                      | Phase 07 polish.                                                |
+| K-011 | info     | Stall guard: a frame gap > 2.5 s pauses the game ("stalled"); shorter hitches slow wall time only. In this sandbox's software GL, continuous (non-`?still`) rendering is slow enough to hit it. | Expected on real devices to be rare; revisit with measurements. |

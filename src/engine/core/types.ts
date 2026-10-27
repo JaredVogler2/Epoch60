@@ -324,8 +324,19 @@ export interface Forecast {
   predictedDeaths: number;
 }
 
+/** World fields of every hazard cell as they were just before the cataclysm (for the read-only presentation). */
+export interface BeforeCells {
+  /** Cell indices (y * w + x), parallel to the arrays below. */
+  cells: number[];
+  forest: number[];
+  scar: number[];
+  silt: number[];
+}
+
 export interface CollapseReport {
   epoch: number;
+  /** Pre-collapse snapshot of affected cells; presentation only, never read by the simulation. */
+  before: BeforeCells;
   hazard: HazardKind;
   hazardName: string;
   headline: string;

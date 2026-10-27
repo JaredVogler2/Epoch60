@@ -110,10 +110,10 @@ function regrowWorld(c: Campaign, centuries: number, log: string[]): void {
     const slope = Math.max(0, w.height[i]! - 300);
     const potential = clamp(Math.round(w.fertility[i]! * 0.9 + 100 - slope * 0.5), 100, 950);
     if (!built) {
-      const rate = Math.round(260 * centuries * (w.scar[i]! > 400 ? 0.7 : 1) * (s ? 0.4 : 1));
+      const rate = Math.round(90 * centuries * (w.scar[i]! > 400 ? 0.6 : 1) * (s ? 0.4 : 1));
       if (w.forest[i]! < potential) w.forest[i] = Math.min(potential, w.forest[i]! + rate);
     }
-    w.scar[i] = Math.round(w.scar[i]! * 0.2);
+    w.scar[i] = Math.round(w.scar[i]! * 0.45);
     w.pollution[i] = Math.round(w.pollution[i]! * 0.5);
     w.erosion[i] = Math.round(w.erosion[i]! * 0.7);
     // Fields rested for centuries recover most of their strength.

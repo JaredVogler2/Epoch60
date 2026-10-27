@@ -8,6 +8,9 @@ export interface Spot {
   x: number;
   y: number;
   rot: 0 | 1;
+  /** Footprint after rotation. */
+  w: number;
+  h: number;
   score: number;
 }
 
@@ -25,9 +28,19 @@ export interface SpotOptions {
   ignoreAffordability?: boolean;
 }
 
+/** The standing hearth (the society may have relocated), else the founders' original site. */
+export function currentHearth(c: Campaign): { x: number; y: number } {
+  let best: { x: number; y: number; id: number } | null = null;
+  for (const s of c.structures) {
+    if (s.kind === 'hearth' && (s.status === 'active' || s.status === 'damaged') && (!best || s.id > best.id))
+      best = { x: s.x + 1, y: s.y + 1, id: s.id };
+  }
+  return best ?? c.world.anchors.hearth;
+}
+
 /** Brute-force search for the best legal footprint. Pure and deterministic (scan order breaks ties). */
 export function findSpot(c: Campaign, kind: BuildingKind, opts: SpotOptions = {}): Spot | null {
-  const near = opts.near ?? c.world.anchors.hearth;
+  const near = opts.near ?? currentHearth(c);
   const maxDist = opts.maxDist ?? 14;
   const rots = opts.rots ?? [0];
   let hazardCells: Set<number> | null = null;
@@ -53,7 +66,7 @@ export function findSpot(c: Campaign, kind: BuildingKind, opts: SpotOptions = {}
           }
           score -= hit * 40;
         }
-        if (!best || score > best.score) best = { x, y, rot, score };
+        if (!best || score > best.score) best = { x, y, rot, w, h, score };
       }
     }
   }

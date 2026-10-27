@@ -3,8 +3,11 @@ import type { GameStore } from './store';
 
 /** One simulation tick is 100 ms of *active, foreground* play. */
 export const TICK_MS = 100;
-/** A frame gap above this is a stall (phone call, throttled tab, debugger): pause instead of catching up. */
-export const STALL_MS = 1000;
+/**
+ * A frame gap above this is a true stall (phone call, throttled tab, debugger): pause with an explanation.
+ * Shorter hitches (shader compiles, GC) just cost wall time — the simulation never fast-forwards to repay it.
+ */
+export const STALL_MS = 2500;
 /** Never run more than this many ticks in a single frame; excess wall time is dropped, not owed. */
 export const MAX_TICKS_PER_FRAME = 6;
 /** Assisted mode runs the same 600 ticks at half speed. */
@@ -16,6 +19,7 @@ export const ASSISTED_SPEED = 0.5;
  */
 export class EpochClock {
   private acc = 0;
+  private seen = 0;
 
   constructor(private readonly store: GameStore) {}
 
@@ -26,6 +30,12 @@ export class EpochClock {
   /** Advance by a wall-clock frame delta. Returns the number of ticks run. */
   step(dtMs: number): number {
     const c = this.store.campaign;
+    if (this.seen !== this.store.clockResetSeq) {
+      // Begin / resume / new game: ignore the frame that straddles the transition (it may include a hitch).
+      this.seen = this.store.clockResetSeq;
+      this.acc = 0;
+      return 0;
+    }
     if (!c || c.phase !== 'ACTIVE' || c.paused) {
       this.acc = 0;
       return 0;

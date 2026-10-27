@@ -8,3 +8,6 @@ playwright-report
 .env*
 coverage
 tmp/
+
+# raw e2e screenshots (large); curated compressed copies live in docs/review
+docs/screenshots/
