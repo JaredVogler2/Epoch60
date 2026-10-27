@@ -68,8 +68,14 @@ ${rows
 
 ## What is and is not claimed
 
-- Targets (60 fps on a midrange laptop, 30 fps on a midrange iPhone) are **unproven**: no real-device measurement exists. The adaptive pixel-ratio governor (\`src/render/governor.ts\`, unit-tested) is the mitigation, and it never removes geometry or forecast information.
-- Draw-call and triangle budgets above are real counts from \`renderer.info\` for the last rendered frame.
+- Targets (60 fps on a midrange laptop, 30 fps on a midrange iPhone) are **unproven**: no real-device measurement exists. The adaptive
+  governor (\`src/render/governor.ts\`, unit-tested) is the mitigation: it lowers the pixel ratio first, then sheds post-processing and
+  finally the birds and the decorative valley beyond the board. It never removes geometry the player needs or any forecast information.
+- Draw-call and triangle counts are real counts from \`renderer.info\` for one whole frame, including the shadow pass and, on the high tier,
+  every post-processing pass.
+- For comparison, before session 4's visual overhaul the same scene cost 118 draw calls and 344k / 440k / 549k triangles (low / medium /
+  high). The overhaul cut draw calls (one instanced smoke system instead of per-chimney meshes) and added triangles, mostly the
+  smooth-shaded trees and the valley beyond the board; the latter uses far-detail trees (56–160 triangles instead of 240–344).
 `;
   writeFileSync(reportPath, md);
   console.log('wrote', reportPath);

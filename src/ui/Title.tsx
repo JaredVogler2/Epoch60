@@ -87,7 +87,7 @@ export function TitleScreen() {
                   maxLength={64}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="6001 or any words"
+                  placeholder="e.g. 6001"
                   value={seedText}
                   data-testid="seed-input"
                   aria-describedby="seed-note"
@@ -110,7 +110,7 @@ export function TitleScreen() {
             <p className="diff-note" id="seed-note" data-testid="seed-note">
               {typed
                 ? `Valley ${typed}${shared.seed === typed ? ' (shared link)' : ''}${best ? ` · your best: ${best.outcome === 'victory' ? 'won' : 'lost'} with ${best.survivors} survivors` : ''}`
-                : 'Same seed, same valley and same disasters — share it.'}
+                : 'A number or any words. Same seed, same valley and same disasters — share it.'}
             </p>
             <button
               type="button"

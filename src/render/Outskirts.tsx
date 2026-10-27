@@ -206,11 +206,12 @@ export function Outskirts({ density, crown }: { density: number; crown: Material
   );
   const water = useMemo(() => linkWaterAtmosphere(makeWaterMaterial()), []);
   const geoms = useMemo(
+    // Far-detail meshes: these trees are only ever seen at a distance, through haze (≈ a third of the triangles).
     () => ({
-      broadleaf: broadleafGeometry(),
-      conifer: coniferGeometry(),
-      cypress: cypressGeometry(),
-      birch: birchTreeGeometry(),
+      broadleaf: broadleafGeometry(true),
+      conifer: coniferGeometry(true),
+      cypress: cypressGeometry(true),
+      birch: birchTreeGeometry(true),
     }),
     [],
   );

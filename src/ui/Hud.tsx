@@ -131,10 +131,11 @@ export function TopBar() {
         </div>
         <div className="timer-hazard">
           <Icon name={hazardIcon(spec.hazard.kind)} size={16} />
-          <span>{spec.hazard.name}</span>
+          <span className="hz-name">{spec.hazard.name}</span>
           {f && f.atRisk > 0 && (
             <span className="risk" data-testid="risk-count">
-              · {f.atRisk} at risk
+              <span className="hz-sep">· </span>
+              {f.atRisk} at risk
             </span>
           )}
         </div>

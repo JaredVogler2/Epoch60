@@ -106,7 +106,12 @@ export function Post() {
     v.uniforms.uStep!.value.set(0, 1 / ht);
     h.uniforms.uMax!.value = max;
     v.uniforms.uMax!.value = max;
+    // renderer.info resets on every render call: count the whole frame (scene, shadows and every pass), not just the
+    // last full-screen pass, so the perf probe and the governor's stats see the real cost.
+    gl.info.autoReset = false;
+    gl.info.reset();
     composer.render();
+    gl.info.autoReset = true;
   }, 1);
   return null;
 }

@@ -1,15 +1,16 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/4 (PRs #1–#3 were merged; each time `main` was merged back into the branch and a new PR opened, because force-pushes are refused here) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** https://github.com/JaredVogler2/Epoch60/pull/5 (PRs #1–#4 were merged, often within minutes of CI going green; each time `main` was merged back into the branch and a new PR opened, because force-pushes are refused here) · Last verified commit: see `git log -1`.
 
 ## State
 
-The 3-epoch loop is **playable in the browser and winnable two different ways on both scenarios** (Chromium-verified): title → plan → build → 60 s → collapse cinematic → debrief → interregnum
-(ruins, survey/excavate, sites, traditions) → next age → … → ending → Play again. Ages change the architecture (thatch → tile → slate); 17 buildings, 9 techs and **four disasters** (fire, flood,
-quake, ashfall) have tested effects; seven state-derived story decisions appear as a deadline chip; two scenarios (Greenvale, The Ashen Winter) and three difficulty tiers; seed links, Daily Ruins and local
-run cards; procedural audio with mute; keyboard-only placement and a live announcer; an adaptive DPR governor. Executed winning routes (Engineers, Archivists) and credible losses are recorded in
-`fixtures/` and replayed headless (`tests/engine/routes.test.ts`) and in the browser (`e2e/victory.spec.ts`, hash-identical). **208 unit tests; Playwright 44 passed / 2 skipped on desktop 1366×768 and an
-iPhone-13 touch profile.** Balance: `docs/BALANCE_REPORT.md` and `docs/balance/` (Normal is easy for competent play; Hard separates the routes — K-003, K-017).
+The 3-epoch loop is **playable in the browser and winnable two different ways on both scenarios** (Chromium-verified): title → plan → build → 60 s → collapse cinematic →
+debrief → interregnum (ruins, survey/excavate, sites, traditions) → next age → … → ending → Play again. Session 4 rebuilt the look to a painterly diorama (shared
+atmosphere, sky and haze, smooth tree species with autumn accents, masonry, the valley continuing past the board, birds, instanced smoke, high-tier tilt-shift and grade)
+and the collapse visuals (smooth flood / quake / ash fronts, a travelling fire wall), added WebGL context-loss recovery, an error boundary, validated storage, modal focus,
+and fixed what a second independent review proved (unreachable traditions, repair/hearth/queue bugs, stale forecast, finished-run re-save, Daily tag, Assisted ranking,
+exact arithmetic in hashed state) with mutation-checked behavioural tests. **247 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still
+open: `docs/KNOWN_ISSUES.md` (notably K-003: on Normal a well-sited Archive alone wins Greenvale).
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -18,13 +19,19 @@ iPhone-13 touch profile.** Balance: `docs/BALANCE_REPORT.md` and `docs/balance/`
 
 ## Next exact steps (highest value first)
 
-1. **Phase 19 — independent adversarial review.** The brief is in the session scratchpad (`review-brief.md`; regenerate from `prompts/19_FINAL_ADVERSARIAL_REVIEW.md` if gone). Run it on a fresh agent with the
-   code, not with conclusions, and fix what it proves (it has not been run yet).
-2. **Phase 17 remainder:** landscape phones, ≤ 360 px touch targets (K-008), a manual screen-reader pass (K-016), WebKit when available (`EPOCH_WEBKIT=1`), real-device frame times (K-009).
-3. **Phase 13:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004). **Phase 16:** meta-progression. **Phase 14 polish:** citizen outfits per age, Age III skyline, flood-edge and quake
-   fracture geometry, then-vs-now slider, more story decisions.
-4. **Phase 15 follow-ups:** make Normal harder or default to a harder tier after a human playtest; give the Hard Ashen Engineers a second landmark (K-017).
-5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015) are the biggest unmeasured things.
+1. **Game depth on Normal (K-003, K-019).** A well-sited Archive alone wins Greenvale/Normal 40/40; fire-born traditions guard against a hazard that never returns.
+   Make Normal need two independent mitigations, or let landmark type and technology identity count in the victory — after a human playtest — and re-run
+   `scripts/sim.ts` and the traces.
+2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
+   the stall guard are tuned on software GL only.
+3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 361 px wide are 40 px (K-008).
+4. **Phase 13 / 14 / 16:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); citizen outfits per age, Age III skyline, a
+   then-vs-now slider, more story decisions; meta-progression.
+5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
+   are the biggest unmeasured things.
+
+The session-4 visual process (standard, plan, quality report with per-iteration scores) is in `docs/3D_*.md`; `scripts/visual-shots.mjs <tag> --set full` repeats
+every capture (`COLLAPSE_T=0.2` freezes a collapse earlier), and `scripts/perf-probe.mjs` measures the scene cost per tier.
 
 ## Tooling you will use
 
