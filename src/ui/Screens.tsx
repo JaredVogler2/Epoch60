@@ -23,8 +23,10 @@ import { useStore } from './useStore';
 export function PrepareCard() {
   const s = useStore();
   const c = s.campaign!;
-  // Wide screens show the briefing by default; phones keep it to a one-line header until tapped.
-  const [open, setOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth > 720);
+  // Roomy screens show the briefing by default; phones (and short landscape screens) keep it to a one-line header until tapped.
+  const [open, setOpen] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth > 720 && window.innerHeight > 520,
+  );
   if (c.phase !== 'PREPARE') return null;
   const spec = currentSpec(c);
   const scenario = getScenario(c.scenario);

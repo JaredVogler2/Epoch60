@@ -1386,8 +1386,30 @@ h3 {
   .prepare-body {
     max-height: 34vh;
   }
-  /* Placing a building: the bar is one short info row over one row of equal buttons, and the Begin card steps aside
-     so the valley stays tappable (a 3-row bar under the Begin card covered most of a 390x664 screen). */
+}
+@media (max-width: 360px) {
+  .chip {
+    padding: 0 7px;
+    min-height: 34px;
+    gap: 3px;
+  }
+  .chip-val {
+    font-size: 0.95rem;
+  }
+  .chip-rate {
+    display: none;
+  }
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+/* Placing a building on a phone (portrait or sideways): the bar is one short info row over one row of equal buttons, and
+   the Begin card steps aside so the valley stays tappable (a 3-row bar under the Begin card covered most of a 390x664 screen). */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 520px) {
+  .kbd-hint {
+    display: none;
+  }
   .bottom-dock:has(.placebar) .prepare {
     display: none;
   }
@@ -1420,21 +1442,59 @@ h3 {
     white-space: nowrap;
   }
 }
-@media (max-width: 360px) {
-  .chip {
-    padding: 0 7px;
-    min-height: 34px;
-    gap: 3px;
+/* ---------- phones held sideways ----------
+   With under ~520 px of height a bottom tray plus the briefing card covers the whole valley (and on an 844x390 phone the
+   tray sat on top of the Begin button). The tray becomes a column on the right; the dock stacks on the left. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .bottom-dock {
+    align-items: flex-start;
+    margin-right: 122px;
   }
-  .chip-val {
-    font-size: 0.95rem;
+  .bottom-dock > * {
+    max-width: 480px;
   }
-  .chip-rate {
+  .tray {
+    position: absolute;
+    top: calc(var(--safe-t) + 70px);
+    right: calc(var(--safe-r) + 10px);
+    bottom: calc(var(--safe-b) + 8px);
+    width: 106px;
+    max-width: none;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tray-scroll {
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .tray-scroll .card {
+    width: 100%;
+    min-height: 78px;
+  }
+  .tray-note {
     display: none;
   }
-  .btn-icon {
-    width: 40px;
-    height: 40px;
+  /* The wide-screen briefing is absolutely placed with a height cap that leaves ~60 px here: keep it in the dock instead. */
+  .prepare {
+    position: static;
+    width: min(100%, 340px);
+    max-height: none;
+    overflow: visible;
+  }
+  .prepare-body {
+    max-height: 30vh;
+    overflow: auto;
+  }
+  .inspector,
+  .panel {
+    right: calc(var(--safe-r) + 128px);
+    top: calc(var(--safe-t) + 70px);
+    width: min(340px, calc(100vw - 160px));
+    max-height: calc(100% - 90px);
   }
 }
 @media (prefers-reduced-motion: reduce) {

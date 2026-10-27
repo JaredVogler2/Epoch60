@@ -305,7 +305,7 @@ export function PlacementBar() {
       </div>
       <div className="place-actions">
         <button type="button" className="btn" data-testid="next-spot" onClick={() => s.suggestNext()}>
-          <Icon name="next" size={20} /> Next site{touch ? '' : ' (N)'}
+          <Icon name="next" size={20} /> Next site{!touch && <span className="kbd-hint"> (N)</span>}
         </button>
         {def.rotatable && (
           <button type="button" className="btn" data-testid="rotate" onClick={() => s.rotatePlacing()}>
@@ -318,7 +318,7 @@ export function PlacementBar() {
           data-testid="cancel-place"
           onClick={() => s.cancelPlacing()}
         >
-          <Icon name="close" size={20} /> {touch ? 'Cancel' : 'Cancel (Esc)'}
+          <Icon name="close" size={20} /> Cancel{!touch && <span className="kbd-hint"> (Esc)</span>}
         </button>
         <button
           type="button"
