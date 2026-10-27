@@ -74,3 +74,6 @@ Phase workflow: inspect actual repo → implement real code → compile/typechec
 ## Avoid
 
 Grandiose design documentation without implementation, meaningless resource meters, 60s of tap-spam, auto-win by building one immortal vault, linear tech tree where best choice always obvious, "ruins" as temporary cosmetics, randomly generated worlds without solvability checks, asset packs that visually clash, dead menus, WebGL blank screens on iPhone, intrusive ads, push notifications or pay-to-win. **The game should reward curiosity and mastery, not exploit compulsive behavior.**
+## Cross-phase binding supplements
+
+Before implementing code, read [QUALITY_GATE_VISUAL_AND_FUN.md](QUALITY_GATE_VISUAL_AND_FUN.md) and [AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md](AGENT_RESUME_AND_EVIDENCE_PROTOCOL.md). Apply them throughout phases 01–19. The art/interaction scorecard and verified working-state commit protocol are mandatory and override any lower-quality implicit shortcut. Do not call a static 3D scene or graphical mockup a playable game.
