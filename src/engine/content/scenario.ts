@@ -196,10 +196,10 @@ export const DIFFICULTY: Record<
   },
   hard: {
     name: 'Hard',
-    blurb: 'Fiercer catastrophes; ten survivors, two surviving landmarks and four retained technologies.',
+    blurb: 'Fiercer catastrophes; ten survivors and four retained technologies.',
     strengthPm: 1150,
     survivors: 2,
-    heritage: 1,
+    heritage: 0,
     techs: 1,
   },
 };

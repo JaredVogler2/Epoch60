@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BUILDINGS,
   computeHash,
   createCampaign,
   dispatchAction,
@@ -17,6 +18,7 @@ import {
 import type { Campaign, Difficulty } from '../../src/engine';
 import { playCampaign } from '../../src/engine/ai/bots';
 import { ROUTES } from '../../src/engine/ai/routes';
+import { isStanding } from '../../src/engine/economy/modifiers';
 import { createStructure } from '../../src/engine/economy/structures';
 
 const make = (d: Difficulty, scenario = 'greenvale') => createCampaign(6001, 'standard', scenario, d);
@@ -25,7 +27,7 @@ describe('difficulty tiers change the world and the goal, never the rules', () =
   it('shift the victory thresholds from the authored ones', () => {
     expect(victoryFor(GREENVALE, 'normal')).toEqual(GREENVALE.victory);
     expect(victoryFor(GREENVALE, 'gentle')).toEqual({ minSurvivors: 6, minHeritage: 1, minRetainedTechs: 2 });
-    expect(victoryFor(GREENVALE, 'hard')).toEqual({ minSurvivors: 10, minHeritage: 2, minRetainedTechs: 4 });
+    expect(victoryFor(GREENVALE, 'hard')).toEqual({ minSurvivors: 10, minHeritage: 1, minRetainedTechs: 4 });
   });
 
   it('scale every hazard: the same village faces more fire, flood, quake and ash on Hard than on Gentle', () => {
@@ -98,20 +100,23 @@ describe('what the tuned routes make of each tier (seed 6001)', () => {
     const normal = verdictOf('archivists', 'normal');
     expect(normal.v.outcome).toBe('victory');
     const hard = verdictOf('archivists', 'hard');
-    expect(hard.v.conditions.map((x) => x.need)).toEqual([10, 2, 4]);
+    expect(hard.v.conditions.map((x) => x.need)).toEqual([10, 1, 4]);
   }, 60_000);
 
-  it('Hard still has two ways in on Greenvale: Engineers raise a second archive, Archivists scatter a seed vault', () => {
-    const standing = (c: Campaign, kind: string) =>
-      c.structures.filter((s) => s.kind === kind && (s.status === 'active' || s.status === 'damaged')).length;
+  it('Hard still has two ways in on Greenvale: Engineers keep a hearth above the flood, Archivists a seed vault', () => {
+    const landmarks = (c: Campaign) =>
+      c.structures
+        .filter((s) => BUILDINGS[s.kind].heritage && isStanding(s) && s.originEpoch < c.epoch)
+        .map((s) => s.kind);
     const eng = verdictOf('engineers', 'hard');
     const arc = verdictOf('archivists', 'hard');
     expect(eng.v.outcome).toBe('victory');
     expect(arc.v.outcome).toBe('victory');
-    // Different mechanisms: the engineers carry the second landmark as another archive, the archivists as a vault.
-    expect(standing(eng.c, 'archive')).toBeGreaterThanOrEqual(2);
-    expect(standing(eng.c, 'seed_vault')).toBe(0);
-    expect(standing(arc.c, 'seed_vault')).toBeGreaterThanOrEqual(1);
+    // Different landmarks: the engineers hold the hearth they lit above the flood, the archivists carry a vault and
+    // move on. (Without Open Hands after the flood the engineers end one survivor short on this seed.)
+    expect(landmarks(eng.c)).toEqual(['hearth']);
+    expect(landmarks(arc.c)).toContain('seed_vault');
+    expect(landmarks(arc.c)).not.toContain('hearth');
   }, 120_000);
 
   it('Gentle is no harder than Normal for the same plan', () => {

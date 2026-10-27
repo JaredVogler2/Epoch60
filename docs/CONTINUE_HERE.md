@@ -10,8 +10,9 @@ atmosphere, sky and haze, smooth tree species with autumn accents, masonry, the 
 and the collapse visuals (smooth flood / quake / ash fronts, a travelling fire wall), added WebGL context-loss recovery, an error boundary, validated storage, modal focus,
 and fixed what a second independent review proved (unreachable traditions, repair/hearth/queue bugs, stale forecast, finished-run re-save, Daily tag, Assisted ranking,
 exact arithmetic in hashed state) with mutation-checked behavioural tests. Visual iteration 3 covered every required viewport (scores 4/5 on the seven criteria
-judged from stills); desktop hover highlights buildings. **247 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still
-open: `docs/KNOWN_ISSUES.md` (notably K-003: on Normal a well-sited Archive alone wins Greenvale).
+judged from stills); desktop hover highlights buildings. Session 5 (rules 0.4.0) made Normal need two separate preparations: an Archive carries the
+knowledge but is no longer a landmark, so a win also needs a Hearth a later society kept, a Seed Vault, a Dam or a Bridge — and the planning card says
+so. **251 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -20,9 +21,10 @@ open: `docs/KNOWN_ISSUES.md` (notably K-003: on Normal a well-sited Archive alon
 
 ## Next exact steps (highest value first)
 
-1. **Game depth on Normal (K-003, K-019).** A well-sited Archive alone wins Greenvale/Normal 40/40; fire-born traditions guard against a hazard that never returns.
-   Make Normal need two independent mitigations, or let landmark type and technology identity count in the victory — after a human playtest — and re-run
-   `scripts/sim.ts` and the traces.
+1. **Game depth, next layer (K-003, K-019).** Normal now needs an Archive _and_ a landmark, but a player who knows both moves still wins Greenvale/Normal
+   easily (`npx vite-node scripts/recipes.ts`); fire-born traditions guard against a hazard that never returns. Candidates: let the landmark's type matter
+   (a Dam or Bridge counting for more), let later ages carry fire risk, or give the fire lessons a lasting upside — after a human playtest — then re-run
+   `scripts/sim.ts`, `scripts/recipes.ts` and the traces.
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).

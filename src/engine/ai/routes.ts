@@ -38,12 +38,15 @@ function pick(prefs: TraditionId[]): (c: Campaign) => TraditionId {
   };
 }
 
-/** Route A — Engineers: stay put, hold the line with stone and earthworks, let the forecast aim every defence. */
+/**
+ * Route A — Engineers: hold the line with stone and earthworks and let the forecast aim every defence. After the
+ * fire they refound above the flood line and keep that hearth through the quake: it is their landmark.
+ */
 const hardMode = (c: Campaign) => c.difficulty === 'hard';
 
-// Hard asks for four retained technologies and two standing landmarks from earlier ages: the engineers raise a
-// second archive in the second age (it doubles their knowledge and is a landmark) and learn hydrology in the third.
-// Normal and Gentle play, and the recorded traces, are untouched.
+// Hard asks for four retained technologies and ten survivors: the engineers raise a second archive in the second age
+// (it doubles their knowledge), learn hydrology in the third and take Open Hands (two more founders) after the flood.
+// Normal and Gentle play are untouched by this.
 const engineersScholar = scholarly((c) =>
   c.epoch === 0
     ? ['masonry', 'writing']
@@ -53,6 +56,21 @@ const engineersScholar = scholarly((c) =>
         ? ['hydrology']
         : [],
 );
+
+const engineersTraditions = pick([
+  'river_wardens',
+  'deep_foundations',
+  'stone_hearted',
+  'fire_wardens',
+  'open_hands',
+]);
+const engineersHardTraditions = pick([
+  'open_hands',
+  'deep_foundations',
+  'stone_hearted',
+  'river_wardens',
+  'fire_wardens',
+]);
 
 export const engineers: Policy = {
   name: 'engineers',
@@ -130,8 +148,9 @@ export const engineers: Policy = {
     historian: 'fund',
     refugees: 'welcome',
   }),
-  site: () => 0,
-  tradition: pick(['river_wardens', 'deep_foundations', 'stone_hearted', 'fire_wardens', 'open_hands']),
+  // High ground after the fire (the flood never reaches that hearth), then the same hearth again after the flood.
+  site: (c) => (c.epoch === 0 ? 2 : 0),
+  tradition: (c) => (hardMode(c) && c.epoch === 1 ? engineersHardTraditions : engineersTraditions)(c),
   excavate: bestExcavation,
 };
 
@@ -277,3 +296,47 @@ export const steward: Policy = {
 };
 
 export const ROUTES: Record<string, Policy> = { engineers, archivists, builder, maximizer, steward };
+
+/**
+ * The least a player can do that knows the scenario (K-003): one farm, one lumber camp, one Archive out of the
+ * later hazards' way, three cheap technologies and three cottages — plus, optionally, one landmark: a Seed Vault on
+ * safe ground, or a hearth founded above the flood and kept. Not a route; a yardstick for how much Normal demands
+ * (`scripts/recipes.ts`, `tests/engine/routes.test.ts`).
+ */
+export function minimalRecipe(landmark: 'none' | 'vault' | 'hold'): Policy {
+  return {
+    name: `recipe-${landmark}`,
+    focus: scholarly(() => ['writing', 'masonry', 'irrigation']),
+    wants: () =>
+      wantsOnly([
+        { id: 'farm', kind: 'farm', count: 1, spot: { avoidHazard: true } },
+        { id: 'lumber', kind: 'lumber_camp', count: 1 },
+        {
+          id: 'archive',
+          kind: 'archive',
+          count: 1,
+          save: true,
+          spot: { avoidEpochs: [1, 2], maxDist: 26, high: true },
+        },
+        ...(landmark === 'vault'
+          ? [
+              {
+                id: 'vault',
+                kind: 'seed_vault' as const,
+                count: 1,
+                save: true,
+                spot: { avoidEpochs: [0, 1, 2], maxDist: 26, high: true },
+              },
+            ]
+          : []),
+        { id: 'r-writing', research: 'writing' },
+        { id: 'r-masonry', research: 'masonry' },
+        { id: 'r-irrigation', research: 'irrigation' },
+        { id: 'cottage', kind: 'cottage', count: 3, spot: { avoidHazard: true } },
+        { id: 'repair', repair: true },
+      ]),
+    site: landmark === 'hold' ? (c) => (c.epoch === 0 ? 2 : 0) : () => 0,
+    tradition: (c) => c.lineage.interregnum?.traditions[0]?.id ?? 'open_hands',
+    excavate: () => null,
+  };
+}

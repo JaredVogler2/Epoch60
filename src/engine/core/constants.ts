@@ -1,7 +1,7 @@
 /** Versions are embedded in saves and replay transcripts so old data can be migrated or rejected. */
 export const SCHEMA_VERSION = 1;
-export const RULES_VERSION = '0.3.0';
-export const CONTENT_VERSION = '0.2.0';
+export const RULES_VERSION = '0.4.0';
+export const CONTENT_VERSION = '0.3.0';
 
 /** Time: one authoritative tick = 100 ms of ACTIVE simulation. 600 ticks = 60.0 s. */
 export const TICKS_PER_SECOND = 10;

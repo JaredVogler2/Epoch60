@@ -70,27 +70,31 @@ ${rows.join('\n')}
 
 ## What the two winning routes do differently — and what they share
 
-**Route A — Engineers (hold the line).** Never leaves the ancestral valley floor. Founds the Archive on the
-north-east ridge — inside the future quake zone — and protects it by *engineering*: Masonry and Writing in the Age of
-Thatch, **Seismic Engineering** in the Age of Bronze, then Retaining Walls, Stone Houses and reinforced stonework
-before the Great Quake, and the Deep Foundations tradition when it is offered before the quake age. It answers story
-decisions defensively (clear the brush, sandbag, brace the landmark). On this seed, without Seismic Engineering the
-same policy loses (ablation test).
+**Route A — Engineers (hold the line).** Founds the Archive on the north-east ridge — inside the future quake zone —
+and protects it by *engineering*: Masonry and Writing in the Age of Thatch, **Seismic Engineering** in the Age of
+Bronze, then Retaining Walls, Stone Houses and reinforced stonework before the Great Quake, and the Deep Foundations
+tradition when it is offered before the quake age. After the fire it refounds on the high ground, above the flood line,
+and founds the last society on that same hearth: the hearth it keeps through the quake is its **landmark**. It answers
+story decisions defensively (clear the brush, sandbag, brace the landmark). On this seed, without Seismic Engineering
+it loses a technology to the quake, and staying on the valley floor loses the hearth to the flood (ablation tests).
 
 **Route B — Archivists (scatter and relocate).** Sites its Archive and Seed Vault where it expects the *later* hazards
 to do least harm — not out of reach: on this seed the fire and the quake still cross its Archives and the ash its Seed
 Vault, and they stand on their resistance. It founds each later society on the High Ground, researches Writing →
 Masonry → Hydrology → Seismic Engineering, builds a second Archive, and digs up what was left behind. It answers story
-decisions by gathering (timber, harvest) and learning (funding the historian, welcoming refugees), and ends with
-three standing landmarks and four retained technologies. Without research, or without an Archive, the same policy
-loses (ablation test).
+decisions by gathering (timber, harvest) and learning (funding the historian, welcoming refugees), and ends with four
+retained technologies in its Archives and the **Seed Vault** as its landmark. Without research or without an Archive it
+keeps no knowledge, and without the Seed Vault it keeps no landmark (ablation tests).
 
-**What they share.** The routes differ in what they *do*; on Greenvale/Normal they do not differ in what the game
-*demands*. A seven-step policy — one Archive sited away from the later flood and quake, one farm, one lumber camp,
-Writing, Masonry, Irrigation and three cottages — wins Greenvale/Normal on 40 of 40 seeds (1–40); the same policy
-with its Archive beside the hearth wins 0 of 40. So on Normal the decisive move is where the Archive stands. The
-recipe fails Hard (0/40: two landmarks and four technologies are needed) and The Ashen Winter (at most 1/40: the ash
-winter needs food put by). See \`docs/KNOWN_ISSUES.md\` K-003.
+**What Normal demands.** Since rules 0.4.0 an Archive carries knowledge but is not a landmark, so a win needs two
+separate preparations: knowledge in an Archive that stands, and a landmark from an earlier age — a Hearth a later
+society kept, a Seed Vault, a Dam or a Bridge. The routes answer the second one differently (a hearth held above the
+flood; a Seed Vault). The seven-step policy that won Greenvale/Normal on 40 of 40 seeds under rules 0.3.0 — one Archive
+sited away from the later flood and quake, one farm, one lumber camp, Writing, Masonry, Irrigation and three cottages —
+now loses every seed (0 of 40 on Greenvale and on The Ashen Winter: it keeps no landmark). With one landmark added it
+wins Greenvale again — a Seed Vault on safe ground 40 of 40, a hearth founded above the flood and kept 27 of 40 — but
+rarely survives The Ashen Winter (7 and 0 of 40). Normal remains forgiving to a player who knows both moves. See
+\`docs/KNOWN_ISSUES.md\` K-003 and \`scripts/recipes.ts\`.
 
 ## Losing paths
 

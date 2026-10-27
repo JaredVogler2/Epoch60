@@ -9,6 +9,7 @@ import {
   getScenario,
   ruinYield,
   unplan,
+  victoryFor,
 } from '../engine';
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
@@ -36,6 +37,10 @@ export function PrepareCard() {
   const inherited = c.structures.filter((x) => x.originEpoch < c.epoch);
   const ruins = inherited.filter((x) => x.status === 'rubble' || x.status === 'buried').length;
   const standing = inherited.filter((x) => x.status === 'active' || x.status === 'damaged').length;
+  const win = victoryFor(scenario, c.difficulty);
+  const landmarksNow = inherited.filter(
+    (x) => BUILDINGS[x.kind].heritage && (x.status === 'active' || x.status === 'damaged'),
+  ).length;
   return (
     <section className={`prepare ${open ? 'open' : ''}`} data-testid="prepare" aria-label="Epoch briefing">
       <button type="button" className="prepare-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -105,6 +110,23 @@ export function PrepareCard() {
               </button>
             </div>
           ))}
+        </div>
+        <div className="victory-goals" data-testid="victory-goals">
+          <b>To break the cycle, after {scenario.epochs.at(-1)!.hazard.headline}:</b>
+          <ul>
+            <li>
+              <Icon name="people" size={14} /> {win.minSurvivors} people alive
+            </li>
+            <li>
+              <Icon name="hearth" size={14} /> {win.minHeritage} landmark{win.minHeritage === 1 ? '' : 's'}{' '}
+              from an earlier age: a hearth you keep, a Seed Vault, a Dam or a Bridge
+              {c.epoch > 0 && <span className="dim"> ({landmarksNow} now)</span>}
+            </li>
+            <li>
+              <Icon name="archive" size={14} /> {win.minRetainedTechs} technologies carried through: memory
+              keeps one, a standing hearth one, an Archive the rest
+            </li>
+          </ul>
         </div>
         <p className="dim small">
           {scenario.name} · epoch {c.epoch + 1} of {scenario.epochs.length} · preparing takes no time.
@@ -365,9 +387,14 @@ export function InterregnumScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c.phase, s.inter.site]);
   if (c.phase !== 'INTERREGNUM' || !inter) return null;
+  // Landmarks and knowledge stores (their tablets can be dug up) head the list.
+  const notable = (x: Structure) => Number(BUILDINGS[x.kind].heritage || BUILDINGS[x.kind].retains > 0);
   const ruins = c.structures
     .filter((x) => x.status === 'rubble' || x.status === 'buried')
-    .sort((a, b) => Number(BUILDINGS[b.kind].heritage) - Number(BUILDINGS[a.kind].heritage) || a.id - b.id);
+    .sort((a, b) => notable(b) - notable(a) || a.id - b.id);
+  const oldHearth = c.structures.find(
+    (x) => x.kind === 'hearth' && (x.status === 'active' || x.status === 'damaged'),
+  );
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
   const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
   return (
@@ -397,30 +424,39 @@ export function InterregnumScreen() {
 
       <h3>Where will your people begin?</h3>
       <div className="site-list">
-        {inter.sites.map((st, i) => (
-          <button
-            key={i}
-            type="button"
-            className={`site ${s.inter.site === i ? 'selected' : ''}`}
-            aria-pressed={s.inter.site === i}
-            data-testid={`site-${i}`}
-            onClick={() => {
-              s.setInter({ site: i });
-              s.focusOn(st.x + 1, st.y + 1, 22);
-            }}
-          >
-            <b>{st.label}</b>
-            <small>{st.note}</small>
-            <span className="site-stats">
-              <span>Soil {Math.round(st.fertility / 10)}%</span>
-              <span className={st.risk > 500 ? 'neg' : st.risk > 150 ? 'warn' : 'pos'}>
-                <Icon name={hazardIcon(st.riskKind)} size={12} />{' '}
-                {st.risk > 500 ? 'Severe' : st.risk > 150 ? 'Exposed' : 'Safe'}
+        {inter.sites.map((st, i) => {
+          // Founding within a cell of a standing hearth moves into it; anywhere else abandons it to ruin.
+          const keeps = !!oldHearth && Math.abs(oldHearth.x - st.x) <= 1 && Math.abs(oldHearth.y - st.y) <= 1;
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`site ${s.inter.site === i ? 'selected' : ''}`}
+              aria-pressed={s.inter.site === i}
+              data-testid={`site-${i}`}
+              onClick={() => {
+                s.setInter({ site: i });
+                s.focusOn(st.x + 1, st.y + 1, 22);
+              }}
+            >
+              <b>{st.label}</b>
+              <small>{st.note}</small>
+              <span className="site-stats">
+                <span>Soil {Math.round(st.fertility / 10)}%</span>
+                <span className={st.risk > 500 ? 'neg' : st.risk > 150 ? 'warn' : 'pos'}>
+                  <Icon name={hazardIcon(st.riskKind)} size={12} />{' '}
+                  {st.risk > 500 ? 'Severe' : st.risk > 150 ? 'Exposed' : 'Safe'}
+                </span>
+                {st.onRuin && <span>On old foundations</span>}
+                {oldHearth && (
+                  <span className={keeps ? 'pos' : 'warn'}>
+                    {keeps ? 'Keeps the old hearth' : 'Abandons the old hearth'}
+                  </span>
+                )}
               </span>
-              {st.onRuin && <span>On old foundations</span>}
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
 
       <h3>What will they remember?</h3>
