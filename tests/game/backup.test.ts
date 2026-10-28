@@ -164,7 +164,8 @@ describe('a backup of what this browser keeps', () => {
     applyBackup(planOf(backupText({ lineage: { save: serialize(incoming) } })), { codex: [], runs: [] });
     expect(computeHash(loadCampaign()!)).toBe(computeHash(incoming));
     expect(localStorage.getItem('epoch60.branches.v1')).toBeNull();
-    expect(loadBranchTag(incoming.seed)).toBeNull();
+    // Brought back once begun (here in its second age), it plays on as a branch from that age.
+    expect(loadBranchTag(incoming.seed)).toBe(1);
   });
 
   it('refuses a file that is not a backup, and leaves out what it cannot read', () => {

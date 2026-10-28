@@ -29,6 +29,8 @@ const ctx = await browser.newContext({
   deviceScaleFactor: dpr,
   hasTouch: touch,
   isMobile: touch,
+  // Scripts run with --js may inject styles; the preview's production CSP would refuse them.
+  bypassCSP: true,
 });
 const page = await ctx.newPage();
 const logs = [];

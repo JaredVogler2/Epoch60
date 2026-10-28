@@ -3,6 +3,7 @@ import { findSpot } from './engine/ai/spots';
 import { store } from './game/store';
 import { cameraApi } from './render/CameraRig';
 import { citizensApi } from './render/Citizens';
+import { omensApi } from './render/Omens';
 import { perfApi } from './render/perf';
 import { presentation } from './render/presentation';
 
@@ -21,6 +22,10 @@ export function installDebug(): void {
     perf: { reset: () => perfApi.reset(), stats: () => perfApi.stats() },
     /** The villagers drawn this frame: position, job and whether they are walking. */
     citizens: () => citizensApi.list(),
+    /** Captures only: everyone stands where they were walking to on the next frame (see `citizensApi.settle`). */
+    settleCitizens: () => citizensApi.settle(),
+    /** The coming catastrophe's omens drawn this frame: its kind, how strong (0..1) and which effects. */
+    omens: () => omensApi.state(),
     /** Integrity hash of the live campaign, for comparing a browser run with a recorded transcript. */
     hash: () => (store.campaign ? computeHash(store.campaign) : null),
     /**

@@ -1,6 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
 import { epochSpec } from '../content/scenario';
-import { UNIT } from '../core/constants';
+import { EPOCH_TICKS, UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type {
   ActionError,
@@ -96,7 +96,7 @@ const DRY_WIND: StoryDef = {
           id: 'clear_brush',
           label: 'Clear the brush',
           detail:
-            'Costs 4 timber. Strips the grass and scrub within 3 cells of the hearth, so the fire has less to burn there.',
+            'Costs 4 timber. Clears the trees and scrub within about 4 cells of the hearth, so the fire has less to burn there.',
           cost: { timber: 4 },
         },
         {
@@ -368,7 +368,7 @@ const DAM_LEAK: StoryDef = {
         {
           id: 'ignore',
           label: 'Leave it',
-          detail: 'It weakens: a levee holds back only half as much; a dam loses its irrigation.',
+          detail: 'It weakens: a levee holds back only half as much; a dam irrigates only half as well.',
         },
       ],
       defaultOption: 'ignore',
@@ -480,8 +480,9 @@ export function stepStories(c: Campaign): void {
   const thisEpoch = c.prompts.filter((p) => p.epoch === c.epoch);
   if (thisEpoch.length >= MAX_STORIES_PER_EPOCH) return;
   if (thisEpoch.some((p) => c.tick - p.openedTick < MIN_SPACING_TICKS)) return;
-  // Nothing new in the last 10 s, when the player should be watching the countdown.
-  if (c.tick > 450) return;
+  // Nothing new in the last 15 s, when the player should be watching the countdown: the latest opens at 44 s and its
+  // deadline passes at 59 s, so every default is applied before the catastrophe.
+  if (c.tick >= EPOCH_TICKS - DEADLINE_TICKS) return;
   for (const id of ORDER) {
     const def = STORIES[id];
     if (c.tick < def.at || thisEpoch.some((p) => p.story === id)) continue;

@@ -29,13 +29,16 @@ export interface RunSpec {
 export const MAX_SEED = 0xffffffff;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** A seed typed by a person: a number is used as is; any other text is hashed to a stable uint32. */
+/**
+ * A seed typed by a person: a valley number (1 to 4294967295) is used as is; any other text, a number out of that range
+ * included, is hashed to a stable uint32 (so "0" is a valley too, never a silent fallback to the canonical one).
+ */
 export function seedFromText(text: string): number | null {
   const t = text.trim();
   if (!t || t.length > 64) return null;
   if (/^\d{1,10}$/.test(t)) {
     const n = Number(t);
-    return n >= 1 && n <= MAX_SEED ? n : null;
+    if (n >= 1 && n <= MAX_SEED) return n;
   }
   const h = parseInt(hashString(t).slice(-8), 16) >>> 0;
   return h === 0 ? 1 : h;
@@ -176,7 +179,7 @@ function isCard(x: unknown): x is RunCard {
     (c.outcome === 'victory' || c.outcome === 'defeat') &&
     finite(c.survivors) &&
     (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted') &&
-    (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1)) &&
+    (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 0)) &&
     (c.legacy === undefined || finite(c.legacy)) &&
     (c.rules === undefined || typeof c.rules === 'string') &&
     (c.endless === undefined || c.endless === true) &&

@@ -97,6 +97,20 @@ export function unfinishedSave(): Campaign | null {
   return c.epoch > 0 || c.actionLog.length > 0 ? c : null;
 }
 
+/** Where a save this build cannot read is set aside (one, the latest), so a later version may still read it. */
+const UNREADABLE_KEY = 'epoch60.save-unreadable.v1';
+
+/** Set the saved lineage aside under its own key, then clear it (it could not be read: damaged or another version). */
+export function setAsideSave(): void {
+  try {
+    const text = safeStorage()?.getItem(SAVE_KEY);
+    if (text) safeStorage()?.setItem(UNREADABLE_KEY, text);
+  } catch {
+    /* no room to keep it: it is cleared all the same, so Continue never fails on it again */
+  }
+  clearSave();
+}
+
 export function clearSave(): void {
   try {
     safeStorage()?.removeItem(SAVE_KEY);

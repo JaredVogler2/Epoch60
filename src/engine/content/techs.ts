@@ -60,7 +60,7 @@ export const TECHS: Record<TechId, TechDef> = {
     ticks: 80,
     requires: [],
     enabled: true,
-    blurb: 'Ditches and channels. Farms yield 25% more, most of all on dry soil.',
+    blurb: 'Ditches and channels. Farms yield 25% more.',
     unlocks: 'Farm +25%',
   },
   crop_rotation: {

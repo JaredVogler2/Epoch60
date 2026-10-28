@@ -1,4 +1,5 @@
 import { chronicleEnding, epochSpec } from '../engine';
+import type { Campaign } from '../engine';
 import { useStore } from './useStore';
 
 /**
@@ -9,6 +10,15 @@ export function Announcer() {
   const s = useStore();
   const c = s.campaign;
   if (!c || s.screen !== 'game') return null;
+  return (
+    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="announcer">
+      {announcement(c)}
+    </div>
+  );
+}
+
+/** What the live region says for this state (pure: it changes only when the state reaches a new moment). */
+export function announcement(c: Campaign): string {
   const spec = epochSpec(c, c.epoch);
   let text = '';
   switch (c.phase) {
@@ -17,9 +27,11 @@ export function Announcer() {
       break;
     case 'ACTIVE': {
       const left = Math.ceil((600 - c.tick) / 10);
+      // Warnings come at 25, 15 and 5 s left: "10 seconds left" is spoken between the second and the last.
       if (c.paused) text = 'Paused.';
-      else if (c.forecastLevel > 0) text = spec.hazard.warnings[c.forecastLevel - 1] ?? '';
+      else if (c.forecastLevel >= 3) text = spec.hazard.warnings[2] ?? '';
       else if (left <= 10) text = '10 seconds left.';
+      else if (c.forecastLevel > 0) text = spec.hazard.warnings[c.forecastLevel - 1] ?? '';
       else if (left <= 30) text = '30 seconds left.';
       else text = `${spec.name} is under way.`;
       break;
@@ -44,9 +56,5 @@ export function Announcer() {
       break;
     }
   }
-  return (
-    <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="announcer">
-      {text}
-    </div>
-  );
+  return text;
 }

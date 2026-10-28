@@ -10,6 +10,7 @@ import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
 import { presentation, sinceHit, visualStatus } from './presentation';
 import { BurnFx, DustPuff } from './CollapseFx';
+import { atmosphere } from './atmosphere';
 import { h01 } from './geo';
 
 const modelCache = new Map<string, BuildingModel>();
@@ -95,6 +96,53 @@ export function smokeSources(c: Campaign | null): SmokeSource[] {
   return out;
 }
 
+/**
+ * A building's own surface: the valley's light (moving cloud shadows, as on the ground and the trees), walls that darken
+ * toward the ground (contact shading, so a house sits on the land rather than hovering over it), a faint mottling that
+ * breaks up flat plaster, timber and stone, and roofs a little smoother than walls. `clip` is the construction sweep.
+ */
+function buildingMaterial(clip: Plane): MeshStandardMaterial {
+  const m = atmosphere(
+    new MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.9,
+      metalness: 0,
+      clippingPlanes: [clip],
+      clipShadows: true,
+    }),
+  );
+  const shared = m.onBeforeCompile;
+  m.onBeforeCompile = (sh, renderer) => {
+    shared(sh, renderer);
+    sh.vertexShader =
+      'varying float vBldY;\nvarying float vBldUp;\n' +
+      sh.vertexShader.replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\n  vBldY = position.y;\n  vBldUp = normal.y;',
+      );
+    sh.fragmentShader =
+      'varying float vBldY;\nvarying float vBldUp;\n' +
+      sh.fragmentShader
+        .replace(
+          '#include <color_fragment>',
+          `#include <color_fragment>
+  float bldWall = 1.0 - smoothstep(0.35, 0.75, abs(vBldUp));
+  diffuseColor.rgb *= mix(1.0, mix(0.7, 1.0, smoothstep(0.0, 0.24, vBldY)), bldWall);
+  diffuseColor.rgb *= 0.95 + 0.1 * atmoNoise(vec2(vAtmoWorld.x + vAtmoWorld.z, vAtmoWorld.y) * 7.0);`,
+        )
+        // Roof slopes (pitched, above the eaves) are smoother than plaster and timber, so the sun glances off tile, slate
+        // and copper; walls, pads and flat tops keep their matte finish.
+        .replace(
+          '#include <roughnessmap_fragment>',
+          `#include <roughnessmap_fragment>
+  float bldRoof = smoothstep(0.3, 0.5, vBldUp) * (1.0 - smoothstep(0.9, 0.98, vBldUp)) * smoothstep(0.35, 0.6, vBldY);
+  roughnessFactor *= mix(1.0, 0.68, bldRoof);`,
+        );
+  };
+  m.customProgramCacheKey = () => 'building-surface';
+  return m;
+}
+
 const StructureView = memo(function StructureView({ s, rev }: { s: Structure; rev: string }) {
   void rev;
   const def = BUILDINGS[s.kind];
@@ -145,17 +193,12 @@ const StructureView = memo(function StructureView({ s, rev }: { s: Structure; re
   }, [s.kind, s.w, s.h, model.height, s.id, def.material]);
 
   const plane = useMemo(() => new Plane(new Vector3(0, -1, 0), 1e4), []);
-  const mat = useMemo(() => {
-    const m = new MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.9,
-      metalness: 0,
-      clippingPlanes: [plane],
-      clipShadows: true,
-    });
-    return m;
-  }, [plane]);
-  const cropMat = useMemo(() => new MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), []);
+  const mat = useMemo(() => buildingMaterial(plane), [plane]);
+  // Crops, scaffolds and ruins share the valley's moving cloud shadows too.
+  const cropMat = useMemo(
+    () => atmosphere(new MeshStandardMaterial({ vertexColors: true, roughness: 0.9 })),
+    [],
+  );
 
   const cx = s.x + s.w / 2;
   const cz = s.y + s.h / 2;

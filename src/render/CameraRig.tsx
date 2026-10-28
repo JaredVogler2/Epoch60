@@ -43,6 +43,44 @@ export const cameraApi: {
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
+/** What the interface covers of a portrait screen, in CSS pixels from the top. */
+export interface UiCover {
+  /** Top edge of the title card (the title screen). */
+  cardTop?: number;
+  /** Bottom edge of the top bar and resource chips (in game). */
+  hudBottom?: number;
+  /** Top edge of the bottom dock: the briefing, the tray or the placement bar (in game). */
+  dockTop?: number;
+}
+
+/**
+ * Where on the screen the camera's focus should sit, as a fraction of the height from the top. On a portrait phone the
+ * interface covers much of the valley (the title is a bottom sheet; in game the top bar, the chips and the dock), so the
+ * focus moves to the middle of what is left uncovered; elsewhere it stays at the centre.
+ */
+export function focusRow(screen: string, w: number, h: number, ui: UiCover): number {
+  if (w >= h || h <= 0) return 0.5;
+  if (screen === 'title') return ui.cardTop === undefined ? 0.5 : clamp(ui.cardTop / 2 / h, 0.16, 0.5);
+  const top = ui.hudBottom ?? 0;
+  const bottom = ui.dockTop ?? h;
+  if (bottom - top < 80) return 0.5;
+  return clamp((top + bottom) / 2 / h, 0.3, 0.6);
+}
+
+function measureUi(): UiCover {
+  if (typeof document === 'undefined') return {};
+  const rect = (sel: string) => document.querySelector(sel)?.getBoundingClientRect();
+  const card = rect('.title-card');
+  const bar = rect('.topbar');
+  const chips = rect('.resbar');
+  const dock = rect('.bottom-dock');
+  return {
+    cardTop: card?.top,
+    hudBottom: bar || chips ? Math.max(bar?.bottom ?? 0, chips?.bottom ?? 0) : undefined,
+    dockTop: dock && dock.height > 0 ? dock.top : undefined,
+  };
+}
+
 export function CameraRig({ enabled }: { enabled: boolean }) {
   const { camera, gl, size } = useThree();
   const target = useRef<CameraState>({ ...DEFAULT_CAMERA });
@@ -50,6 +88,9 @@ export function CameraRig({ enabled }: { enabled: boolean }) {
   const keys = useRef(new Set<string>());
   const lastFocusId = useRef(0);
   const lastScreen = useRef('');
+  // The focus row is measured when the screen or the window changes, and again a second later (fonts, late layout),
+  // never in between: the view does not drift while a player is aiming at it.
+  const framing = useRef({ key: '', again: 0, offset: 0 });
 
   useEffect(() => {
     const el = gl.domElement;
@@ -189,10 +230,27 @@ export function CameraRig({ enabled }: { enabled: boolean }) {
     };
   }, [camera, gl]);
 
-  useFrame((_, dtRaw) => {
+  useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.1);
     const t = target.current;
     const c = cur.current;
+    const fr0 = framing.current;
+    const now = state.clock.elapsedTime;
+    const fkey = `${store.screen}:${size.width}x${size.height}`;
+    const remeasure = fkey !== fr0.key || (fr0.again > 0 && now >= fr0.again);
+    if (remeasure) {
+      fr0.again = fkey !== fr0.key ? now + 1 : 0;
+      fr0.key = fkey;
+      const cam = camera as PerspectiveCamera;
+      const offset = Math.round(
+        (0.5 - focusRow(store.screen, size.width, size.height, measureUi())) * size.height,
+      );
+      if (offset !== fr0.offset || (offset !== 0 && cam.view?.fullHeight !== size.height)) {
+        fr0.offset = offset;
+        if (offset) cam.setViewOffset(size.width, size.height, 0, offset, size.width, size.height);
+        else cam.clearViewOffset();
+      }
+    }
     // keyboard
     const k = keys.current;
     if (k.size) {

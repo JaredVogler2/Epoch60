@@ -129,7 +129,7 @@ export function checkBackup(text: string): BackupCheck {
           ? l.daily
           : null;
       const branch =
-        Number.isInteger(l.branch) && (l.branch as number) >= 1 && (l.branch as number) <= campaign.epoch
+        Number.isInteger(l.branch) && (l.branch as number) >= 0 && (l.branch as number) <= campaign.epoch
           ? (l.branch as number)
           : null;
       lineage = { campaign, save: l.save, daily, branch };
@@ -145,8 +145,20 @@ export function checkBackup(text: string): BackupCheck {
 }
 
 /**
- * Bring a checked backup in. Its lineage replaces the saved one (with its Daily Ruins date and branch mark; the branch
- * points of the lineage it replaces go with it). Its feats and cards join this browser's, so nothing else is lost.
+ * The branch mark a lineage brought back from a backup carries: its own if it was a branch already, else the age it was
+ * in once it had begun. A backup could otherwise retry an age that was lost (export, lose, import, play again), which
+ * is exactly what a branch is; like any branch, its feats count but its card is never ranked.
+ */
+export function importedBranch(lineage: NonNullable<BackupPlan['lineage']>): number | null {
+  const c = lineage.campaign;
+  const begun = c.epoch > 0 || c.actionLog.length > 0;
+  return lineage.branch ?? (begun ? c.epoch : null);
+}
+
+/**
+ * Bring a checked backup in. Its lineage replaces the saved one (with its Daily Ruins date and branch mark, see
+ * `importedBranch`; the branch points of the lineage it replaces go with it). Its feats and cards join this browser's,
+ * so nothing else is lost.
  */
 export function applyBackup(plan: BackupPlan, have: { codex: CodexEntry[]; runs: RunCard[] }): BackupResult {
   const codex = mergeCodex(have.codex, plan.codex);
@@ -155,12 +167,12 @@ export function applyBackup(plan: BackupPlan, have: { codex: CodexEntry[]; runs:
   saveRuns(runs);
   let lineage = false;
   if (plan.lineage) {
-    const { campaign, save, daily, branch } = plan.lineage;
+    const { campaign, save, daily } = plan.lineage;
     lineage = writeSaveText(save);
     if (lineage) {
       saveDailyTag(campaign.seed, daily);
       clearBranchPoints();
-      saveBranchTag(campaign.seed, branch);
+      saveBranchTag(campaign.seed, importedBranch(plan.lineage));
     }
   }
   const before = new Set(have.runs.map((r) => r.id));

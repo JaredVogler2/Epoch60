@@ -22,6 +22,7 @@ import { Post, graphics } from './Post';
 import { Structures } from './Structures';
 import { Citizens } from './Citizens';
 import { AshFall, CollapseDirector, HazardFront } from './CollapseFx';
+import { Omens } from './Omens';
 import { FrontFx } from './FrontFx';
 import { Interaction } from './Interaction';
 import {
@@ -309,6 +310,7 @@ export function GameCanvas() {
         <HazardFront />
         <FrontFx />
         <AshFall />
+        <Omens density={quality.tier === 'low' ? 0.6 : 1} />
         <CollapseDirector />
         <ForecastOverlay />
         <HistoryLens />

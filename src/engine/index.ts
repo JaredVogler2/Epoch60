@@ -44,7 +44,14 @@ export type { PlacementOk } from './economy/placement';
 export { housingCapacity, techCost, mods } from './economy/modifiers';
 export { buildSpeedPm, farmFertilityPm } from './economy/economy';
 export { ruinYield } from './legacy/inheritance';
-export { collapseEpoch, earlierLandmarks, LANDMARK_HINT, LANDMARK_LABEL } from './legacy/collapse';
+export {
+  carryOf,
+  collapseEpoch,
+  earlierLandmarks,
+  LANDMARK_HINT,
+  LANDMARK_LABEL,
+  techRetentionCapacity,
+} from './legacy/collapse';
 export { canEndure, capstoneEpoch, chronicleEnding, chronicleOver } from './legacy/endless';
 export type { ChronicleEnding } from './legacy/endless';
 export { FEATS, FEAT_GROUPS, FEAT_IDS } from './legacy/feats';

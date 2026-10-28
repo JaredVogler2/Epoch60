@@ -22,6 +22,40 @@ const LIGHT = new Color('#f1eee8');
 const DARK = new Color('#8f8a84');
 const tint = new Color();
 
+/** A unit puff whose opacity is per instance (`aAlpha`). */
+export function puffGeometry(alpha: InstancedBufferAttribute): SphereGeometry {
+  const g = new SphereGeometry(1, 14, 10);
+  g.setAttribute('aAlpha', alpha);
+  return g;
+}
+
+/** Soft vapour: opacity per puff, falling off toward each puff's silhouette (view-space normal), so no hard edges. */
+export function smokeMaterial(emissive: string, emissiveIntensity: number): MeshStandardMaterial {
+  const m = new MeshStandardMaterial({
+    color: '#ffffff',
+    roughness: 1,
+    metalness: 0,
+    transparent: true,
+    depthWrite: false,
+    emissive: new Color(emissive),
+    emissiveIntensity,
+  });
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader =
+      'attribute float aAlpha;\nvarying float vSmokeAlpha;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vSmokeAlpha = aAlpha;');
+    sh.fragmentShader =
+      'varying float vSmokeAlpha;\n' +
+      sh.fragmentShader.replace(
+        '#include <normal_fragment_maps>',
+        '#include <normal_fragment_maps>\n  diffuseColor.a *= vSmokeAlpha * smoothstep(0.0, 0.85, abs(normal.z));',
+      );
+  };
+  // One program for every smoke material: only colours differ.
+  m.customProgramCacheKey = () => 'smoke-field';
+  return m;
+}
+
 /**
  * All chimney and hearth smoke in one instanced draw: soft round puffs that rise, lean with the shared wind, swell and
  * fade. Opacity is per puff (an instanced attribute), so nothing pops in or out. Render-only.
@@ -41,39 +75,8 @@ export function SmokeField() {
     a.setUsage(DynamicDrawUsage);
     return a;
   }, []);
-  const geo = useMemo(() => {
-    const g = new SphereGeometry(1, 14, 10);
-    g.setAttribute('aAlpha', alpha);
-    return g;
-  }, [alpha]);
-  const mat = useMemo(() => {
-    const m = new MeshStandardMaterial({
-      color: '#ffffff',
-      roughness: 1,
-      metalness: 0,
-      transparent: true,
-      depthWrite: false,
-      emissive: new Color('#6b6660'),
-      emissiveIntensity: 0.55,
-    });
-    m.onBeforeCompile = (sh) => {
-      sh.vertexShader =
-        'attribute float aAlpha;\nvarying float vSmokeAlpha;\n' +
-        sh.vertexShader.replace(
-          '#include <begin_vertex>',
-          '#include <begin_vertex>\n  vSmokeAlpha = aAlpha;',
-        );
-      // Soft vapour: opacity falls off toward each puff's silhouette (view-space normal), so no hard sphere edges.
-      sh.fragmentShader =
-        'varying float vSmokeAlpha;\n' +
-        sh.fragmentShader.replace(
-          '#include <normal_fragment_maps>',
-          '#include <normal_fragment_maps>\n  diffuseColor.a *= vSmokeAlpha * smoothstep(0.0, 0.85, abs(normal.z));',
-        );
-    };
-    m.customProgramCacheKey = () => 'smoke-field';
-    return m;
-  }, []);
+  const geo = useMemo(() => puffGeometry(alpha), [alpha]);
+  const mat = useMemo(() => smokeMaterial('#6b6660', 0.55), []);
   useEffect(() => () => geo.dispose(), [geo]);
 
   useFrame((state) => {

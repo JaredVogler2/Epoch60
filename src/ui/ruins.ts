@@ -33,6 +33,23 @@ function price(n: number, what: string): string {
   return `${Math.ceil(n / UNIT)} ${what}`;
 }
 
+/**
+ * Whether founding a hearth on this site (its 2×2 pad, cleared of ruins unless an old hearth is kept there) would clear
+ * an Archive that was never dug up: any tablets inside are lost with it, as when it is cleared or built over.
+ */
+export function tabletsUnderSite(c: Campaign, x: number, y: number): boolean {
+  return c.structures.some(
+    (s) =>
+      s.kind === 'archive' &&
+      !s.excavated &&
+      (s.status === 'rubble' || s.status === 'buried') &&
+      s.x <= x + 1 &&
+      x <= s.x + s.w - 1 &&
+      s.y <= y + 1 &&
+      y <= s.y + s.h - 1,
+  );
+}
+
 export function ruinFacts(c: Campaign, s: Structure): RuinFacts {
   const d = BUILDINGS[s.kind];
   const spec = s.originEpoch >= 0 ? epochSpec(c, s.originEpoch) : undefined;

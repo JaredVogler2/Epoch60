@@ -8,7 +8,13 @@ import { atmosphere } from './atmosphere';
 import { h01, mix, rgb, shade } from './geo';
 import type { RGB } from './geo';
 import { hueFor, type FoliageKind } from './Foliage';
-import { broadleafGeometry, coniferGeometry, cypressGeometry, birchTreeGeometry } from './models/trees';
+import {
+  broadleafGeometry,
+  coniferGeometry,
+  cypressGeometry,
+  birchTreeGeometry,
+  shrubGeometry,
+} from './models/trees';
 import { WATER_LEVEL } from './terrain';
 import type { TerrainModel } from './terrain';
 import { graphics } from './Post';
@@ -57,7 +63,7 @@ interface Ring {
   ground: BufferGeometry;
   water: BufferGeometry;
   trees: Record<
-    'broadleaf' | 'conifer' | 'cypress' | 'birch',
+    'broadleaf' | 'conifer' | 'cypress' | 'birch' | 'shrub',
     { x: number; y: number; z: number; rot: number; s: number; tint: number }[]
   >;
 }
@@ -96,6 +102,10 @@ function build(T: TerrainModel, density: number): Ring {
       forestAt[kk] = forest;
       let c: RGB = mix(MEADOW, DRY, fbm(x * 0.07, z * 0.07, 451) * 0.6);
       c = mix(c, FLOOR, forest * 0.8);
+      // Patches a few cells across (lusher swales, drier rises), so a near meadow never reads as one flat green.
+      const patch = vnoise(x * 0.3, z * 0.3, 479);
+      c = mix(c, FLOOR, smooth((patch - 0.5) / 0.3) * 0.45);
+      c = mix(c, DRY, smooth((0.45 - patch) / 0.3) * 0.3);
       const bank = smooth(1 - Math.abs(h - (WATER_LEVEL + 0.07)) / 0.12);
       c = mix(c, BANK, bank * 0.6);
       c = mix(c, BED, smooth((WATER_LEVEL - h) / 0.05));
@@ -137,7 +147,7 @@ function build(T: TerrainModel, density: number): Ring {
   water.setAttribute('position', new BufferAttribute(wpos, 3));
   water.setAttribute('aDepth', new BufferAttribute(depth, 1));
 
-  const trees: Ring['trees'] = { broadleaf: [], conifer: [], cypress: [], birch: [] };
+  const trees: Ring['trees'] = { broadleaf: [], conifer: [], cypress: [], birch: [], shrub: [] };
   for (let j = 0; j < N - 1; j++)
     for (let i = 0; i < N - 1; i++) {
       const x0 = MIN + i * STEP;
@@ -148,6 +158,21 @@ function build(T: TerrainModel, density: number): Ring {
       if (d < 0.8 || d > 26) continue;
       const kk = j * N + i;
       const f = forestAt[kk]!;
+      // Bushes dot the open ground near the board, where the camera sees the outskirts closest.
+      if (d < 12 && f < 0.5 && h01(i, j, 540) < 0.24 * density) {
+        const x = x0 + h01(i, j, 541) * STEP;
+        const z = z0 + h01(j, i, 542) * STEP;
+        const y = hgt[kk]!;
+        if (!insideBoard(x, z) && y > WATER_LEVEL + 0.12)
+          trees.shrub.push({
+            x,
+            y,
+            z,
+            rot: h01(i, j, 543) * Math.PI * 2,
+            s: 0.8 + h01(i, j, 544) * 0.7,
+            tint: h01(j, i, 545),
+          });
+      }
       const n = Math.floor(f * 1.6 * density + h01(i, j, 471));
       for (let t = 0; t < n; t++) {
         const x = x0 + h01(i, j, 480 + t) * STEP;
@@ -184,7 +209,7 @@ function build(T: TerrainModel, density: number): Ring {
 }
 
 const dummy = new Object3D();
-const KINDS = ['broadleaf', 'conifer', 'cypress', 'birch'] as const;
+const KINDS = ['broadleaf', 'conifer', 'cypress', 'birch', 'shrub'] as const;
 const CAP = 2600;
 
 export function Outskirts({ density, crown }: { density: number; crown: Material }) {
@@ -212,6 +237,7 @@ export function Outskirts({ density, crown }: { density: number; crown: Material
       conifer: coniferGeometry(true),
       cypress: cypressGeometry(true),
       birch: birchTreeGeometry(true),
+      shrub: shrubGeometry(),
     }),
     [],
   );

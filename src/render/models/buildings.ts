@@ -121,6 +121,8 @@ function cottage(
   const roofDark = shade(roof, era >= 1 ? 0.78 : 0.82);
   const bump = era >= 1 ? 0.0 : 0.07;
   const rows = era >= 1 ? 5 : 4;
+  // From the Age of Iron a house is raised a storey: stone below, a jettied timber-framed floor above.
+  if (era >= 2 && variant !== 1) return storeyHouse(g, gl, variant, era, seed, plaster, roof, roofDark);
   if (variant === 0) {
     // Longhouse with a long thatched ridge.
     g.box(0, 0, 0, 1.82, 0.12, 1.28, PAL.stoneDark);
@@ -147,6 +149,9 @@ function cottage(
     g.box(0.65, 1.3, -0.28, 0.28, 0.06, 0.28, PAL.stoneDark);
     logPile(g, -0.55, -0.82, 0, 0.55, 2);
     barrel(g, 0.95, 0.72);
+    // The Age of Bronze builds a tiled porch over the door, on two posts.
+    // (under the main roof's eave, which comes down to 0.62)
+    if (era >= 1) porch(g, -0.4, 0.57, roof, 0.6);
     if (era >= SPIRES) {
       spire(g, -0.98, 1.22, 0, 0.05, 0.34, roofDark);
       pennant(g, 0.65, 1.36, -0.28, PAL.red);
@@ -155,26 +160,38 @@ function cottage(
     return { g, gl, height: 1.3 };
   }
   if (variant === 1) {
-    // Round hut with a conical thatch cap.
+    // Round hut with a conical thatch cap; from the Age of Bronze a stone drum, from the Age of Iron a tower-house.
+    const wallH = era >= 2 ? 1.04 : 0.64;
+    const lift = wallH - 0.64;
     g.cyl(0, 0, 0, 0.74, 0.72, 0.1, 12, PAL.stoneDark);
-    g.cyl(0, 0.1, 0, 0.62, 0.6, 0.64, 12, plaster);
-    for (let i = 0; i < 12; i += 2) {
-      const a = (i / 12) * Math.PI * 2 + 0.3;
-      g.box(Math.cos(a) * 0.63, 0.1, Math.sin(a) * 0.63, 0.07, 0.64, 0.07, PAL.timber);
+    if (era >= 1) {
+      g.cyl(0, 0.1, 0, 0.62, 0.6, wallH, 12, PAL.stone, { wobble: 0.02 });
+      for (let y = 0.3; y < wallH; y += 0.24)
+        g.cyl(0, 0.1 + y, 0, 0.625, 0.625, 0.025, 12, PAL.stoneDark, { capTop: false });
+    } else {
+      g.cyl(0, 0.1, 0, 0.62, 0.6, 0.64, 12, plaster);
+      for (let i = 0; i < 12; i += 2) {
+        const a = (i / 12) * Math.PI * 2 + 0.3;
+        g.box(Math.cos(a) * 0.63, 0.1, Math.sin(a) * 0.63, 0.07, 0.64, 0.07, PAL.timber);
+      }
     }
     // a thick eave rim, then a steep cone: a hut, not a parasol
-    g.cyl(0, 0.68, 0, 0.84, 0.8, 0.1, 12, roofDark, { wobble: era >= 1 ? 0.01 : 0.05 });
-    g.cyl(0, 0.78, 0, 0.8, 0.0, 0.92, 12, roof, { wobble: era >= 1 ? 0.02 : 0.07 });
+    g.cyl(0, 0.68 + lift, 0, 0.84, 0.8, 0.1, 12, roofDark, { wobble: era >= 1 ? 0.01 : 0.05 });
+    g.cyl(0, 0.78 + lift, 0, 0.8, 0.0, 0.92, 12, roof, { wobble: era >= 1 ? 0.02 : 0.07 });
     if (era >= SPIRES) {
-      spire(g, 0, 1.6, 0, 0.07, 0.4, roofDark);
-      pennant(g, 0.02, 1.86, 0, PAL.gold);
-    } else g.cyl(0, 1.66, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+      spire(g, 0, 1.6 + lift, 0, 0.07, 0.4, roofDark);
+      pennant(g, 0.02, 1.86 + lift, 0, PAL.gold);
+    } else g.cyl(0, 1.66 + lift, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
     door(g, 0, 0.62, 0.26, 0.42);
     windowAt(g, gl, 0.47, 0.4, 0.38, 0.2, 0.17, 0.7);
+    if (era >= 2) {
+      windowAt(g, gl, -0.47, 0.82, 0.38, 0.2, 0.17, -0.7);
+      windowAt(g, gl, 0.2, 0.82, -0.58, 0.2, 0.17, Math.PI);
+    }
     g.lump(-0.75, 0.1, 0.5, 0.18, 0.12, 0.16, PAL.stone, { seed: 1, rough: 0.2 });
     g.lump(0.8, 0.1, -0.2, 0.14, 0.1, 0.13, PAL.stone, { seed: 2, rough: 0.2 });
     barrel(g, -0.7, -0.35);
-    return { g, gl, height: era >= SPIRES ? 2.3 : 1.8 };
+    return { g, gl, height: (era >= SPIRES ? 2.3 : 1.8) + lift };
   }
   // Framed cottage with a steep gable and a lean-to.
   g.box(0, 0, 0, 1.4, 0.12, 1.4, PAL.stoneDark);
@@ -192,6 +209,7 @@ function cottage(
     gableColor: era >= 1 ? plaster : PAL.thatchDark,
   });
   door(g, 0.0, 0.65, 0.3, 0.46);
+  if (era >= 1) porch(g, 0.0, 0.64, roof, 0.72);
   windowAt(g, gl, -0.45, 0.46, 0.645, 0.22, 0.22);
   windowAt(g, gl, 0.62, 0.46, 0.2, 0.2, 0.2, Math.PI / 2);
   // lean-to
@@ -205,6 +223,79 @@ function cottage(
     return { g, gl, height: 2.0 };
   }
   return { g, gl, height: 1.6 };
+}
+
+/** A small tiled porch over a door on the +z face (`wallZ`), on two posts, its roof sloping down from `top`. */
+function porch(g: GeoBuilder, x: number, wallZ: number, roof: RGB, top: number): void {
+  for (const dx of [-0.3, 0.3]) g.box(x + dx, 0.12, wallZ + 0.3, 0.05, top - 0.22, 0.05, PAL.timber);
+  g.shed(x, 0, wallZ + 0.17, 0.72, 0.36, top, top - 0.1, roof);
+}
+
+/**
+ * The Age of Iron's house: a stone ground floor, a timber-framed upper floor jettied out over it, a steeper roof and a
+ * chimney through both floors. Variant 0 is long (ridge along x), variant 2 square (ridge along z) with a lean-to.
+ */
+function storeyHouse(
+  g: GeoBuilder,
+  gl: GeoBuilder,
+  variant: number,
+  era: number,
+  seed: number,
+  plaster: RGB,
+  roof: RGB,
+  roofDark: RGB,
+): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+  const long = variant === 0;
+  const w = long ? 1.7 : 1.28;
+  const d = long ? 1.14 : 1.28;
+  const ground = [PAL.stone, PAL.stoneLight, PAL.sandstone][seed % 3]!;
+  g.box(0, 0, 0, w + 0.12, 0.12, d + 0.14, PAL.stoneDark);
+  g.masonry(0, 0.12, 0, w, 0.5, d, ground, 0, { course: 0.13, block: 0.3 });
+  // the jetty: a beam course, then the upper floor overhanging by a hand's breadth
+  g.box(0, 0.62, 0, w + 0.12, 0.06, d + 0.12, PAL.timberDark);
+  const uw = w + 0.1;
+  const ud = d + 0.1;
+  g.box(0, 0.68, 0, uw, 0.46, ud, plaster);
+  const posts = long ? [-0.86, -0.3, 0.3, 0.86] : [-0.66, 0, 0.66];
+  for (const z of [-ud / 2 - 0.005, ud / 2 + 0.005]) {
+    for (const x of posts) g.box(x, 0.68, z, 0.06, 0.46, 0.03, PAL.timberDark);
+    g.box(0, 1.1, z, uw, 0.05, 0.03, PAL.timberDark);
+    g.beam([posts[0]!, 0.7, z], [posts[1]!, 1.1, z], 0.016, PAL.timberDark);
+    g.beam([posts.at(-1)!, 0.7, z], [posts.at(-2)!, 1.1, z], 0.016, PAL.timberDark);
+  }
+  for (const x of [-uw / 2 - 0.005, uw / 2 + 0.005])
+    for (const z of [-ud / 2 + 0.05, ud / 2 - 0.05]) g.box(x, 0.68, z, 0.03, 0.46, 0.06, PAL.timberDark);
+  g.gable(0, 1.14, 0, uw + 0.36, ud + 0.4, long ? 0.68 : 0.78, roof, {
+    ridgeAxis: long ? 'x' : 'z',
+    rows: 6,
+    ridgeColor: roofDark,
+    gableColor: plaster,
+  });
+  // door and windows below, a row of lit windows above
+  door(g, long ? -0.4 : 0, d / 2 + 0.01, 0.3, 0.42);
+  windowAt(g, gl, long ? 0.4 : -0.38, 0.32, d / 2 + 0.015, 0.22, 0.18);
+  const upper = long ? [-0.58, 0, 0.58] : [-0.34, 0.34];
+  for (const x of upper) windowAt(g, gl, x, 0.8, ud / 2 + 0.02, 0.2, 0.2);
+  windowAt(g, gl, 0, 0.8, -ud / 2 - 0.02, 0.22, 0.2, Math.PI);
+  // a chimney through both floors, above the ridge
+  const cx = long ? 0.62 : 0.4;
+  const cz = long ? -0.26 : -0.3;
+  g.box(cx, 0.62, cz, 0.24, 1.42, 0.24, ground, 0, PAL.stoneDark);
+  g.box(cx, 2.04, cz, 0.3, 0.06, 0.3, PAL.stoneDark);
+  if (!long) {
+    g.shed(-0.98, 0.1, -0.1, 0.5, 0.8, 0.5, 0.32, roofDark, 0, 0);
+    for (const z of [-0.45, 0.25]) g.box(-1.18, 0, z, 0.05, 0.5, 0.05, PAL.timber);
+    logPile(g, -0.98, -0.1, Math.PI / 2, 0.5, 2);
+  } else {
+    logPile(g, -0.55, -0.84, 0, 0.55, 2);
+    barrel(g, 0.98, 0.74);
+  }
+  if (era >= SPIRES) {
+    spire(g, long ? -0.96 : 0, 1.8, long ? 0 : 0.78, 0.05, 0.36, roofDark);
+    pennant(g, cx, 2.1, cz, long ? PAL.red : PAL.teal);
+    return { g, gl, height: 2.5 };
+  }
+  return { g, gl, height: 2.1 };
 }
 
 /* ------------------------------------------------------------------ */
@@ -604,17 +695,24 @@ function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; he
   const gl = new GeoBuilder(seed + 1);
   const roof =
     era >= SPIRES ? roofFor(era, seed) : era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
+  // From the Age of Iron the store is taller, with a loft door and a hoist beam to lift sacks into it.
+  const up = era >= 2 ? 0.42 : 0;
   g.cyl(0, 0, 0, 0.92, 0.9, 0.14, 12, PAL.stoneDark);
-  g.cyl(0, 0.14, 0, 0.78, 0.74, 0.88, 12, PAL.stone, { wobble: 0.03 });
-  for (const y of [0.34, 0.58, 0.82])
+  g.cyl(0, 0.14, 0, 0.78, 0.74, 0.88 + up, 12, PAL.stone, { wobble: 0.03 });
+  for (const y of up ? [0.34, 0.58, 0.82, 1.06] : [0.34, 0.58, 0.82])
     g.cyl(0, y, 0, 0.785, 0.785, 0.025, 12, PAL.stoneDark, { capTop: false });
-  g.cyl(0, 1.0, 0, 0.9, 0.0, 0.78, 12, roof, { wobble: era >= 1 ? 0.01 : 0.08 });
+  g.cyl(0, 1.0 + up, 0, 0.9, 0.0, 0.78, 12, roof, { wobble: era >= 1 ? 0.01 : 0.08 });
+  if (up) {
+    g.box(0.05, 1.0, 0.73, 0.28, 0.3, 0.06, PAL.timberDark);
+    g.beam([0.05, 1.42, 0.55], [0.05, 1.42, 1.1], 0.03, PAL.timber);
+    g.beam([0.05, 1.42, 1.08], [0.05, 0.86, 1.08], 0.006, PAL.timberDark);
+  }
   if (era >= SPIRES) {
     // a lantern cupola on the cone, lit, under a copper spire
-    g.cyl(0, 1.56, 0, 0.17, 0.17, 0.26, 8, PAL.stoneLight);
-    gl.cyl(0, 1.62, 0, 0.175, 0.175, 0.13, 8, WARM, { capTop: false });
-    spire(g, 0, 1.82, 0, 0.21, 0.42, roof);
-  } else g.cyl(0, 1.74, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+    g.cyl(0, 1.56 + up, 0, 0.17, 0.17, 0.26, 8, PAL.stoneLight);
+    gl.cyl(0, 1.62 + up, 0, 0.175, 0.175, 0.13, 8, WARM, { capTop: false });
+    spire(g, 0, 1.82 + up, 0, 0.21, 0.42, roof);
+  } else g.cyl(0, 1.74 + up, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
   door(g, 0, 0.74, 0.3, 0.46, 0.14);
   g.box(0.1, 0.78, 0.7, 0.34, 0.22, 0.06, PAL.timberDark);
   for (const [x, z] of [
@@ -625,7 +723,7 @@ function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; he
     g.cyl(x, 0.34, z, 0.07, 0.0, 0.1, 6, PAL.sandstone);
   }
   barrel(g, -0.9, -0.4);
-  return { g, gl, height: era >= SPIRES ? 2.4 : 1.8 };
+  return { g, gl, height: (era >= SPIRES ? 2.4 : 1.8) + up };
 }
 
 /* ------------------------------------------------------------------ */
@@ -642,20 +740,35 @@ function stoneHouse(
   const wall = [PAL.stone, PAL.stoneLight, PAL.sandstone][variant % 3]!;
   const roof = roofFor(Math.max(1, era), seed);
   const ridge = shade(roof, 0.78);
+  // From the Age of Iron the stone house rises a second storey, with a string course between the floors.
+  const up = era >= 2 ? 0.5 : 0;
   g.box(0, 0, 0, 1.78, 0.12, 1.66, PAL.stoneDark);
   // ashlar walls and dressed corner stones
-  g.masonry(0, 0.12, 0, 1.6, 0.8, 1.48, wall, 0, { course: 0.16, block: 0.34 });
+  g.masonry(0, 0.12, 0, 1.6, 0.8 + up, 1.48, wall, 0, { course: 0.16, block: 0.34 });
   for (const x of [-0.78, 0.78])
-    for (const z of [-0.72, 0.72]) g.box(x, 0.12, z, 0.17, 0.82, 0.17, PAL.stoneLight);
-  g.gable(0, 0.94, 0, 1.92, 1.74, 0.64, roof, {
+    for (const z of [-0.72, 0.72]) g.box(x, 0.12, z, 0.17, 0.82 + up, 0.17, PAL.stoneLight);
+  if (up) {
+    g.box(0, 0.86, 0, 1.66, 0.06, 1.54, PAL.stoneLight);
+    for (const x of [-0.42, 0.45]) windowAt(g, gl, x, 1.0, 0.745, 0.22, 0.24);
+    windowAt(g, gl, 0.3, 1.0, -0.745, 0.22, 0.24, Math.PI);
+  }
+  g.gable(0, 0.94 + up, 0, 1.92, 1.74, 0.64, roof, {
     ridgeAxis: variant === 1 ? 'z' : 'x',
     rows: 5,
     ridgeColor: ridge,
     gableColor: wall,
   });
   // chimney, door with a stone lintel, shuttered windows
-  g.box(variant === 1 ? -0.45 : 0.55, 0.95, variant === 1 ? 0.2 : -0.25, 0.22, 0.75, 0.22, PAL.stoneDark);
-  g.box(variant === 1 ? -0.45 : 0.55, 1.7, variant === 1 ? 0.2 : -0.25, 0.28, 0.05, 0.28, PAL.stone);
+  g.box(
+    variant === 1 ? -0.45 : 0.55,
+    0.95 + up,
+    variant === 1 ? 0.2 : -0.25,
+    0.22,
+    0.75,
+    0.22,
+    PAL.stoneDark,
+  );
+  g.box(variant === 1 ? -0.45 : 0.55, 1.7 + up, variant === 1 ? 0.2 : -0.25, 0.28, 0.05, 0.28, PAL.stone);
   door(g, -0.3, 0.74, 0.3, 0.5);
   g.box(-0.3, 0.64, 0.75, 0.46, 0.07, 0.07, PAL.stoneLight);
   windowAt(g, gl, 0.45, 0.42, 0.745, 0.24, 0.26);
@@ -668,14 +781,14 @@ function stoneHouse(
     // a corner turret, away from the chimney, with a lit slit window and a copper spire
     const tx = variant === 1 ? 0.78 : -0.78;
     const tz = -0.72;
-    g.cyl(tx, 0.12, tz, 0.3, 0.28, 1.52, 10, wall, { capColor: PAL.stoneLight });
-    g.cyl(tx, 1.64, tz, 0.34, 0.34, 0.07, 10, PAL.stoneLight);
-    gl.box(tx, 1.0, tz + 0.285, 0.07, 0.22, 0.03, WARM);
-    spire(g, tx, 1.71, tz, 0.35, 0.82, roof);
-    pennant(g, tx, 2.5, tz, PAL.red);
-    return { g, gl, height: 2.95 };
+    g.cyl(tx, 0.12, tz, 0.3, 0.28, 1.52 + up, 10, wall, { capColor: PAL.stoneLight });
+    g.cyl(tx, 1.64 + up, tz, 0.34, 0.34, 0.07, 10, PAL.stoneLight);
+    gl.box(tx, 1.0 + up, tz + 0.285, 0.07, 0.22, 0.03, WARM);
+    spire(g, tx, 1.71 + up, tz, 0.35, 0.82, roof);
+    pennant(g, tx, 2.5 + up, tz, PAL.red);
+    return { g, gl, height: 2.95 + up };
   }
-  return { g, gl, height: 1.65 };
+  return { g, gl, height: 1.65 + up };
 }
 
 /* ------------------------------------------------------------------ */

@@ -18,7 +18,6 @@ import {
   legacyOf,
   nextEpochSpec,
   ruinYield,
-  unplan,
   victoryFor,
 } from '../engine';
 import type { HazardKind, Structure, TraditionId } from '../engine';
@@ -30,6 +29,7 @@ import { ThenNow } from './ThenNow';
 import { chronicleOf } from './chronicle';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
+import { tabletsUnderSite } from './ruins';
 import { shareQuery } from '../game/modes';
 import { useStore } from './useStore';
 import { useDialog } from './useDialog';
@@ -43,11 +43,27 @@ export function PrepareCard() {
   const [open, setOpen] = useState(
     () => typeof window !== 'undefined' && window.innerWidth > 720 && window.innerHeight > 520,
   );
+  // The orders sit below the forecast: one just given is brought into view, so the slot it took is seen, and so are the
+  // orders already given when the card is opened (on a phone it is closed while an order is placed).
+  const plansRef = useRef<HTMLDivElement>(null);
+  const orders = c.phase === 'PREPARE' ? c.queue.length : 0;
+  const before = useRef({ orders, open });
+  useEffect(() => {
+    const was = before.current;
+    if (open && orders > 0 && (orders > was.orders || !was.open))
+      plansRef.current?.scrollIntoView?.({ block: 'nearest' });
+    before.current = { orders, open };
+  }, [orders, open]);
   if (c.phase !== 'PREPARE') return null;
   const spec = currentSpec(c);
   const scenario = getScenario(c.scenario);
   const f = s.getForecastCached();
-  const plans = c.queue.filter((q) => q.action.type === 'build' || q.action.type === 'research');
+  // Every order given while planning takes an opening slot: all of them are listed, and each can be withdrawn.
+  const plans = c.queue;
+  const named = (id: number) => {
+    const t = c.structures.find((x) => x.id === id);
+    return t ? BUILDINGS[t.kind].name : 'building';
+  };
   const inherited = c.structures.filter((x) => x.originEpoch < c.epoch);
   const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches;
   const ruins = inherited.filter((x) => x.status === 'rubble' || x.status === 'buried').length;
@@ -117,7 +133,7 @@ export function PrepareCard() {
             </span>
           </div>
         )}
-        <div className="plans">
+        <div className="plans" ref={plansRef}>
           <b>Opening orders {plans.length}/3</b>
           {plans.length === 0 && (
             <span className="dim">
@@ -134,15 +150,29 @@ export function PrepareCard() {
                 <>
                   <Icon name="knowledge" size={18} /> Research {TECHS[q.action.tech].name}
                 </>
+              ) : q.action.type === 'repair' ? (
+                <>
+                  <Icon name="wrench" size={18} /> Repair the {named(q.action.id)}
+                </>
+              ) : q.action.type === 'reinforce' ? (
+                <>
+                  <Icon name="shield" size={18} /> Reinforce the {named(q.action.id)} against{' '}
+                  {q.action.hazard}
+                </>
+              ) : q.action.type === 'demolish' ? (
+                <>
+                  <Icon name="trash" size={18} /> Clear the {named(q.action.id)}
+                </>
+              ) : q.action.type === 'cancel' ? (
+                <>
+                  <Icon name="close" size={18} /> Cancel the {named(q.action.id)}
+                </>
               ) : null}
               <button
                 type="button"
                 className="btn-icon sm"
                 aria-label="Withdraw plan"
-                onClick={() => {
-                  unplan(c, q.seq);
-                  s.dispatch({ type: 'setFocus', focus: c.civ.focus }, { quiet: true });
-                }}
+                onClick={() => s.dispatch({ type: 'unplan', seq: q.seq })}
               >
                 <Icon name="close" size={16} />
               </button>
@@ -549,6 +579,11 @@ export function InterregnumScreen() {
                   {st.risk > 500 ? 'Severe' : st.risk > 150 ? 'Exposed' : 'Safe'}
                 </span>
                 {st.onRuin && <span>On old foundations</span>}
+                {!keeps && tabletsUnderSite(c, st.x, st.y) && (
+                  <span className="warn" data-testid="site-tablets">
+                    Clears an Archive never dug up: its tablets are lost
+                  </span>
+                )}
                 {oldHearth && (
                   <span className={keeps ? 'pos' : 'warn'}>
                     {keeps ? 'Keeps the old hearth' : 'Abandons the old hearth'}
