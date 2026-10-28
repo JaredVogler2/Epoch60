@@ -141,7 +141,8 @@ export function loadBranchTag(seed: number): number | null {
     const raw = safeStorage()?.getItem(BRANCH_TAG_KEY);
     if (!raw) return null;
     const v = JSON.parse(raw) as { seed?: unknown; epoch?: unknown };
-    return v.seed === seed && Number.isInteger(v.epoch) && (v.epoch as number) >= 1
+    // Age I (0) marks a lineage brought back from a backup in its first age.
+    return v.seed === seed && Number.isInteger(v.epoch) && (v.epoch as number) >= 0
       ? (v.epoch as number)
       : null;
   } catch {

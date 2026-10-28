@@ -42,12 +42,17 @@ describe('seeds', () => {
     expect(a! >= 1 && a! <= MAX_SEED).toBe(true);
   });
 
-  it('refuses empty, absurd, and out-of-range seeds instead of trusting them', () => {
+  it('refuses empty and absurd seeds, and hashes out-of-range numbers instead of trusting them', () => {
     expect(seedFromText('')).toBeNull();
     expect(seedFromText('   ')).toBeNull();
     expect(seedFromText('x'.repeat(65))).toBeNull();
-    expect(seedFromText('0')).toBeNull();
-    expect(seedFromText('4294967296')).toBeNull();
+    // Out of the valley numbers' range, a number is hashed like any words: a valley, never a silent fallback.
+    for (const t of ['0', '4294967296']) {
+      const v = seedFromText(t)!;
+      expect(v >= 1 && v <= MAX_SEED).toBe(true);
+      expect(v).toBe(seedFromText(t));
+      expect(String(v)).not.toBe(t);
+    }
     expect(seedFromText('99999999999')).toBe(seedFromText('99999999999'));
   });
 });

@@ -10,7 +10,7 @@ import {
   techCost,
 } from '../engine';
 import type { HazardKind, LaborFocus, ResourceKey, Structure, TechId } from '../engine';
-import { currentSpec, epochSpec } from '../engine';
+import { carryOf, currentSpec, effectiveResistance, epochSpec } from '../engine';
 import { Icon, RESOURCE_ICON, hazardIcon } from './icons';
 import { ROMAN, units } from './format';
 import { ruinFacts } from './ruins';
@@ -100,10 +100,23 @@ export function Inspector() {
   const rc = repairCost(st);
   // A restorable ruin over its kind's limit still shows the button, disabled, so the reason is visible.
   const repairWhy = repairBlocked(c, st);
+  // An order already waiting for this building (an opening plan, or one queued for the next tick) is not given twice.
+  const queued = (type: 'repair' | 'reinforce') =>
+    c.queue.some((q) => q.action.type === type && q.action.id === st.id);
   const canRepair = timed && (!repairWhy || repairWhy.code === 'limit_reached');
   const canReinforce =
-    (st.status === 'active' || st.status === 'damaged') && st.bonus[hz] < REINFORCE_BONUS && timed;
-  const resist = (k: HazardKind) => Math.round((d.resist[k] + st.bonus[k]) / 10);
+    (st.status === 'active' || st.status === 'damaged') &&
+    st.bonus[hz] < REINFORCE_BONUS &&
+    timed &&
+    !queued('reinforce');
+  // As the engine counts them: every bonus, tradition, wall and the cap (and this age's catastrophe at its severity).
+  const resist = (k: HazardKind) =>
+    Math.round(effectiveResistance(c, st, k, k === hz ? undefined : 1000) / 10);
+  // What it carries through a collapse, as the engine counts it (Writing adds to Archives only; damaged, half).
+  const carries = carryOf(c, st.kind, st.status === 'constructing' ? 'active' : st.status);
+  // A construction site the catastrophe would damage is lost: it has no walls yet to stand damaged.
+  const destroyed =
+    impact?.after === 'rubble' || (st.status === 'constructing' && impact?.after === 'damaged');
   return (
     <aside className="inspector" data-testid="inspector" aria-label={`${d.name} details`}>
       <header>
@@ -132,9 +145,11 @@ export function Inspector() {
               </li>
             )}
             {d.retains > 0 && (
-              <li>
-                <Icon name="knowledge" size={14} /> Carries{' '}
-                {d.retains + (c.civ.techs.includes('writing') ? 2 : 0)} technologies through a collapse
+              <li data-testid="insp-carries">
+                <Icon name="knowledge" size={14} /> Carries {carries}{' '}
+                {carries === 1 ? 'technology' : 'technologies'} through a collapse
+                {st.status === 'damaged' ? ' (half, while damaged)' : ''}
+                {st.status === 'constructing' ? ' (once built)' : ''}
               </li>
             )}
             {st.originEpoch < c.epoch && (
@@ -145,16 +160,17 @@ export function Inspector() {
                   : `Built in the ${epochSpec(c, st.originEpoch).ageName} (age ${ROMAN[st.originEpoch]})`}
               </li>
             )}
-            <li>
+            <li data-testid="insp-resist">
               <Icon name="fire" size={14} /> {resist('fire')}% · <Icon name="flood" size={14} />{' '}
-              {resist('flood')}% · <Icon name="quake" size={14} /> {resist('quake')}% resistance
+              {resist('flood')}% · <Icon name="quake" size={14} /> {resist('quake')}% ·{' '}
+              <Icon name={hazardIcon('ash')} size={14} /> {resist('ash')}% resistance
             </li>
           </ul>
           {impact && impact.after !== 'active' && (
-            <div className={`risk-box ${impact.after}`} data-testid="insp-risk">
+            <div className={`risk-box ${destroyed ? 'rubble' : impact.after}`} data-testid="insp-risk">
               <Icon name={hazardIcon(hz)} size={18} />
               <span>
-                {impact.after === 'rubble' ? 'Will be destroyed' : 'Will be damaged'} by the{' '}
+                {destroyed ? 'Will be destroyed' : 'Will be damaged'} by the{' '}
                 {currentSpec(c).hazard.name.toLowerCase()}. {impact.reason}
               </span>
             </div>
@@ -183,8 +199,8 @@ export function Inspector() {
             type="button"
             className="btn"
             data-testid="act-repair"
-            disabled={!!repairWhy}
-            title={repairWhy?.message}
+            disabled={!!repairWhy || queued('repair')}
+            title={queued('repair') ? 'Already ordered' : repairWhy?.message}
             onClick={() => s.dispatch({ type: 'repair', id: st.id })}
           >
             <Icon name="wrench" size={18} /> {ruin ? 'Restore' : 'Repair'} <CostLine cost={rc} />

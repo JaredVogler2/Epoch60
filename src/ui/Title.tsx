@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { MAX_BACKUP_CHARS, checkBackup, downloadBackup } from '../game/backup';
+import { MAX_BACKUP_CHARS, checkBackup, downloadBackup, importedBranch } from '../game/backup';
 import type { BackupPlan } from '../game/backup';
 import { hasSave, loadCampaign, unfinishedSave } from '../game/persist';
 import {
@@ -428,7 +428,7 @@ export function TitleScreen() {
               {r.legacy !== undefined ? ` · legacy ${r.legacy}` : ''}
               {r.daily ? ` · daily ${r.daily}` : ''}
               {r.modifiers ? ` · ${r.modifiers.map((m) => MODIFIERS[m].name).join(', ')}` : ''}
-              {r.branch ? ` · branch from age ${ROMAN[r.branch]}` : ''}
+              {r.branch !== undefined ? ` · branch from age ${ROMAN[r.branch]}` : ''}
               {r.endless ? ` · ${r.title.toLowerCase()} after ${r.epochs} ages` : ''}
             </li>
           ))}
@@ -610,6 +610,13 @@ function YourData() {
           {plan.lineage && here && (
             <p className="note-warn" data-testid="import-replaces">
               Its lineage replaces the one saved here ({lineageLabel(here)}).
+            </p>
+          )}
+          {plan.lineage && importedBranch(plan.lineage) !== null && (
+            <p className="dim small" data-testid="import-branch">
+              Brought back from a backup, it plays on as a branch from age{' '}
+              {ROMAN[importedBranch(plan.lineage)!]}: its feats count, but its card is never ranked (a backup
+              could otherwise retry a lost age).
             </p>
           )}
           <p className="dim small">Its feats and run cards join this browser's; nothing else here changes.</p>

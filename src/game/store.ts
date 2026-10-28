@@ -51,13 +51,13 @@ import type { RunCard } from './modes';
 import { explain } from './messages';
 import {
   DEFAULT_SETTINGS,
-  clearSave,
   loadCampaign,
   loadDailyTag,
   loadSettings,
   saveCampaign,
   saveDailyTag,
   saveSettings,
+  setAsideSave,
 } from './persist';
 import type { Settings } from './persist';
 
@@ -416,8 +416,9 @@ export class GameStore {
     r.matched = computeHash(c) === r.finalHash;
   }
 
+  /** The save could not be read: set it aside (kept under its own key) so Continue does not fail on it again. */
   abandonSave(): void {
-    clearSave();
+    setAsideSave();
     this.emit();
   }
 

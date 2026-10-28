@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (#10, the long chronicle; PRs #1–#9 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (#12, the Phase 19 review fixes; PRs #1–#11 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
 
 ## State
 
@@ -33,7 +33,7 @@ can be **carried on** as **the long chronicle** (endless play after the capstone
 `src/engine/legacy/endless.ts`, `epochSpec` in `content/scenario.ts`): each later age brings back one of the scenario's
 catastrophes, 10% fiercer per age in reach, harm and every building's resistance; later ages are not judged, the chronicle
 ends when fewer than three survive or after age XII, or is rested at a debrief, and gets its own unranked card. Over 20 seeds
-the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. **Phase 18** began in session 7: the build is deploy-ready and checked (`docs/RELEASE_CHECKLIST.md`): `vercel.json` sends a strict content security policy and other headers, `vite preview` sends the same ones so every browser test runs under them, and `npm run verify:release` checks the built `dist` in CI (whole, within its size budget, headers in place); Settings, Your data exports the saved lineage, Codex and run cards as one file and imports one back after checking it like stored data; a new lineage over a saved one with progress asks first. Nothing is deployed (K-018). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. **Phase 18** began in session 7: the build is deploy-ready and checked (`docs/RELEASE_CHECKLIST.md`): `vercel.json` sends a strict content security policy and other headers, `vite preview` sends the same ones so every browser test runs under them, and `npm run verify:release` checks the built `dist` in CI (whole, within its size budget, headers in place); Settings, Your data exports the saved lineage, Codex and run cards as one file and imports one back after checking it like stored data; a new lineage over a saved one with progress asks first. Nothing is deployed (K-018). **Phase 19** began in session 7: an independent adversarial review found ten real defects (a damaged Archive carrying more than an untouched one, ruins that could not be dug twice, decisions whose default never applied, an inspector with its own arithmetic, unlisted opening orders, a replay knocked off its path, an unreadable save erased, texts the code contradicted, a backup laundering a lost age); all are fixed with tests that fail on the old code (rules 0.4.2), and `docs/ADVERSARIAL_REVIEW.md` holds the table, the attack list, a manual QA runbook and the verdict (not a pass). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -44,6 +44,10 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 
 ## Next exact steps (highest value first)
 
+0. **Phase 19 visual gate on the final build** (if `docs/ADVERSARIAL_REVIEW.md` still says it is not run): canonical captures
+   with `scripts/visual-shots.mjs` (seed 6001, fixed cameras; add the crisis, archaeology, Age of Spires and 320×568
+   scenes), inspect every image, score the ten categories prompt 19 names, fix what scores under 4 in the meshes and
+   lighting, then record the scores and the verdict.
 1. **Game depth, next layer (K-003, K-019).** Normal now needs an Archive _and_ a landmark, but a player who knows both moves still wins Greenvale/Normal
    easily (`npx vite-node scripts/recipes.ts`); fire-born traditions guard against a hazard that never returns. Candidates: let the landmark's type matter
    (a Dam or Bridge counting for more), let later ages carry fire risk, or give the fire lessons a lasting upside — after a human playtest — then re-run

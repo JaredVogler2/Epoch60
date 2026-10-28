@@ -112,7 +112,7 @@ All outputs are `def.output × staffing × modifiers`, using integer rounding on
 
 - Food: each person eats 12 milli-food/tick (0.12/s).
 - Housing: Hearth 6, Cottage 4 (damaged housing counts half).
-- Growth: needs food ≥ 6 s of consumption, `pop < housing`, morale ≥ 350; +1 per 70 ticks.
+- Growth: needs food in store of at least 0.06 a person (half a second of eating), no shortage, `pop < housing`, morale ≥ 350; +1 per 70 ticks.
 - Hunger: no food → morale −2/tick; −1 person per 50 hungry ticks.
 - Overcrowding (pop > housing): morale −1/tick; no growth.
 
@@ -153,7 +153,8 @@ sleep outdoors: 40 % die in fire/flood, 25 % in a quake, if the hazard touched a
 
 ## 8. Knowledge and legacy
 
-- **Retention:** a surviving people always keep 1 technology (oral tradition). Each intact Archive adds 3 (+2 with Writing); a damaged one adds half.
+- **Retention:** a surviving people always keep 1 technology (oral tradition). Each intact Archive adds 3 (+2 with Writing) and a standing Hearth 1; a damaged one adds half (rounded down), a site under construction nothing.
+  Each counts at the status it ends the catastrophe with, an older wound included: a damaged Archive the catastrophe barely touches is still damaged (rules 0.4.2).
   The most valuable (highest knowledge cost) are kept.
 - **Tablets:** every Archive is assigned technologies in id order (highest value first). A destroyed Archive keeps its tablets in the ruin.
 - **Lost** technologies are cheaper to re-research (−35 %).
@@ -170,7 +171,8 @@ scars ×0.45, pollution ×0.5, rested fields recover toward 700. A surviving **S
 
 **2 surveys** and **1 excavation** per interregnum. Excavation yields salvage × `max(0.4, 1 − 0.2 × burial)`, plus: Archive → its tablets and +6 knowledge;
 Seed Vault → +12 food and reseeds radius ~4; Quarry +6 stone; Hearth +4 stone. Excavated stone/earth works can be **repaired** at 65 % of cost.
-You cannot excavate the same ruin twice or dig everything.
+You cannot excavate the same ruin twice or dig everything. A building restored from a ruin that falls again is a new ruin, to survey and dig again;
+a restoration still under construction when it falls keeps its "dug up" mark (its tablets were already taken).
 
 **Pressing a ruin** (the inspector, `src/ui/ruins.ts`) says, from the engine's own records: when and by whom it was built
 and what it was for; how it fell — destroyed outright, abandoned, never finished, or broken by a catastrophe and finished
@@ -262,14 +264,14 @@ Small decisions arise from the village's **actual state** — never as modals, n
 at least 10 s apart. Each is a compact chip with a 15 s countdown; if the deadline passes, the **free default** (always "do nothing") is applied.
 Answering is a normal timed action (`choose`), validated when sent and re-validated at the tick boundary; an unaffordable choice is refused and the decision stays open.
 
-| Decision                                      | Offered when (state)                             | Options (cost) → real effect                                                                                                                                    |
-| --------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A dry wind (fire age, ≥ tick 150)             | the fire forecast destroys or damages a building | Clear the brush (4 timber): forest/scrub within 3 cells of the hearth is removed, shrinking the forecast burn · Cut what we can: +8 timber · Trust the forecast |
-| The river is climbing (flood age, ≥ tick 250) | the flood forecast reaches a building            | Sandbag (6 timber): buildings within 6 cells of the hearth gain +16 % flood resistance · Bring the harvest in: +10 food · Hold our nerve                        |
-| The ground trembles (quake age, ≥ tick 250)   | the quake forecast reaches a building            | Brace the worst-hit building (8 stone, +22 % quake resistance) · Shore up up to three at-risk homes (10 stone) · Wait and see                                   |
-| Refugees (age ≥ 2, ≥ tick 100)                | at least 3 free beds and 12 food                 | Welcome them (8 food): +3 people, +3 knowledge · Turn them away                                                                                                 |
-| A historian (≥ tick 120)                      | an Archive is standing and sound                 | Fund her (6 timber, 4 food): +8 knowledge · Decline                                                                                                             |
-| The dam is seeping (flood age, ≥ tick 200)    | a sound Dam or Levee exists                      | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much)                                                                              |
+| Decision                                      | Offered when (state)                             | Options (cost) → real effect                                                                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A dry wind (fire age, ≥ tick 150)             | the fire forecast destroys or damages a building | Clear the brush (4 timber): trees and scrub within about 4 cells of the hearth are removed (grass still burns), shrinking the forecast burn · Cut what we can: +8 timber · Trust the forecast |
+| The river is climbing (flood age, ≥ tick 250) | the flood forecast reaches a building            | Sandbag (6 timber): buildings within 6 cells of the hearth gain +16 % flood resistance · Bring the harvest in: +10 food · Hold our nerve                                                      |
+| The ground trembles (quake age, ≥ tick 250)   | the quake forecast reaches a building            | Brace the worst-hit building (8 stone, +22 % quake resistance) · Shore up up to three at-risk homes (10 stone) · Wait and see                                                                 |
+| Refugees (age ≥ 2, ≥ tick 100)                | at least 3 free beds and 12 food                 | Welcome them (8 food): +3 people, +3 knowledge · Turn them away                                                                                                                               |
+| A historian (≥ tick 120)                      | an Archive is standing and sound                 | Fund her (6 timber, 4 food): +8 knowledge · Decline                                                                                                                                           |
+| The dam is seeping (flood age, ≥ tick 200)    | a sound Dam or Levee exists                      | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much)                                                                                                            |
 
 The outcome line states the measured result ("the predicted burn shrank by 18 cells", or that it is unchanged when the cleared scrub lies off the fire's path) and appears in the debrief's important events.
 Impossible decisions are never offered (no dam leak without a dam, no refugees without beds). Covered by `tests/engine/story.test.ts` and `e2e/story.spec.ts`.
@@ -326,7 +328,9 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
 - **Replay an age** — the ending offers "Replay from Age II / III": the lineage as it stood when that age was founded (kept in
   the browser for the current lineage only; a new lineage clears it, and a damaged or foreign point is ignored). Everything
   after it is played again. The lineage is then a **branch**: the briefing and the ending say so, its run card is marked, its
-  feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages.
+  feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages. A
+  lineage brought back from a backup once it had begun is a branch from the age it was in (a backup could otherwise retry
+  an age that was lost).
 
 - **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins, or
   drawn for a random valley by an **expedition** (§18).
@@ -370,7 +374,7 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                                                                          |
 | Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                                                                                |
 | Endings     | Against the Odds          | Win a lineage on Hard.                                                                                                                                                        |
-| Endings     | The Twelfth Age           | Carry the chronicle on to the twelfth age and come through its catastrophe with at least three people.                                                                       |
+| Endings     | The Twelfth Age           | Carry the chronicle on to the twelfth age and come through its catastrophe with at least three people.                                                                        |
 | Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.                                                                 |
 
 "Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village

@@ -29,10 +29,31 @@ const SEVERITY: Record<StructureStatus, number> = {
   buried: 2,
 };
 
+/**
+ * What a structure is after this catastrophe: never better than before (a light blow never mends an older wound), and a
+ * construction site the hazard damages is lost. One rule for the village and for what its Archives carry out of it.
+ */
+function statusAfter(s: Structure, imp: StructureImpact | undefined): StructureStatus {
+  if (!imp) return s.status;
+  let after = imp.after;
+  if (s.status === 'constructing' && after === 'active') after = 'constructing';
+  if (s.status === 'constructing' && after === 'damaged') after = 'rubble';
+  return SEVERITY[after] < SEVERITY[s.status] ? s.status : after;
+}
+
 /** Share of occupants lost when their home is destroyed / damaged. */
 const DEATH_DESTROYED = 550;
 const DEATH_DAMAGED = 120;
 const DEATH_OUTDOORS: Record<HazardKind, number> = { fire: 400, flood: 400, quake: 250, ash: 150 };
+
+/**
+ * How many technologies one building carries through a collapse at a given status: Writing adds two to an Archive
+ * (never to a hearth), a damaged carrier carries half, and one still being built or fallen carries nothing.
+ */
+export function carryOf(c: Campaign, kind: BuildingKind, status: StructureStatus): number {
+  const base = BUILDINGS[kind].retains + (kind === 'archive' && c.civ.techs.includes('writing') ? 2 : 0);
+  return status === 'active' ? base : status === 'damaged' ? Math.floor(base / 2) : 0;
+}
 
 /** How many technologies a society can carry out of a collapse, given each archive's post-hazard status. */
 export function techRetentionCapacity(
@@ -41,12 +62,7 @@ export function techRetentionCapacity(
 ): number {
   // Oral tradition: a surviving people always remember at least one thing.
   let cap = 1;
-  const bonus = c.civ.techs.includes('writing') ? 2 : 0;
-  for (const a of carriers) {
-    const base = BUILDINGS[a.kind].retains + (a.kind === 'archive' ? bonus : 0);
-    if (a.status === 'active') cap += base;
-    else if (a.status === 'damaged') cap += Math.floor(base / 2);
-  }
+  for (const a of carriers) cap += carryOf(c, a.kind, a.status);
   return cap;
 }
 
@@ -279,13 +295,13 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
     const cap = BUILDINGS[a.kind].retains + (a.kind === 'archive' ? bonus : 0);
     a.storedTechs = unassigned.splice(0, cap);
   }
-  // (Archives that fall below keep whatever they had stored: it stays recoverable in the ruin.)
+  // (Archives that fall below keep whatever they had stored: it stays recoverable in the ruin.) What they carry is
+  // read from what they will be after the catastrophe, by the same rule as the village below: a damaged Archive the
+  // hazard barely touches is still damaged, and carries half.
+  const impactById = new Map(result.impacts.map((i) => [i.id, i]));
   const retainedCap = techRetentionCapacity(
     c,
-    archives.map((a) => ({
-      kind: a.kind,
-      status: result.impacts.find((i) => i.id === a.id)?.after ?? a.status,
-    })),
+    archives.map((a) => ({ kind: a.kind, status: statusAfter(a, impactById.get(a.id)) })),
   );
   const retained = byValue(c.civ.techs).slice(0, retainedCap);
   const lost = c.civ.techs.filter((t) => !retained.includes(t));
@@ -293,7 +309,6 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   // Apply structure outcomes. Statuses only ever get worse.
   let lostN = 0;
   let damagedN = 0;
-  const impactById = new Map(result.impacts.map((i) => [i.id, i]));
   for (const s of c.structures) {
     const imp = impactById.get(s.id);
     if (!imp) {
@@ -302,14 +317,11 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
       }
       continue;
     }
-    let after = imp.after;
-    if (s.status === 'constructing' && after === 'active') after = 'constructing';
-    if (s.status === 'constructing' && after === 'damaged') after = 'rubble';
+    const after = statusAfter(s, imp);
     // A building already in disrepair that this hazard barely touched is no worse for it: not "damaged by" it.
     const noWorse = s.status === 'damaged' && imp.after === 'active';
-    if (SEVERITY[after] < SEVERITY[s.status] || (after === 'active' && s.status === 'damaged'))
-      after = s.status;
-    const wasStanding = isStanding(s) || s.status === 'constructing';
+    const stood = isStanding(s);
+    const wasStanding = stood || s.status === 'constructing';
     s.status = after;
     // Integrity, like status, only gets worse: a light blow never mends an older wound.
     s.integrity = Math.min(s.integrity, Math.max(0, 1000 - imp.damage));
@@ -317,6 +329,11 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
       s.cause = kind;
       s.salvage = salvageFor(s, kind);
       s.burial = 0;
+      // A restored ruin that falls again is a new ruin: its new tablets can be found and dug up like any other's.
+      if (stood) {
+        s.surveyed = false;
+        s.excavated = false;
+      }
       if (wasStanding) lostN++;
       s.provenance.push(
         `${nameOf(s)} was destroyed by ${spec.hazard.headline}. ${BUILDINGS[s.kind].material === 'stone' ? 'Its stone footings remain.' : 'Little but charred footings remain.'}`,
