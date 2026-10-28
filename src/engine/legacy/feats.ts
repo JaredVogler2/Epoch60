@@ -1,6 +1,7 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { MAX_AGES, getScenario } from '../content/scenario';
 import { TECHS } from '../content/techs';
+import { MIN_FOUNDERS } from '../core/constants';
 import type { Campaign, CollapseReport, FeatId, HazardResult, Structure, TechId } from '../core/types';
 import { isStanding } from '../economy/modifiers';
 import { cellsOf, idx } from '../world/query';
@@ -81,6 +82,14 @@ export const FEATS: Record<FeatId, FeatDef> = {
     name: 'Living Heritage',
     how: 'Keep a landmark built in the first age standing through the last catastrophe.',
     lesson: 'A Seed Vault, or a hearth on ground no disaster reaches, can stand through every age.',
+  },
+  five_generations: {
+    id: 'five_generations',
+    group: 'heritage',
+    name: 'Five Generations',
+    how: "Carry the chronicle on, and keep a landmark built in the first age standing through the fifth age's catastrophe.",
+    lesson:
+      'In the long chronicle walls and reinforcement hold less every age; a landmark out of every catastrophe’s way does not need them.',
   },
   river_works: {
     id: 'river_works',
@@ -164,6 +173,14 @@ export const FEATS: Record<FeatId, FeatDef> = {
     how: 'Win a lineage on Hard.',
     lesson:
       'Hard asks for ten survivors and four technologies: a second Archive and more founders pay for themselves.',
+  },
+  twelfth_age: {
+    id: 'twelfth_age',
+    group: 'endings',
+    name: 'The Twelfth Age',
+    how: 'Carry the chronicle on to the twelfth age and come through its catastrophe with at least three people.',
+    lesson:
+      'Every returning catastrophe reaches further and breaks more: what endures twelve ages is a village built out of their way.',
   },
   perfect_age: {
     id: 'perfect_age',
@@ -276,8 +293,11 @@ export function featsOnCollapse(
   )
     award(c, 'perfect_age');
   const last = c.epoch === getScenario(c.scenario).epochs.length - 1;
-  if (last && standing.some((s) => BUILDINGS[s.kind].heritage && s.originEpoch === 0))
-    award(c, 'living_heritage');
+  const founders = standing.some((s) => BUILDINGS[s.kind].heritage && s.originEpoch === 0);
+  if (last && founders) award(c, 'living_heritage');
+  // The fifth age (index 4) and the twelfth are reached only by carrying the chronicle on.
+  if (c.epoch === 4 && founders) award(c, 'five_generations');
+  if (c.endless && c.epoch === MAX_AGES - 1 && r.survivors >= MIN_FOUNDERS) award(c, 'twelfth_age');
   if (r.verdict?.outcome === 'victory') {
     award(c, 'cycle_broken');
     if (c.difficulty === 'hard') award(c, 'hard_won');

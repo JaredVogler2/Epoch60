@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../content/buildings';
 import { epochSpec, getScenario, victoryFor } from '../content/scenario';
 import { TECHS } from '../content/techs';
-import { UNIT } from '../core/constants';
+import { MIN_FOUNDERS, UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type {
   BuildingKind,
@@ -197,9 +197,6 @@ export const LANDMARK_HINT = `Landmarks are ${(Object.keys(BUILDINGS) as Buildin
   .map((k) => (k === 'hearth' ? 'a Hearth the later societies kept' : `a ${BUILDINGS[k].name}`))
   .join(', ')
   .replace(/, ([^,]*)$/, ' or $1')}; an Archive carries knowledge, not a landmark.`;
-
-/** The fewest survivors who can found the next age. */
-export const MIN_FOUNDERS = 3;
 
 export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId[]): Verdict | null {
   // The long chronicle's ages are not judged: the lineage already won, and its chronicle ends when it cannot go on

@@ -446,7 +446,9 @@ export type FeatId =
   | 'light_footprint'
   | 'cycle_broken'
   | 'hard_won'
-  | 'perfect_age';
+  | 'perfect_age'
+  | 'five_generations'
+  | 'twelfth_age';
 
 /** A feat the lineage earned, recorded by the engine at the moment it happened (see `legacy/feats.ts`). */
 export interface FeatRecord {

@@ -1,6 +1,6 @@
 import { MAX_AGES, epochSpec, getScenario } from '../content/scenario';
 import type { Campaign } from '../core/types';
-import { MIN_FOUNDERS } from './collapse';
+import { MIN_FOUNDERS } from '../core/constants';
 
 /**
  * The long chronicle: endless play after a victory, bounded at `MAX_AGES` ages. A lineage that broke the cycle may

@@ -359,6 +359,7 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                                                                                    |
 | Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                                                                                 |
 | Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                                                                                     |
+| Heritage    | Five Generations          | Carry the chronicle on, and keep a landmark built in the first age standing through the fifth age's catastrophe.                                                              |
 | Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                                                                                     |
 | Engineering | The River Held            | The Great Flood takes no lives, and your Levees or Dam spare a building harm the water would otherwise have done (the same flood is projected with no levee or dam standing). |
 | Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale).                                                          |
@@ -369,12 +370,16 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                                                                          |
 | Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                                                                                |
 | Endings     | Against the Odds          | Win a lineage on Hard.                                                                                                                                                        |
+| Endings     | The Twelfth Age           | Carry the chronicle on to the twelfth age and come through its catastrophe with at least three people.                                                                       |
 | Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.                                                                 |
 
 "Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village
 entirely proves nothing about how it was built. "Reinforced" means the player's own Reinforce order for that hazard in
 that age (a story decision can set the same bonus; it does not count). Every feat is earned by at least one recorded run
-(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`).
+(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`). Five Generations and The Twelfth Age
+need the long chronicle (§20): the recorded Archivists' victory carried on to the twelfth age earns both (its first-age
+Seed Vault stands through the fifth age), and in passing The Grandparents' Library in age X, from an Archive the fierce
+returns brought down.
 
 **The Codex** is the device-local list of every feat this browser has seen a lineage earn (`epoch60.codex.v1`). It only
 copies records from played lineages — the title screen's demo village never counts — so nothing appears in it that was

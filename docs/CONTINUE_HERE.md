@@ -12,7 +12,7 @@ and fixed what a second independent review proved (unreachable traditions, repai
 exact arithmetic in hashed state) with mutation-checked behavioural tests. Visual iteration 3 covered every required viewport (scores 4/5 on the seven criteria
 judged from stills); desktop hover highlights buildings. Session 5 (rules 0.4.0) made Normal need two separate preparations: an Archive carries the
 knowledge but is no longer a landmark, so a win also needs a Hearth a later society kept, a Seed Vault, a Dam or a Bridge — and the planning card says
-so. Session 6 began Phase 16: **18 feats** awarded by the engine at the moment they happen (`src/engine/legacy/feats.ts`, kept in
+so. Session 6 began Phase 16: **18 feats** (20 since session 7's long chronicle) awarded by the engine at the moment they happen (`src/engine/legacy/feats.ts`, kept in
 `lineage.feats`, so replays earn exactly the same ones), each earned by at least one recorded run (`fixtures/feats.md`); a device-local
 **Codex** on the title; and on the ending an **Atlas of Ages** (one entry per age) plus two or three **ideas for the next lineage** drawn
 from what the run lacked. Pressing a ruin tells its age, purpose, how it fell and what clearing or restoring does now; a lineage can replay an age
