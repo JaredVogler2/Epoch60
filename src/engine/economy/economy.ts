@@ -11,6 +11,8 @@ import { hasTech, housingCapacity, mods } from './modifiers';
 
 export const FOOD_PER_PERSON_TICK = 12; // 0.12 food/s each
 export const GROWTH_TICKS = 70;
+/** Standing forest (sum of permille over a lumber camp's radius-3 disc) at which it cuts at full rate. */
+export const LUMBER_FULL_FOREST = 9000;
 export const STARVE_TICKS = 50;
 export const RES_CAP = 900 * UNIT;
 
@@ -293,7 +295,7 @@ export function stepProduction(c: Campaign): void {
         }
       }
     } else if (d.job === 'timber') {
-      const eff = Math.min(1000, Math.round((forestAround(c, s, 3) * 1000) / 9000));
+      const eff = Math.min(1000, Math.round((forestAround(c, s, 3) * 1000) / LUMBER_FULL_FOREST));
       const out = Math.round(
         (d.output * s.staffing * eff * (1000 + m.timberRate + forgeBoostPm(c, s)) * cond) / 1e12,
       );

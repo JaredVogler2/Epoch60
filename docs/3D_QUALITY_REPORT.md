@@ -181,3 +181,16 @@ and only re-roofed (thatch, tile, slate). Now (`src/render/models/buildings.ts`)
 Captured with `scripts/showcase-ages.js` (the same buildings raised in each age) from 8 and 14 cells: a thatched hut, a
 stone-drum hut under tile and a two-storey slate house now read as three stages of one village; the Age of Spires keeps
 its copper and spires on the taller forms. Cost: about 2–3% more triangles in the probe's showcase scene (`docs/PERF.md`).
+
+### Session 7 — a Granary reads as a store (`v7-granary.jpg`, `v7-granary-huts.jpg`)
+
+Comparing the Ecologists' and the Engineers' last age in The Ashen Winter (`v7-routes-ashen.jpg`) needed the engine's
+list of what stands to tell the two lineages' round buildings apart: from the play camera a round-hut cottage and a
+Granary were both stone drums under the age's conical roof (slate in the Age of Iron), and in that scenario the
+Granaries are what one route builds and the other does not. Now a Granary stands on five staddle stones and a timber
+floor, under a cone of timber shingles with two darker courses in every age (only the Age of Spires adds its lantern and
+copper spire), with steps up to its door and sacks of grain beside them; a round-hut cottage keeps the age's roof.
+Captured before and after at play zoom from the Engineers' recorded Ashen win (`scripts/gate-shots.mjs <tag> --fixture
+ashen/engineers --scenes last`), beside the round huts of the first two ages (`--scenes granaries`) and in the Age of
+Spires (`--scenes spires`); inspected. Render only; the perf probe's showcase scene has no Granary, so its figures are
+unchanged.

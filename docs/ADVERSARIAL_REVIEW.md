@@ -42,6 +42,12 @@ Before and after: `docs/review/visual/v7-plans-iphone.jpg` (after; the before st
 capture of it was overwritten by the passing run) and `docs/review/visual/v7-inspector-desktop.jpg` (the inspector
 reading the engine: carries one technology, every resistance).
 
+And one from the gameplay audit below:
+
+| #   | Sev. | Finding                                                                                                                                                                                        | Root cause                                                                                                                                                                                                | Fix                                                                                                                                                                                              | Regression test                                                                                                                                                                      |
+| --- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 12  | P2   | Prompt 19's ecology-steward strategy did not exist: the one ecology-minded bot won 7 of 100 Greenvale seeds, and a tuned ecology route won as often with its ecology taken away (on Greenvale) | Every ecological quantity has slack where the verdict is decided: food never binds outside the ash winter, a lumber camp barely depends on its woods, the flood follows the whole valley's forest (K-027) | A third route, the **Ecologists**, wins both scenarios; in The Ashen Winter its fields decide the verdict (no Granary). On Greenvale its ecology decides nothing: measured and left open (K-027) | `tests/engine/routes.test.ts`: both recorded wins replay and reproduce; with one field an age they starve on The Ashen Winter; the Greenvale result is pinned; `e2e/victory.spec.ts` |
+
 ## The attack list (prompt 19), checked
 
 Sound, with the code that makes it so (the reviewer's reading, and the existing tests that hold it):
@@ -83,12 +89,58 @@ the minute, and choices after it.
 | The Ashen Winter, Engineers (won)  | 5, 10                        | 5, 6   | 5, 2    |
 | The Ashen Winter, Archivists (won) | 5, 12                        | 4, 6   | 5, 9    |
 | Greenvale, builder (lost)          | 5, 4                         | 4, 3   | 5, 6    |
+| Greenvale, Ecologists (won)        | 5, 11                        | 4, 13  | 5, 7    |
+| The Ashen Winter, Ecologists (won) | 5, 11                        | 4, 11  | 5, 6    |
 
 Scripted bots make 7–17 decisions an age, the winning ones more; prompt 19's "6–15 meaningful choices" is met by the
 bots' own plans, but whether a person's minute feels full or idle is **UNVERIFIED** (no human playtest, K-014).
 
+### Science, ecology and monuments: competitive strategies?
+
+Prompt 19 asks it, and also to attempt an ecology-steward strategy beside the archive and engineering ones. Each route
+is measured with the bots and its mechanism checked by taking it away (`tests/engine/routes.test.ts`; `scripts/sim.ts`,
+Normal: Greenvale on seeds 1–100, The Ashen Winter on 1–40):
+
+| Strategy                  | Route      | Greenvale | The Ashen Winter | What wins it (without it, on seed 6001)                                                                                                                  |
+| ------------------------- | ---------- | --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monuments and engineering | Engineers  | 98/100    | 40/40            | Seismic Engineering (a technology lost to the quake), the hearth held above the flood (no landmark), Granaries in the ash winter (they starve)           |
+| Science and knowledge     | Archivists | 100/100   | 40/40            | research and an Archive (no knowledge kept), the Seed Vault (no landmark)                                                                                |
+| Ecology                   | Ecologists | 100/100   | 40/40            | in The Ashen Winter, their fields: no Granary, and with one field an age they starve (2 of 40 seeds won); on Greenvale nothing ecological (below, K-027) |
+| (ecology-minded baseline) | steward    | 7/100     | 0/40             | —                                                                                                                                                        |
+
+**Answer.** Science and monuments are competitive and distinct on both scenarios. Ecology is now competitive on both,
+but distinct only in The Ashen Winter, where the larder decides who lives and the Ecologists fill it from their fields
+instead of sealing Granaries. On Greenvale their ecology decides nothing the verdict counts: the same plan with one field
+an age also wins 40 of 40 (seeds 1–40), the ecology branch swapped for Masonry, Bronze Tools and Hydrology wins 39 of 40
+with as many survivors (13.8 against 13.5), and an earlier version that planted Groves where the forecast flood would run
+won as often without them, with the same flood deaths. On Greenvale they win the way the Archivists do, by an Archive and
+a Seed Vault out of harm. The probes behind K-027 say why: food never binds outside the ash winter (every route is at its
+housing cap 83–98% of the minute, and the Ecologists end an age with a median 92 food unspent), a lumber camp cuts at
+full rate from about 31% forest cover and fells only about 2,300‰ of its woods an age, so Forestry's lighter felling
+never changes its output, and the flood follows the whole valley's forest, which no route moves by more than a few points
+(the Engineers keep the most, 41.6% at the flood, because their firebreak keeps the Great Fire out of the woods).
+Making the land matter on Greenvale is a rules change for every route, left open with its candidates (K-027); the test
+that pins the Greenvale result is there so that change cannot forget it.
+
+On Hard (ten survivors and a fourth technology) the Ecologists win 39 of 40 Greenvale seeds and 35 of 40 on The Ashen
+Winter, against the Engineers' 39 and 39 and the Archivists' 40 and 31: they carry exactly four technologies, so a single
+one lost loses the game (`docs/balance/`).
+
+The same valley 3 s before the ash winter in the two recorded Ashen lineages (`docs/review/visual/v7-routes-ashen.jpg`,
+`node scripts/gate-shots.mjs <tag> --fixture ashen/ecologists --scenes last`, and the same for the Engineers; inspected,
+and the buildings identified from the engine's own list of what stands): the Ecologists' three fields and no Granary
+beside the Engineers' two Granaries, stone house and two fields. Identifying them showed that a round-hut cottage and a
+Granary looked alike from the play camera: both were stone drums under the age's conical roof. A Granary now stands on
+staddle stones under a cone of timber shingles in every age, with steps and sacks at its door (`v7-granary.jpg` before
+and after, `v7-granary-huts.jpg` beside the round huts; render only). The same look showed one thing the rules and the
+picture disagree on, left open as K-028: a cottage of the Age of Iron is drawn under slate, over stone, yet the ash
+breaks it like thatch.
+
 ## Verification
 
+- The Ecologists (finding 12, later in session 7): typecheck and lint clean, `npm test` 406 tests in 45 files; the route
+  traces re-recorded with the existing fixtures byte-identical; `e2e/victory.spec.ts`, the five recorded wins through the
+  browser on both profiles, 10 passed; the balance reports regenerated with the Ecologists.
 - `npm run typecheck`, `npm run lint`: clean. `npm test`: 392 tests in 43 files pass (12 new for these findings, and the
   seed and backup tests changed with them).
 - Eleven one-line reverts of the fixes each make a test fail (listed in `docs/TEST_RESULTS.md`); the phone briefing's

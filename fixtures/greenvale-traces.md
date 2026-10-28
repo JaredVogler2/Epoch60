@@ -12,6 +12,7 @@ same forecast and placement information a returning player has, and no hidden en
 | --- | --- | --- | --- | --- | --- |
 | engineers | VICTORY | 10 → 11 → 11 | 11/8 · 1/1 · 3/3 | 42 | `1ee2afd54997fe` |
 | archivists | VICTORY | 9 → 11 → 14 | 14/8 · 1/1 · 4/3 | 53 | `1f5fde9b1fa9ee` |
+| ecologists | VICTORY | 7 → 12 → 14 | 14/8 · 1/1 · 4/3 | 54 | `0e5f42aaee6513` |
 | builder | DEFEAT | 11 → 12 → 15 | 15/8 · 0/1 · 0/3 | 36 | `1a2420f00e3478` |
 | noop | DEFEAT | 2 | 2/3 | 4 | `1835a06e6c2b77` |
 
@@ -42,6 +43,12 @@ now loses every seed (0 of 40 on Greenvale and on The Ashen Winter: it keeps no 
 wins Greenvale again — a Seed Vault on safe ground 40 of 40, a hearth founded above the flood and kept 27 of 40 — but
 rarely survives The Ashen Winter (7 and 0 of 40). Normal remains forgiving to a player who knows both moves. See
 `docs/KNOWN_ISSUES.md` K-003 and `scripts/recipes.ts`.
+
+**Route C — Ecologists (live off good fields).** Two or three farms an age, sited off the coming hazard's ground, the
+ecology branch's three technologies (Irrigation, Forestry, Crop Rotation) with Writing, one Archive and a Seed Vault on
+ground no age touches as the landmark. No levee, dam, wall, firebreak, stone house or granary. On Greenvale this wins the
+way the seven-step recipe with a Seed Vault does, and the fields decide nothing the verdict counts: with one field an age
+the same plan also wins (K-027). Its own mechanism shows in The Ashen Winter below.
 
 ## Losing paths
 
@@ -77,15 +84,28 @@ rarely survives The Ashen Winter (7 and 0 of 40). Normal remains forgiving to a 
 - **Traditions chosen:** open_hands → high_ground.
 - **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
 
+### ecologists — VICTORY
+
+- **Epoch 1 (fire)**: 7 survivors, 3 deaths. Techs: irrigation, writing. Decisions: historian:fund, dry_wind:clear_brush. Standing after: Hearth×1, Archive×1, Farm×2, Quarry×1, Seed Vault×1.
+- **Epoch 2 (flood)**: 12 survivors, 0 deaths. Techs: irrigation, writing, forestry, crop_rotation. Decisions: historian:fund, river_rising:harvest_early. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Farm×2, Cottage×3.
+- **Epoch 3 (quake)**: 14 survivors, 0 deaths. Techs: crop_rotation, forestry, irrigation, writing. Decisions: historian:fund. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Farm×3, Lumber Camp×1, Cottage×2.
+- **Traditions chosen:** silt_farmers → open_hands.
+- **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
+
 # The Ashen Winter (second scenario) — EXECUTED
 
 Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatch roofs, no harvest comes, and the larder
 (food on hand plus 25 per sealed Granary) decides who eats. Transcripts in `fixtures/ashen/`, replayed by the same test file.
 
+The Engineers and the Archivists seal two Granaries each before the winter (the Engineers lose without them, ablation
+test). The Ecologists build no Granary at all: what their fields have put by feeds them. With one field an age the same
+Ecologists starve in the winter and lose (ablation test; 2 of 40 seeds won).
+
 | Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
 | --- | --- | --- | --- | --- | --- |
 | engineers | VICTORY | 10 → 11 → 13 | 13/8 · 1/1 · 3/3 | 42 | `035a609a82d1c6` |
 | archivists | VICTORY | 9 → 9 → 11 | 11/8 · 1/1 · 4/3 | 51 | `19414887f82cf0` |
+| ecologists | VICTORY | 7 → 9 → 11 | 11/8 · 1/1 · 4/3 | 51 | `1406af7a67d382` |
 | builder | DEFEAT | 11 → 12 → 5 | 5/8 · 0/1 · 0/3 | 36 | `177acf54a7900a` |
 | steward | DEFEAT | 13 → 11 → 0 | 0/3 | 32 | `1488041361089c` |
 
@@ -103,6 +123,14 @@ Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatc
 - **Epoch 2 (flood)**: 9 survivors, 3 deaths. Techs: masonry, writing, hydrology. Decisions: historian:fund, river_rising:harvest_early. Standing after: Archive×1, Seed Vault×1, Hearth×1.
 - **Epoch 3 (ash)**: 11 survivors, 1 deaths. Techs: hydrology, masonry, writing, seismic_engineering. Decisions: historian:fund, ash_warning:trade_grain. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Farm×2, Lumber Camp×1, Granary×2, Cottage×1.
 - **Traditions chosen:** open_hands → high_ground.
+- **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
+
+### ecologists — VICTORY
+
+- **Epoch 1 (fire)**: 7 survivors, 3 deaths. Techs: irrigation, writing. Decisions: historian:fund, dry_wind:clear_brush. Standing after: Hearth×1, Archive×1, Farm×2, Quarry×1, Seed Vault×1.
+- **Epoch 2 (flood)**: 9 survivors, 0 deaths. Techs: irrigation, writing, forestry, crop_rotation. Decisions: historian:fund, river_rising:harvest_early. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Lumber Camp×1, Cottage×1.
+- **Epoch 3 (ash)**: 11 survivors, 1 deaths. Techs: crop_rotation, forestry, irrigation, writing. Decisions: historian:fund, ash_warning:trade_grain. Standing after: Archive×1, Quarry×1, Seed Vault×1, Hearth×1, Farm×3, Lumber Camp×1, Cottage×1.
+- **Traditions chosen:** silt_farmers → open_hands.
 - **Verdict:** The cycle is broken — Your people, your landmarks and your knowledge outlasted three collapses.
 
 ### builder — DEFEAT

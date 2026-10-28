@@ -44,12 +44,14 @@ function record(scenario: string, dir: string, policies: Policy[]) {
 const { rows, sections } = record('greenvale', 'fixtures/greenvale', [
   ROUTES.engineers!,
   ROUTES.archivists!,
+  ROUTES.ecologists!,
   ROUTES.builder!,
   noopPolicy,
 ]);
 const ashen = record('ashen', 'fixtures/ashen', [
   ROUTES.engineers!,
   ROUTES.archivists!,
+  ROUTES.ecologists!,
   ROUTES.builder!,
   ROUTES.steward!,
 ]);
@@ -96,18 +98,28 @@ wins Greenvale again — a Seed Vault on safe ground 40 of 40, a hearth founded 
 rarely survives The Ashen Winter (7 and 0 of 40). Normal remains forgiving to a player who knows both moves. See
 \`docs/KNOWN_ISSUES.md\` K-003 and \`scripts/recipes.ts\`.
 
+**Route C — Ecologists (live off good fields).** Two or three farms an age, sited off the coming hazard's ground, the
+ecology branch's three technologies (Irrigation, Forestry, Crop Rotation) with Writing, one Archive and a Seed Vault on
+ground no age touches as the landmark. No levee, dam, wall, firebreak, stone house or granary. On Greenvale this wins the
+way the seven-step recipe with a Seed Vault does, and the fields decide nothing the verdict counts: with one field an age
+the same plan also wins (K-027). Its own mechanism shows in The Ashen Winter below.
+
 ## Losing paths
 
-${sections.slice(2).join('\n\n')}
+${sections.slice(3).join('\n\n')}
 
 ## Full per-epoch accounts
 
-${sections.slice(0, 2).join('\n\n')}
+${sections.slice(0, 3).join('\n\n')}
 
 # The Ashen Winter (second scenario) — EXECUTED
 
 Fire and flood as in Greenvale, then an **ashfall winter**: wet ash breaks thatch roofs, no harvest comes, and the larder
 (food on hand plus 25 per sealed Granary) decides who eats. Transcripts in \`fixtures/ashen/\`, replayed by the same test file.
+
+The Engineers and the Archivists seal two Granaries each before the winter (the Engineers lose without them, ablation
+test). The Ecologists build no Granary at all: what their fields have put by feeds them. With one field an age the same
+Ecologists starve in the winter and lose (ablation test; 2 of 40 seeds won).
 
 | Policy | Result | Survivors per epoch | Victory conditions (people · landmarks · techs) | Actions | Final hash |
 | --- | --- | --- | --- | --- | --- |

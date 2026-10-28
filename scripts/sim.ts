@@ -17,7 +17,7 @@ const arg = (name: string, d: string) => {
 };
 const N = Number(arg('seeds', '100'));
 const FROM = Number(arg('from', '1'));
-const names = arg('policies', 'noop,random,builder,maximizer,steward,engineers,archivists').split(',');
+const names = arg('policies', 'noop,random,builder,maximizer,steward,engineers,archivists,ecologists').split(',');
 const scenario = arg('scenario', 'greenvale');
 const difficulty = arg('difficulty', 'normal') as Difficulty;
 const modifiers = arg('modifiers', '').split(',').filter(Boolean) as ModifierId[];
@@ -152,7 +152,8 @@ ${lines.join('\n')}
 ## Reading this table
 
 - \`noop\` and \`random\` are the baselines thoughtful play must beat. \`builder\` thrives but plans no legacy. \`maximizer\` and \`steward\` are
-  additional single-idea strategies; \`engineers\` and \`archivists\` are the two tuned winning routes (see \`fixtures/greenvale-traces.md\`).
+  additional single-idea strategies; \`engineers\`, \`archivists\` and \`ecologists\` are the tuned winning routes (see \`fixtures/greenvale-traces.md\`).
+  The ecologists' fields decide the verdict only in The Ashen Winter; on Greenvale one field an age wins as well (K-027).
 - "Met" columns are the share of campaigns that reached the final verdict and satisfied each victory condition.
 - Human playtesting has **not** been done; these figures say nothing about fun.
 `;

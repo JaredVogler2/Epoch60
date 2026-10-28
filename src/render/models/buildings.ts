@@ -687,43 +687,59 @@ function hearth(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number }
 }
 
 /* ------------------------------------------------------------------ */
-/* Granary: a round, sealed stone store with a steep roof              */
+/* Granary: a round, sealed stone store, raised, under timber shingles */
 /* ------------------------------------------------------------------ */
 
 function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
   const g = new GeoBuilder(seed);
   const gl = new GeoBuilder(seed + 1);
-  const roof =
-    era >= SPIRES ? roofFor(era, seed) : era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
+  // A store, not a home: raised on staddle stones against damp and vermin, under a cone of timber shingles in every
+  // age, so that from the play camera it never reads as the round-hut cottage beside it, a stone drum under the age's
+  // own roof. Only the Age of Spires crowns it like its houses.
+  const shingle = PAL.woodLight;
   // From the Age of Iron the store is taller, with a loft door and a hoist beam to lift sacks into it.
   const up = era >= 2 ? 0.42 : 0;
-  g.cyl(0, 0, 0, 0.92, 0.9, 0.14, 12, PAL.stoneDark);
-  g.cyl(0, 0.14, 0, 0.78, 0.74, 0.88 + up, 12, PAL.stone, { wobble: 0.03 });
-  for (const y of up ? [0.34, 0.58, 0.82, 1.06] : [0.34, 0.58, 0.82])
-    g.cyl(0, y, 0, 0.785, 0.785, 0.025, 12, PAL.stoneDark, { capTop: false });
-  g.cyl(0, 1.0 + up, 0, 0.9, 0.0, 0.78, 12, roof, { wobble: era >= 1 ? 0.01 : 0.08 });
+  // Five staddle stones, each a tapered stem under a cap, then a timber floor: the dark gap beneath is the store's mark.
+  const floor = 0.2;
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + 0.3;
+    const x = Math.cos(a) * 0.5;
+    const z = Math.sin(a) * 0.5;
+    g.cyl(x, 0, z, 0.08, 0.12, floor - 0.05, 6, PAL.sandstone);
+    g.cyl(x, floor - 0.05, z, 0.17, 0.15, 0.05, 8, PAL.sandstone);
+  }
+  g.cyl(0, floor, 0, 0.86, 0.86, 0.08, 12, PAL.timberDark);
+  const base = floor + 0.08;
+  g.cyl(0, base, 0, 0.78, 0.74, 0.88 + up, 12, PAL.stone, { wobble: 0.03 });
+  for (const y of up ? [0.2, 0.44, 0.68, 0.92] : [0.2, 0.44, 0.68])
+    g.cyl(0, base + y, 0, 0.785, 0.785, 0.025, 12, PAL.stoneDark, { capTop: false });
+  const eave = base + 0.86 + up;
+  g.cyl(0, eave, 0, 0.94, 0.0, 0.8, 12, shingle, { wobble: 0.01 });
+  // two courses of darker shingles ringing the cone
+  for (const f of [0.3, 0.6]) {
+    const r = 0.94 * (1 - f);
+    g.cyl(0, eave + 0.8 * f, 0, r + 0.02, r - 0.01, 0.035, 12, PAL.timber, { capTop: false });
+  }
   if (up) {
-    g.box(0.05, 1.0, 0.73, 0.28, 0.3, 0.06, PAL.timberDark);
-    g.beam([0.05, 1.42, 0.55], [0.05, 1.42, 1.1], 0.03, PAL.timber);
-    g.beam([0.05, 1.42, 1.08], [0.05, 0.86, 1.08], 0.006, PAL.timberDark);
+    g.box(0.05, base + 0.86, 0.73, 0.28, 0.3, 0.06, PAL.timberDark);
+    g.beam([0.05, base + 1.28, 0.55], [0.05, base + 1.28, 1.1], 0.03, PAL.timber);
+    g.beam([0.05, base + 1.28, 1.08], [0.05, base + 0.72, 1.08], 0.006, PAL.timberDark);
   }
   if (era >= SPIRES) {
-    // a lantern cupola on the cone, lit, under a copper spire
-    g.cyl(0, 1.56 + up, 0, 0.17, 0.17, 0.26, 8, PAL.stoneLight);
-    gl.cyl(0, 1.62 + up, 0, 0.175, 0.175, 0.13, 8, WARM, { capTop: false });
-    spire(g, 0, 1.82 + up, 0, 0.21, 0.42, roof);
-  } else g.cyl(0, 1.74 + up, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
-  door(g, 0, 0.74, 0.3, 0.46, 0.14);
-  g.box(0.1, 0.78, 0.7, 0.34, 0.22, 0.06, PAL.timberDark);
-  for (const [x, z] of [
-    [0.95, 0.5],
-    [-0.9, 0.7],
-  ] as [number, number][]) {
-    g.cyl(x, 0, z, 0.2, 0.18, 0.34, 8, PAL.sandstone);
-    g.cyl(x, 0.34, z, 0.07, 0.0, 0.1, 6, PAL.sandstone);
-  }
+    // a lantern cupola on the cone, lit, under the age's copper spire
+    g.cyl(0, eave + 0.56, 0, 0.17, 0.17, 0.26, 8, PAL.stoneLight);
+    gl.cyl(0, eave + 0.62, 0, 0.175, 0.175, 0.13, 8, WARM, { capTop: false });
+    spire(g, 0, eave + 0.82, 0, 0.21, 0.42, roofFor(era, seed));
+  } else g.cyl(0, eave + 0.74, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+  door(g, 0, 0.74, 0.3, 0.46, base);
+  g.box(0.1, base + 0.64, 0.7, 0.34, 0.22, 0.06, PAL.timberDark);
+  // two steps up to the raised door, and sacks of grain waiting to go in
+  g.box(0, 0, 0.98, 0.42, 0.12, 0.16, PAL.stoneDark);
+  g.box(0, 0, 0.86, 0.42, 0.24, 0.12, PAL.stoneDark);
+  g.lump(0.62, 0.16, 0.88, 0.17, 0.2, 0.15, PAL.plasterWarm, { seed: 3, rough: 0.12 });
+  g.lump(0.82, 0.14, 0.66, 0.15, 0.18, 0.14, PAL.plasterWarm, { seed: 4, rough: 0.12 });
   barrel(g, -0.9, -0.4);
-  return { g, gl, height: (era >= SPIRES ? 2.4 : 1.8) + up };
+  return { g, gl, height: (era >= SPIRES ? 2.4 : 1.8) + up + 0.14 };
 }
 
 /* ------------------------------------------------------------------ */

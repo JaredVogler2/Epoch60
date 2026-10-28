@@ -20,6 +20,7 @@ const CASES = [
   ['greenvale', 'archivists', 3030],
   ['ashen', 'engineers', 2650],
   ['ashen', 'archivists', 2530],
+  ['ashen', 'ecologists', 2500],
 ] as const;
 
 /**

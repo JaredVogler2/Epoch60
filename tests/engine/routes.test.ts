@@ -55,6 +55,7 @@ describe('executed Greenvale traces (seed 6001)', () => {
   const expected = {
     engineers: 'VICTORY',
     archivists: 'VICTORY',
+    ecologists: 'VICTORY',
     builder: 'DEFEAT',
     noop: 'DEFEAT',
   } as const;
@@ -69,7 +70,7 @@ describe('executed Greenvale traces (seed 6001)', () => {
     });
   }
 
-  for (const name of ['engineers', 'archivists', 'builder'] as const) {
+  for (const name of ['engineers', 'archivists', 'ecologists', 'builder'] as const) {
     it(
       `${name}: the policy still produces exactly the recorded transcript`,
       () => {
@@ -240,6 +241,7 @@ describe('executed traces: The Ashen Winter (second scenario, fourth disaster)',
   const expected = {
     engineers: 'VICTORY',
     archivists: 'VICTORY',
+    ecologists: 'VICTORY',
     builder: 'DEFEAT',
     steward: 'DEFEAT',
   } as const;
@@ -253,7 +255,7 @@ describe('executed traces: The Ashen Winter (second scenario, fourth disaster)',
     });
   }
 
-  for (const name of ['engineers', 'archivists'] as const) {
+  for (const name of ['engineers', 'archivists', 'ecologists'] as const) {
     it(
       `${name}: the policy still produces exactly the recorded ashen transcript`,
       () => {
@@ -278,4 +280,58 @@ describe('executed traces: The Ashen Winter (second scenario, fourth disaster)',
     expect(c.report!.hazard).toBe('ash');
     expect(c.report!.survivors).toBeLessThan(8);
   });
+});
+
+/**
+ * Route C, the Ecologists: a farming people who learn the ecology branch. In The Ashen Winter their fields are their
+ * defence — no Granary, only the harvest they have put by — and the same plan with one field an age starves. On
+ * Greenvale their fields decide nothing the verdict counts (K-027); that is pinned here too, so it cannot be forgotten.
+ */
+describe('a third route: the Ecologists live off their fields', () => {
+  const eco = replayCampaign(fixture('ecologists', 'ashen'));
+  const eng = replayCampaign(fixture('engineers', 'ashen'));
+  const oneField = (p: Policy): Policy => ({
+    ...p,
+    name: `${p.name}-one-field`,
+    wants: (c) => p.wants(c).map((w) => (w.id === 'farm' ? { ...w, count: 1 } : w)),
+  });
+
+  it('they come through the ash winter on what their fields put by, without a Granary', () => {
+    expect(eco.phase).toBe('VICTORY');
+    expect(eco.report!.hazard).toBe('ash');
+    expect(eco.lineage.feats.map((f) => f.id)).toContain('winter_fed');
+    expect(everBuilt(eco).has('granary')).toBe(false);
+    expect(everBuilt(eng).has('granary')).toBe(true);
+  });
+
+  it('they raise none of the engineering works and carry the whole ecology branch to the end', () => {
+    for (const k of ['granary', 'levee', 'dam', 'retaining_wall', 'firebreak', 'stone_house'] as const)
+      expect(everBuilt(eco).has(k), k).toBe(false);
+    const techs = eco.lineage.reports.at(-1)!.retainedTechs;
+    expect(techs).toEqual(expect.arrayContaining(['irrigation', 'forestry', 'crop_rotation']));
+    expect(eng.lineage.reports.at(-1)!.retainedTechs).not.toContain('crop_rotation');
+    expect(landmarks(eco)).toEqual(['seed_vault']);
+    const farms = (c: Campaign) => c.structures.filter((s) => s.kind === 'farm').length;
+    expect(farms(eco)).toBeGreaterThan(farms(eng));
+  });
+
+  it(
+    'with one field an age the same plan starves in the winter and loses',
+    () => {
+      const c = play(oneField(ROUTES.ecologists!), SEED, 'ashen');
+      expect(c.phase).toBe('DEFEAT');
+      expect(c.report!.verdict!.conditions.find((x) => x.label === 'Surviving people')!.met).toBe(false);
+      expect(c.report!.causes.join(' ')).toMatch(/starved in the ash winter/);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    'K-027: on Greenvale the fields decide nothing the verdict counts — one field an age wins as well',
+    () => {
+      expect(replayCampaign(fixture('ecologists')).phase).toBe('VICTORY');
+      expect(play(oneField(ROUTES.ecologists!)).phase).toBe('VICTORY');
+    },
+    TIMEOUT,
+  );
 });
