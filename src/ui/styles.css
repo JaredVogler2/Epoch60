@@ -2070,6 +2070,19 @@ h3 {
     margin: 0;
     font-size: 0.74rem;
   }
+  /* The sheet keeps to what starts a lineage, so the valley shows above it: the seed hint repeats the field's
+     placeholder, and Continue appears only when there is something to continue. */
+  .title-actions .diff-note.generic,
+  .title-actions .continue:disabled {
+    display: none;
+  }
+  .title-more {
+    gap: 6px;
+  }
+  .title-more .btn {
+    padding-inline: 10px;
+    font-size: 0.9rem;
+  }
   .footnote {
     margin-top: 6px;
     font-size: 0.7rem;

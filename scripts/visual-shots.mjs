@@ -147,6 +147,9 @@ for (const vpName of vps) {
       deviceScaleFactor: vp.dpr,
       hasTouch: vp.touch,
       isMobile: vp.touch,
+      // The preview sends the production CSP (`style-src 'self'`), which refuses the styles these captures inject to
+      // hide cards; the captures bypass it (the game itself never injects a style).
+      bypassCSP: true,
     });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => problems.push(`${vpName}/${scene} pageerror: ${e.message}`));

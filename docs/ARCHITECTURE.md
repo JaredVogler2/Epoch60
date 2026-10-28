@@ -26,10 +26,12 @@ src/game/        Browser-side state around the engine: store (one mutable campai
 src/render/      React Three Fiber scene — a READ-ONLY projection of engine state:
                  Scene (canvas, lights, tone mapping, context-loss recovery), atmosphere (shared clock/wind/clouds injected
                  into materials), Sky, terrain + water, Foliage + Outskirts + models/, Structures, SmokeField, Birds,
-                 Citizens, CollapseFx + FrontFx + presentation (the collapse cinematic, render-only), Overlays (forecast,
+                 Citizens, Omens (the coming catastrophe in the world from 30 s left: smoke and embers, rain, dust),
+                 CollapseFx + FrontFx + presentation (the collapse cinematic, render-only), Overlays (forecast,
                  placement, the history lens drawn from history.ts: each age's works, each catastrophe's recorded reach,
                  eroded ground), Snapshot (then-and-now pictures from a fixed viewpoint, session memory only),
-                 CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
+                 CameraRig (on a portrait screen its focus sits in the middle of what the interface leaves uncovered),
+                 Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
 src/ui/          DOM HUD, tray, inspector and panels (ruins.ts: a ruin's story and worth), debrief, interregnum (ThenNow),
                  ending (legacy, Atlas of Ages, chronicle.ts: the most storied works' lives, feats, ideas for the next
                  lineage), HistoryLegend, ReplayBar, title (incl. the Codex, the challenges, Settings' Your data and

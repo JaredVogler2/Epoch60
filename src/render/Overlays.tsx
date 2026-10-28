@@ -66,9 +66,9 @@ void main() {
     float contour = 1.0 - smoothstep(0.0, max(fwidth(vCover) * 1.6, 1e-4), abs(vCover - 0.5));
     a = fill * (0.05 + 0.13 * v) * (0.6 + 0.4 * fine) * uFill + contour * 0.62;
   } else if (uMode < 1.5) {     // valid placement: soft fill + crisp border
-    a = 0.28 + 0.6 * border;
+    a = 0.28 * uFill + 0.6 * border;
   } else if (uMode < 2.5) {     // invalid: hatched fill + border
-    a = (0.22 + 0.3 * stripe) + 0.55 * border;
+    a = (0.22 + 0.3 * stripe) * uFill + 0.55 * border;
   } else if (uMode < 3.5) {     // selection ring
     a = border * (0.7 + 0.3 * pulse);
   } else if (uMode < 4.5) {     // at-risk marker
@@ -595,6 +595,8 @@ export function HistoryLens() {
       const [epoch, state] = k.split(':');
       const color = ageColor(Number(epoch));
       const mat = decalMaterial(color, state === 'ruin' ? 2 : 1, state === 'ruin' ? 0.75 : 0.65);
+      // A light fill under a crisp outline: the ruin itself (or what grew over it) still shows through.
+      mat.uniforms.uFill!.value = 0.4;
       mat.depthTest = false;
       out.push({ key: k, geom: mergedRects(rects, 0.075), mat });
     }

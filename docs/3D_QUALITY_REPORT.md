@@ -135,15 +135,34 @@ The long chronicle's later ages (IV–XII) reused Age III's slate roofs and buil
 three ages deep (K-024). Buildings raised in age IV or later now build in a fourth architecture, the **Age of Spires**
 (`era >= 3` in `src/render/models/buildings.ts`; the engine names the age to match):
 
-| Building    | Age III (slate)                     | Age of Spires                                                             |
-| ----------- | ----------------------------------- | ------------------------------------------------------------------------- |
-| Every roof  | slate blue-grey and teal            | copper gone green (three shades, varied per house)                        |
-| Cottages    | slate gables and cones, a bare pole | a copper spire with a gold finial on the ridge or cone, a pennant         |
+| Building    | Age III (slate)                     | Age of Spires                                                              |
+| ----------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| Every roof  | slate blue-grey and teal            | copper gone green (three shades, varied per house)                         |
+| Cottages    | slate gables and cones, a bare pole | a copper spire with a gold finial on the ridge or cone, a pennant          |
 | Stone house | slate gable and chimney             | a corner turret away from the chimney, lit slit window, copper spire, flag |
-| Granary     | slate cone and pole                 | a lit lantern cupola under a copper spire                                 |
-| Archive     | teal hip roof and portico           | the same hall with a stone bell tower: lit belfry and copper spire        |
+| Granary     | slate cone and pole                 | a lit lantern cupola under a copper spire                                  |
+| Archive     | teal hip roof and portico           | the same hall with a stone bell tower: lit belfry and copper spire         |
 
 Captured with `scripts/showcase-spires.js` (the same cottages, stone houses, granary and Archive raised in age III and in
 age IV, side by side, seed 6001) at 19 and 27 cells: the copper roofs and the spires tell the two ages apart at play zoom; the
 pennants read only up close. Age III's teal slate (`#5aa3a8`) and the lightest copper (`#73b98a`) are near neighbours.
 
+### Session 7 — the Phase 19 visual gate (`v7-gate-*.jpg`)
+
+Prompt 19's canonical scenes, captured by `scripts/gate-shots.mjs` from the built app (software GL, high tier) at
+1920×1080, 1366×768, 390×844 and 320×568: the title, a new lineage at 60 s, a placement, and the Engineers' recorded win on
+seed 6001 replayed in the browser to 35 s and 3 s left in each age, the Great Fire mid-cinematic, the first interregnum and
+the third age with the interface hidden; plus the showcase close-up and the Age of Spires. Every image was inspected; the
+full account (method, before and after, scores) is in `docs/ADVERSARIAL_REVIEW.md`, "Visual gate".
+
+| Seen in the capture                                                           | Fix                                                                                                                     |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| A calm valley 3 s before the catastrophe; only the interface warned           | Omens from 30 s left: smoke and embers from the fire's origin, rain before a flood, dust over the quake's forecast zone |
+| The history lens's pads hid the ruins between ages                            | A light fill under the outline: the rubble shows through                                                                |
+| The land past the board one flat bright green beside a later village          | Meadow patches a few cells across and bushes near the board                                                             |
+| Walls without ground contact, one finish for every building, no cloud shade   | Contact shading at wall bases, faint mottling, smoother roof slopes, the valley's cloud shadows                         |
+| The phone title sheet over the valley; the 320 px village behind the briefing | The camera's focus in the middle of the uncovered part of a portrait screen; a shorter phone title sheet                |
+
+**Scores (1–5, judged on the final captures):** geometry 4, scene composition 4, material shading 4 (3 before this pass),
+lighting 4, foliage 4, water 3, citizen life 3, historical progression 3, HUD restraint 4, touch usability 4. Motion,
+real GPUs and phones remain unjudged (K-009).

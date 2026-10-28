@@ -20,9 +20,21 @@ import { groundY } from './world';
 export type Role = 'builder' | 'farmer' | 'lumberjack' | 'quarryman' | 'scholar' | 'idle';
 
 /** Where the villagers are and what they do, for tests and captures (read-only; gameplay never uses it). */
-export const citizensApi: { list: () => { x: number; z: number; role: Role; moving: boolean }[] } = {
+export const citizensApi: {
+  list: () => { x: number; z: number; role: Role; moving: boolean }[];
+  /**
+   * Debug captures only: on the next frame everyone stands where they were walking to, as if the minute had run in
+   * real time (a replay jumps the clock, and paused people do not walk).
+   */
+  settle: () => void;
+} = {
   list: () => [],
+  settle: () => {
+    settleRequested = true;
+  },
 };
+/** Set by `citizensApi.settle`; taken by whichever villager layer draws next (a new game may have just remounted it). */
+let settleRequested = false;
 
 /** Tunic hue by job; each age dyes it differently (see `tunic`). */
 const ROLE_COLOR: Record<Role, string> = {
@@ -294,7 +306,9 @@ export function Citizens() {
       });
     }
     ag.length = Math.min(ag.length, Math.min(shown, MAX));
-    if (t - lastAssign.current > 0.25 || lastAssign.current < 0) {
+    const settle = settleRequested;
+    settleRequested = false;
+    if (settle || t - lastAssign.current > 0.25 || lastAssign.current < 0) {
       lastAssign.current = t;
       const tasks: { site: number; role: Role }[] = [];
       const sorted = [...c.structures].sort((a, b) => a.id - b.id);
@@ -331,6 +345,14 @@ export function Citizens() {
           }
         }
       });
+    }
+
+    if (settle) {
+      for (const a of ag) {
+        if (a.target < 0) continue;
+        a.x = (a.target % GRID_W) + 0.5 + a.offX;
+        a.z = Math.floor(a.target / GRID_W) + 0.5 + a.offZ;
+      }
     }
 
     // Move and animate.

@@ -33,3 +33,9 @@ Scene: the Age showcase village (16 building kinds, citizens, roads, foliage), c
 - Session 6's then-and-now pictures are not in this scene either: twice per age the game draws one extra frame of the valley into a
   480×270 corner of the canvas (from a fixed viewpoint, overlays hidden) and reads it back, then redraws the normal view. The probe does not
   measure it.
+- Session 7's omens (Phase 19) are not in this scene either: they draw only in an age's last 30 s, and then only the age's
+  own hazard: for a fire one instanced smoke column (at most 40 puffs) and one point cloud of 160 embers, for a flood 900
+  rain streaks in one line draw, for a quake one instanced mesh of at most 48 dust puffs; every one skips the shadow pass,
+  and the CPU work is one loop over those instances per frame. The low tier draws 60% of the embers and rain. The
+  building surface pass adds no draw call (the same material with cloud shadows, contact shading and a roof finish in its
+  shader); the outskirts gain one instanced mesh of bushes (on about a quarter of the open cells within 12 of the board). Unmeasured on a real GPU (K-009).

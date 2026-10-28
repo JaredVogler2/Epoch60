@@ -18,7 +18,9 @@ const browser = await chromium.launch({
     '--ignore-gpu-blocklist',
   ],
 });
-const page = await (await browser.newContext({ viewport: { width: w, height: h } })).newPage();
+const page = await (
+  await browser.newContext({ viewport: { width: w, height: h }, bypassCSP: true })
+).newPage();
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto('http://127.0.0.1:5173/?debug&still&quality=low');
 await page.waitForFunction(() => !!window.__epoch);
