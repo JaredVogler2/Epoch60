@@ -72,9 +72,10 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     const later = Array.from({ length: MAX_AGES - 3 }, (_, k) => epochSpec(g, k + 3));
     expect(new Set(later.map((s) => s.name)).size).toBe(later.length);
     expect(later.map((s) => s.start)).toEqual(later.map((s) => GREENVALE.epochs[(s.index - 3) % 3]!.start));
-    expect(later.every((s) => s.age === GREENVALE.epochs[2]!.age && s.yearsAfter === CHRONICLE_YEARS)).toBe(
-      true,
-    );
+    // They build in an architecture of their own, the Age of Spires (the render layer's fourth).
+    expect(
+      later.every((s) => s.ageName === 'Age of Spires' && s.age === 3 && s.yearsAfter === CHRONICLE_YEARS),
+    ).toBe(true);
     // The next age: none after the last authored one unless carried on, and none after the twelfth.
     expect(nextEpochSpec({ scenario: 'greenvale', epoch: 2 })).toBeNull();
     expect(nextEpochSpec({ ...g, epoch: 2 })).toBe(epochSpec(g, 3));

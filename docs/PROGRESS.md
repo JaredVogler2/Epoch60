@@ -564,4 +564,13 @@ moved. A sixth recorded feat run, `fixtures/feats/long-chronicle.json` (the Arch
 `scripts/record-feats.ts` with `ages: 12`), earns both (Five Generations in age V: its first-age Seed Vault stands out of
 every catastrophe's way) and, in age X, The Grandparents' Library: the fierce returns brought an Archive down and a later
 age dug up its tablets. `tests/engine/feats.test.ts` replays it with its exact list. The Codex now counts 20.
+**The Age of Spires (the long chronicle's look).** Ages IV–XII had reused Age III's slate roofs, so a valley twelve ages deep
+looked three ages deep. Buildings raised in a later age now build in a fourth architecture (`era >= 3` in
+`src/render/models/buildings.ts`): copper roofs gone green, a copper spire and pennant on cottages, a corner turret with a
+lit slit window and a spire on stone houses, a lit lantern cupola on granaries, and a stone bell tower with a lit belfry on
+Archives. The engine names those ages the **Age of Spires** (`epochSpec`), which moved only the long-chronicle feat run's
+hash (its founding records name the age; re-recorded, the same feats). Captured with `scripts/showcase-spires.js` (the same
+buildings raised in age III and in age IV, side by side) and inspected (`docs/3D_QUALITY_REPORT.md`, review copy
+`docs/review/visual/v7-spires.jpg`): the copper and the spires tell the ages apart at play zoom; the pennants read only up
+close.
 

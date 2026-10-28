@@ -248,6 +248,8 @@ const SCARCE: Record<ResourceKey, string> = {
   stone: 'Stone is scarce: the settlers carry little, and must quarry or salvage the rest.',
   knowledge: 'Knowledge is scarce: the settlers carry little of it.',
 };
+/** The later ages build in copper and raise spires (the render layer's fourth architecture). */
+const CHRONICLE_AGE_NAME = 'Age of Spires';
 const CHRONICLE_GOAL =
   'Endure: every returning catastrophe is fiercer than the last. Rest the chronicle at any debrief, or carry it to the twelfth age.';
 
@@ -256,7 +258,8 @@ const specCache = new Map<string, EpochSpec>();
 /**
  * The spec of any age of a lineage. The scenario's own ages are as authored; a lineage carrying its chronicle on
  * (`endless`) waits centuries after the last of them, and each later age brings back the scenario's catastrophes in
- * their order, each return a step fiercer, with the last age's architecture and the returning age's provisions.
+ * their order, each return a step fiercer, in an architecture of its own (the Age of Spires) with the returning age's
+ * provisions.
  */
 export function epochSpec(c: Pick<Campaign, 'scenario' | 'endless'>, epoch: number): EpochSpec {
   const s = getScenario(c.scenario);
@@ -277,8 +280,8 @@ export function epochSpec(c: Pick<Campaign, 'scenario' | 'endless'>, epoch: numb
       index: epoch,
       id: `${base.id}_${epoch + 1}`,
       name: CHRONICLE_NAMES[kind][Math.min(2, Math.floor((epoch - n) / n))]!,
-      ageName: last.ageName,
-      age: last.age,
+      ageName: CHRONICLE_AGE_NAME,
+      age: last.age + 1,
       hazard: {
         ...base.hazard,
         headline: base.hazard.headline.replace(

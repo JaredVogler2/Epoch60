@@ -514,8 +514,9 @@ already won stands and keeps its own run card.
   because a quake's intensity is capped per cell, a fire's harm is the share of a footprint it burns, and a late
   village's resistances sit at their cap (traditions stack every age), so multiplying its tiny vulnerability changed
   nothing. With resistance divided too, defences age out while living out of harm's way still works (measured below). Its headline counts the returns ("The Second Great Fire", … "The Fourth
-  Great Quake"); the settlers bring the provisions of the age whose catastrophe returns and build with the last age's
-  architecture; each later age has its own people ("The Ember Folk", "The High-Water Folk", …).
+  Great Quake"); the settlers bring the provisions of the age whose catastrophe returns and build in an architecture of
+  their own, the Age of Spires (copper roofs, spires, turrets and pennants; the render layer's fourth era); each later age
+  has its own people ("The Ember Folk", "The High-Water Folk", …).
 - **Not judged.** A later age has no verdict. At its debrief the chronicle **ends by itself** when fewer than 3 came
   through (`MIN_FOUNDERS`: "The chronicle ends") or when the twelfth age has passed ("The chronicle is complete");
   otherwise the player chooses: let the centuries pass, or **rest the chronicle** there (`rest`: "The chronicle rests").
