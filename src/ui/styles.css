@@ -896,6 +896,19 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  /* A long inspector (a ruin's story) scrolls under its actions, which stay in reach at the bottom. */
+  position: sticky;
+  bottom: -12px;
+  margin: 0 -12px -12px;
+  padding: 8px 12px 12px;
+  background: var(--panel-solid);
+}
+.ruin-facts .blurb {
+  font-size: 0.86rem;
+  margin: 6px 0;
+}
+.ruin-facts .facts {
+  font-size: 0.84rem;
 }
 .side-panels {
   display: contents;

@@ -13,6 +13,7 @@ import type { HazardKind, LaborFocus, ResourceKey, Structure, TechId } from '../
 import { currentSpec } from '../engine';
 import { Icon, RESOURCE_ICON, hazardIcon } from './icons';
 import { units } from './format';
+import { ruinFacts } from './ruins';
 import { useStore } from './useStore';
 import { useDialog } from './useDialog';
 
@@ -50,6 +51,39 @@ function statusLabel(s: Structure): string {
     case 'buried':
       return 'Buried ruin';
   }
+}
+
+/** A ruin's story and what it is worth now: who built it, for what, how it fell, what clearing or restoring does. */
+function RuinFactsView() {
+  const s = useStore();
+  const c = s.campaign!;
+  const st = c.structures.find((x) => x.id === s.selectedId)!;
+  const f = ruinFacts(c, st);
+  return (
+    <div className="ruin-facts" data-testid="ruin-facts">
+      <p className="blurb" data-testid="ruin-built">
+        {f.built} {f.purpose}
+      </p>
+      <p className="blurb" data-testid="ruin-fell">
+        {f.fell}
+      </p>
+      {/* Once dug up, what it held has been taken: only an unexcavated ruin still has a survey to tell. */}
+      {!st.excavated &&
+        (st.surveyed ? (
+          <p className="blurb">{ruinYield(st).note}</p>
+        ) : (
+          <p className="blurb dim">What lies beneath is unknown until it is surveyed between ages.</p>
+        ))}
+      <ul className="facts">
+        <li data-testid="ruin-clear">
+          <Icon name="trash" size={14} /> {f.clear}
+        </li>
+        <li data-testid="ruin-restore">
+          <Icon name="wrench" size={14} /> {f.restore}
+        </li>
+      </ul>
+    </div>
+  );
 }
 
 export function Inspector() {
@@ -124,16 +158,7 @@ export function Inspector() {
           )}
         </>
       )}
-      {ruin && (
-        <>
-          <p className="blurb">{st.provenance.at(-1) ?? 'A ruin of an earlier age.'}</p>
-          {st.excavated || st.surveyed ? (
-            <p className="blurb">{ruinYield(st).note}</p>
-          ) : (
-            <p className="blurb dim">What lies beneath is unknown until surveyed between epochs.</p>
-          )}
-        </>
-      )}
+      {ruin && <RuinFactsView />}
       <div className="insp-actions">
         {st.status === 'constructing' && st.repairs === 0 && timed && (
           <button

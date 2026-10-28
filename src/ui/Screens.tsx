@@ -336,7 +336,8 @@ function RuinRow({ st }: { st: Structure }) {
         <span>
           <b>{d.name}</b>
           <small>
-            ({st.x},{st.y}) · {st.status === 'buried' ? 'deeply buried' : 'ruin'} · {st.cause ?? 'time'}
+            ({st.x},{st.y}) · age {ROMAN[st.originEpoch]} ·{' '}
+            {st.status === 'buried' ? 'deeply buried' : 'ruin'} · {st.cause ?? 'time'}
           </small>
         </span>
       </button>

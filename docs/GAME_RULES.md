@@ -169,6 +169,14 @@ scars ×0.45, pollution ×0.5, rested fields recover toward 700. A surviving **S
 Seed Vault → +12 food and reseeds radius ~4; Quarry +6 stone; Hearth +4 stone. Excavated stone/earth works can be **repaired** at 65 % of cost.
 You cannot excavate the same ruin twice or dig everything.
 
+**Pressing a ruin** (the inspector, `src/ui/ruins.ts`) says, from the engine's own records: when and by whom it was built
+and what it was for; how it fell — destroyed outright, abandoned, never finished, or broken by a catastrophe and finished
+by the centuries (that catastrophe is named unless it was repaired since); what clearing it gives now (its exact salvage,
+in whole units as the resource bar counts them, or "less than 1"); and what restoring it costs (rounded up, as every
+price in the UI) and does — builders finish the last 65 %, a landmark restored and standing at the end counts as one
+from an earlier age, an Archive carries technologies again — or why it cannot be restored yet (not excavated; thatch;
+an old hearth; the kind's limit). Tests check the stated salvage and price against what the actions really give and take.
+
 ### Founding the next society
 
 Choose one of up to three computed **sites** (ancestral hearth, fertile flats, high ground — each scored against the _next_ epoch's hazard) and one of three
