@@ -1,7 +1,7 @@
 // The Phase 19 visual gate's canonical captures (prompts/19 and prompts/QUALITY_GATE_VISUAL_AND_FUN.md), repeatable:
 //   npm run build && npx vite preview --host 127.0.0.1 --port 4173 &
 //   node scripts/gate-shots.mjs <tag> [--scenes mid,crisis] [--viewports laptop-1366x768] [--quality high]
-//     [--fixture ashen/ecologists]
+//     [--fixture ashen/ecologists] [--focus 27.5,25]  (lineage scenes: look closely at that cell instead of the village)
 // Every lineage scene is a recorded win (by default the Engineers', fixtures/greenvale/engineers.json: seed 6001,
 // Greenvale, Normal) replayed through the browser's own store to a fixed age and tick, then paused (its card hidden) so the picture holds
 // still; the camera is placed on that age's hearth with the pose below. Writes PNGs to docs/screenshots/gate/<tag>/
@@ -107,11 +107,14 @@ async function replayTo(page, stop) {
   );
 }
 
-/** A lineage scene: replay, hold still, frame the village. */
+const focus = opt('focus', '')?.split(',').map(Number);
+
+/** A lineage scene: replay, hold still, frame the village (or, with --focus, one spot up close). */
 const at = (stop, extra) => async (page, vp) => {
   const r = await replayTo(page, stop);
   await style(page, HIDE_PAUSE);
-  await page.evaluate((c) => window.__epoch.camera.set(c, true), pose(vp, r.x, r.z, false, r.extent));
+  const view = focus?.length === 2 ? pose(vp, focus[0], focus[1], true) : pose(vp, r.x, r.z, false, r.extent);
+  await page.evaluate((c) => window.__epoch.camera.set(c, true), view);
   if (extra) await extra(page, vp, r);
   return r;
 };
@@ -172,6 +175,20 @@ const SCENES = {
     LAPTOP,
     async (page, vp) => {
       await page.evaluate(showcaseAges.replace('e.runTicks(c, 590);', 'e.runTicks(c, 240);'));
+      await style(page, HIDE_PAUSE + '.story,.collapse-overlay{display:none!important}');
+      await page.evaluate((c) => window.__epoch.camera.set(c, true), pose(vp, 17.5, 16, true));
+    },
+  ],
+  // The same village with a Granary of the first two ages beside the round huts: a store must not read as a home.
+  granaries: [
+    LAPTOP,
+    async (page, vp) => {
+      await page.evaluate(
+        showcaseAges.replace(
+          'e.runTicks(c, 590);',
+          "put('granary', 0);\n  put('granary', 1);\n  c.epoch = 2;\n  e.runTicks(c, 240);",
+        ),
+      );
       await style(page, HIDE_PAUSE + '.story,.collapse-overlay{display:none!important}');
       await page.evaluate((c) => window.__epoch.camera.set(c, true), pose(vp, 17.5, 16, true));
     },

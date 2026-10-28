@@ -130,7 +130,11 @@ The same valley 3 s before the ash winter in the two recorded Ashen lineages (`d
 `node scripts/gate-shots.mjs <tag> --fixture ashen/ecologists --scenes last`, and the same for the Engineers; inspected,
 and the buildings identified from the engine's own list of what stands): the Ecologists' three fields and no Granary
 beside the Engineers' two Granaries, stone house and two fields. Identifying them showed that a round-hut cottage and a
-Granary look alike from the play camera: both are stone drums under the age's conical roof.
+Granary looked alike from the play camera: both were stone drums under the age's conical roof. A Granary now stands on
+staddle stones under a cone of timber shingles in every age, with steps and sacks at its door (`v7-granary.jpg` before
+and after, `v7-granary-huts.jpg` beside the round huts; render only). The same look showed one thing the rules and the
+picture disagree on, left open as K-028: a cottage of the Age of Iron is drawn under slate, over stone, yet the ash
+breaks it like thatch.
 
 ## Verification
 

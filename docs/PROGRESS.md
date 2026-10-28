@@ -783,3 +783,10 @@ flood follows the whole valley's forest, which no route moves by more than a few
 recorded (`fixtures/{greenvale,ashen}/ecologists.json`, existing fixtures unchanged), replayed headless and in the browser,
 and the Greenvale result is pinned by a test so a rules change that makes the land matter has to face it. The balance
 reports were regenerated with the Ecologists under rules 0.4.2 (every earlier policy's figures unchanged).
+
+**A Granary reads as a store.** Comparing the two Ashen lineages' last age (`v7-routes-ashen.jpg`) took the engine's list
+of what stands to tell their round buildings apart: a round-hut cottage and a Granary were both stone drums under the
+age's cone. A Granary now stands on staddle stones under timber shingles in every age, with steps and sacks at its door
+(render only; before and after in `v7-granary.jpg`, beside the round huts in `v7-granary-huts.jpg`; `scripts/gate-shots.mjs`
+gained `--fixture`, `--focus` and the `last` and `granaries` scenes for this). The same look exposed K-028: a cottage of
+the Age of Iron is drawn under slate over stone, yet the ash breaks it like thatch.
