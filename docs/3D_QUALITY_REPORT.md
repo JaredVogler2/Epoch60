@@ -128,3 +128,22 @@ Captured before and after at Age I and Age III, from 2.4, 6.5, 10 and 15 cells: 
 play zoom; at the default distance villagers are still a few pixels tall, and they remain simple low-poly figures — this addresses the
 "citizens are tiny and blocky" note under Geometry & materials without changing its score (4). Cost: five more draw calls
 (`docs/PERF.md`).
+
+### Session 7 — the Age of Spires (`v7-spires.jpg`)
+
+The long chronicle's later ages (IV–XII) reused Age III's slate roofs and buildings, so a valley twelve ages deep looked
+three ages deep (K-024). Buildings raised in age IV or later now build in a fourth architecture, the **Age of Spires**
+(`era >= 3` in `src/render/models/buildings.ts`; the engine names the age to match):
+
+| Building    | Age III (slate)                     | Age of Spires                                                             |
+| ----------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| Every roof  | slate blue-grey and teal            | copper gone green (three shades, varied per house)                        |
+| Cottages    | slate gables and cones, a bare pole | a copper spire with a gold finial on the ridge or cone, a pennant         |
+| Stone house | slate gable and chimney             | a corner turret away from the chimney, lit slit window, copper spire, flag |
+| Granary     | slate cone and pole                 | a lit lantern cupola under a copper spire                                 |
+| Archive     | teal hip roof and portico           | the same hall with a stone bell tower: lit belfry and copper spire        |
+
+Captured with `scripts/showcase-spires.js` (the same cottages, stone houses, granary and Archive raised in age III and in
+age IV, side by side, seed 6001) at 19 and 27 cells: the copper roofs and the spires tell the two ages apart at play zoom; the
+pennants read only up close. Age III's teal slate (`#5aa3a8`) and the lightest copper (`#73b98a`) are near neighbours.
+

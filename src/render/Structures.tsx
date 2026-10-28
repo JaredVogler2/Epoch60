@@ -5,7 +5,7 @@ import type { BufferGeometry } from 'three';
 import { BUILDINGS } from '../engine';
 import type { Campaign, Structure } from '../engine';
 import { store } from '../game/store';
-import { buildingModel, ruinGeometry, scaffoldGeometry } from './models/buildings';
+import { buildingModel, eraOf, ruinGeometry, scaffoldGeometry } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
 import { presentation, sinceHit, visualStatus } from './presentation';
@@ -18,10 +18,11 @@ const scaffoldCache = new Map<string, BufferGeometry>();
 
 function modelFor(s: Structure): BuildingModel {
   const variant = (s.id * 7 + s.x * 3 + s.y) % 3;
-  const key = `${s.kind}:${s.w}x${s.h}:${variant}:${s.id % 5}:${s.originEpoch}`;
+  const era = eraOf(s.originEpoch);
+  const key = `${s.kind}:${s.w}x${s.h}:${variant}:${s.id % 5}:${era}`;
   let m = modelCache.get(key);
   if (!m) {
-    m = buildingModel(s.kind, s.w, s.h, variant, 100 + s.id * 31 + variant, s.originEpoch);
+    m = buildingModel(s.kind, s.w, s.h, variant, 100 + s.id * 31 + variant, era);
     modelCache.set(key, m);
   }
   return m;

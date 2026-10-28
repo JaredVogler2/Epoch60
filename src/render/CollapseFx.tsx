@@ -14,7 +14,7 @@ import {
   UniformsLib,
   UniformsUtils,
 } from 'three';
-import { GRID_H, GRID_W, getScenario } from '../engine';
+import { GRID_H, GRID_W, epochSpec } from '../engine';
 import type { CollapseReport } from '../engine';
 import { store } from '../game/store';
 import { ATMO_GLSL, atmo } from './atmosphere';
@@ -602,7 +602,7 @@ export function AshFall() {
     const dt = Math.min(dtRaw, 0.1);
     let amount = 0;
     if (c && store.screen === 'game') {
-      const ash = getScenario(c.scenario).epochs[c.epoch]?.hazard.kind === 'ash';
+      const ash = epochSpec(c, c.epoch).hazard.kind === 'ash';
       if (ash && c.phase === 'ACTIVE') amount = Math.min(1, Math.max(0, (c.tick - 350) / 200));
       else if (ash && c.phase === 'COLLAPSING') amount = 1;
       else if (presentation.active && presentation.hazard === 'ash') amount = 1;

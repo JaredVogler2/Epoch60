@@ -111,6 +111,19 @@ const EXPECTED: Record<string, string[]> = {
     'cycle_broken@2',
     'light_footprint@2',
   ],
+  // The Archivists' victory carried on to the twelfth age (the long chronicle): only it reaches the fifth and twelfth.
+  'feats/long-chronicle': [
+    'archive_built@0',
+    'old_foundations@1',
+    'every_field@1',
+    'quake_unshaken@2',
+    'perfect_age@2',
+    'living_heritage@2',
+    'cycle_broken@2',
+    'five_generations@4',
+    'grandparents_library@9',
+    'twelfth_age@11',
+  ],
 };
 
 const replays = new Map<string, Campaign>();

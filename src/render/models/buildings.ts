@@ -18,15 +18,39 @@ export interface BuildingModel {
 const WARM = rgb('#ffb347');
 const WARM_DIM = rgb('#e08a2c');
 
-/** Roof colour by age, varied per house like a real village (thatch → fired tile → slate). */
+/**
+ * Roof colour by age, varied per house like a real village (thatch → fired tile → slate → copper gone green). The
+ * fourth is the long chronicle's later ages (era 3 and on, the Age of Spires).
+ */
 const ROOFS: RGB[][] = [
   [rgb('#d6a64e'), rgb('#c8943e'), rgb('#dcb05a')],
   [rgb('#c4553c'), rgb('#d8743a'), rgb('#b84a3a')],
   [rgb('#4f7f92'), rgb('#5aa3a8'), rgb('#56677a')],
+  [rgb('#5fa676'), rgb('#73b98a'), rgb('#4f9468')],
 ];
+/** The architecture of the long chronicle's later ages: copper roofs, spires, turrets and pennants. */
+const SPIRES = 3;
+/** The architecture a building raised in this age is built in (every age past the third builds the same). */
+export const eraOf = (epoch: number): number => Math.min(epoch, SPIRES);
 function roofFor(era: number, seed: number): RGB {
-  const set = ROOFS[Math.min(2, Math.max(0, era))]!;
+  const set = ROOFS[Math.min(SPIRES, Math.max(0, era))]!;
   return set[seed % set.length]!;
+}
+
+/** A slender spire with a gold finial: the Age of Spires' mark on a roof, a turret or a tower. */
+function spire(g: GeoBuilder, x: number, y: number, z: number, r: number, h: number, color: RGB): void {
+  g.cyl(x, y, z, r, 0, h, 8, color);
+  g.cyl(x, y + h - 0.03, z, 0.026, 0.012, 0.16, 5, PAL.gold);
+}
+
+/** A small pennant on a pole (both faces, so it reads from any side). */
+function pennant(g: GeoBuilder, x: number, y: number, z: number, color: RGB): void {
+  g.cyl(x, y, z, 0.018, 0.014, 0.44, 5, PAL.timberDark);
+  const a: [number, number, number] = [x, y + 0.44, z];
+  const b: [number, number, number] = [x, y + 0.3, z];
+  const c: [number, number, number] = [x + 0.26, y + 0.37, z + 0.02];
+  g.triangle(a, b, c, color);
+  g.triangle(b, a, c, color);
 }
 
 function door(g: GeoBuilder, x: number, z: number, w = 0.28, h = 0.4, base = 0.12): void {
@@ -123,6 +147,11 @@ function cottage(
     g.box(0.65, 1.3, -0.28, 0.28, 0.06, 0.28, PAL.stoneDark);
     logPile(g, -0.55, -0.82, 0, 0.55, 2);
     barrel(g, 0.95, 0.72);
+    if (era >= SPIRES) {
+      spire(g, -0.98, 1.22, 0, 0.05, 0.34, roofDark);
+      pennant(g, 0.65, 1.36, -0.28, PAL.red);
+      return { g, gl, height: 1.8 };
+    }
     return { g, gl, height: 1.3 };
   }
   if (variant === 1) {
@@ -136,13 +165,16 @@ function cottage(
     // a thick eave rim, then a steep cone: a hut, not a parasol
     g.cyl(0, 0.68, 0, 0.84, 0.8, 0.1, 12, roofDark, { wobble: era >= 1 ? 0.01 : 0.05 });
     g.cyl(0, 0.78, 0, 0.8, 0.0, 0.92, 12, roof, { wobble: era >= 1 ? 0.02 : 0.07 });
-    g.cyl(0, 1.66, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+    if (era >= SPIRES) {
+      spire(g, 0, 1.6, 0, 0.07, 0.4, roofDark);
+      pennant(g, 0.02, 1.86, 0, PAL.gold);
+    } else g.cyl(0, 1.66, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
     door(g, 0, 0.62, 0.26, 0.42);
     windowAt(g, gl, 0.47, 0.4, 0.38, 0.2, 0.17, 0.7);
     g.lump(-0.75, 0.1, 0.5, 0.18, 0.12, 0.16, PAL.stone, { seed: 1, rough: 0.2 });
     g.lump(0.8, 0.1, -0.2, 0.14, 0.1, 0.13, PAL.stone, { seed: 2, rough: 0.2 });
     barrel(g, -0.7, -0.35);
-    return { g, gl, height: 1.8 };
+    return { g, gl, height: era >= SPIRES ? 2.3 : 1.8 };
   }
   // Framed cottage with a steep gable and a lean-to.
   g.box(0, 0, 0, 1.4, 0.12, 1.4, PAL.stoneDark);
@@ -167,6 +199,11 @@ function cottage(
   for (const z of [-0.45, 0.25]) g.box(-1.2, 0, z, 0.05, 0.5, 0.05, PAL.timber);
   logPile(g, -1.0, -0.1, Math.PI / 2, 0.5, 2);
   g.box(0.45, 0.8, -0.35, 0.2, 0.75, 0.2, PAL.stone, 0, PAL.stoneDark);
+  if (era >= SPIRES) {
+    spire(g, 0, 1.48, 0.8, 0.05, 0.34, roofDark);
+    pennant(g, 0.45, 1.55, -0.35, PAL.teal);
+    return { g, gl, height: 2.0 };
+  }
   return { g, gl, height: 1.6 };
 }
 
@@ -354,7 +391,7 @@ function workshop(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number
 /* Archive                                                             */
 /* ------------------------------------------------------------------ */
 
-function archive(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
+function archive(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
   const g = new GeoBuilder(seed);
   const gl = new GeoBuilder(seed + 1);
   g.jitter = 0.05;
@@ -414,6 +451,17 @@ function archive(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number 
       i % 2 ? PAL.clay : PAL.terracotta,
       i * 0.15,
     );
+  if (era >= SPIRES) {
+    // a bell tower behind the hall: dressed stone, lit belfry openings and a copper spire
+    const tx = 0.62;
+    const tz = -0.62;
+    g.masonry(tx, 0.2, tz, 0.56, 1.95, 0.56, sand, 0, { course: 0.14, block: 0.3, spread: 0.1 });
+    g.box(tx, 2.15, tz, 0.64, 0.07, 0.64, PAL.gold);
+    gl.box(tx, 1.72, tz + 0.29, 0.16, 0.26, 0.03, WARM);
+    gl.box(tx + 0.29, 1.72, tz, 0.16, 0.26, 0.03, WARM, Math.PI / 2);
+    spire(g, tx, 2.22, tz, 0.42, 0.95, roofFor(era, seed));
+    return { g, gl, height: 3.3 };
+  }
   return { g, gl, height: 1.9 };
 }
 
@@ -554,13 +602,19 @@ function hearth(seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number }
 function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; height: number } {
   const g = new GeoBuilder(seed);
   const gl = new GeoBuilder(seed + 1);
-  const roof = era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
+  const roof =
+    era >= SPIRES ? roofFor(era, seed) : era >= 2 ? PAL.slate : era >= 1 ? PAL.terracotta : PAL.thatch;
   g.cyl(0, 0, 0, 0.92, 0.9, 0.14, 12, PAL.stoneDark);
   g.cyl(0, 0.14, 0, 0.78, 0.74, 0.88, 12, PAL.stone, { wobble: 0.03 });
   for (const y of [0.34, 0.58, 0.82])
     g.cyl(0, y, 0, 0.785, 0.785, 0.025, 12, PAL.stoneDark, { capTop: false });
   g.cyl(0, 1.0, 0, 0.9, 0.0, 0.78, 12, roof, { wobble: era >= 1 ? 0.01 : 0.08 });
-  g.cyl(0, 1.74, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
+  if (era >= SPIRES) {
+    // a lantern cupola on the cone, lit, under a copper spire
+    g.cyl(0, 1.56, 0, 0.17, 0.17, 0.26, 8, PAL.stoneLight);
+    gl.cyl(0, 1.62, 0, 0.175, 0.175, 0.13, 8, WARM, { capTop: false });
+    spire(g, 0, 1.82, 0, 0.21, 0.42, roof);
+  } else g.cyl(0, 1.74, 0, 0.05, 0.03, 0.14, 5, PAL.timber);
   door(g, 0, 0.74, 0.3, 0.46, 0.14);
   g.box(0.1, 0.78, 0.7, 0.34, 0.22, 0.06, PAL.timberDark);
   for (const [x, z] of [
@@ -571,7 +625,7 @@ function granary(era: number, seed: number): { g: GeoBuilder; gl: GeoBuilder; he
     g.cyl(x, 0.34, z, 0.07, 0.0, 0.1, 6, PAL.sandstone);
   }
   barrel(g, -0.9, -0.4);
-  return { g, gl, height: 1.8 };
+  return { g, gl, height: era >= SPIRES ? 2.4 : 1.8 };
 }
 
 /* ------------------------------------------------------------------ */
@@ -610,6 +664,17 @@ function stoneHouse(
   g.box(0.8, 0.35, 0.3, 0.02, 0.34, 0.06, era >= 1 ? PAL.teal : PAL.timberDark);
   barrel(g, 0.95, 0.9);
   g.lump(-0.95, 0.1, 0.55, 0.16, 0.1, 0.14, PAL.stone, { seed: 2, rough: 0.2 });
+  if (era >= SPIRES) {
+    // a corner turret, away from the chimney, with a lit slit window and a copper spire
+    const tx = variant === 1 ? 0.78 : -0.78;
+    const tz = -0.72;
+    g.cyl(tx, 0.12, tz, 0.3, 0.28, 1.52, 10, wall, { capColor: PAL.stoneLight });
+    g.cyl(tx, 1.64, tz, 0.34, 0.34, 0.07, 10, PAL.stoneLight);
+    gl.box(tx, 1.0, tz + 0.285, 0.07, 0.22, 0.03, WARM);
+    spire(g, tx, 1.71, tz, 0.35, 0.82, roof);
+    pennant(g, tx, 2.5, tz, PAL.red);
+    return { g, gl, height: 2.95 };
+  }
   return { g, gl, height: 1.65 };
 }
 
@@ -850,7 +915,7 @@ export function buildingModel(
   h: number,
   variant: number,
   seed: number,
-  /** Architectural age (the epoch the building was raised in): 0 thatch, 1 tile, 2 slate. */
+  /** Architectural age (the epoch the building was raised in): 0 thatch, 1 tile, 2 slate, 3+ copper and spires. */
   era = 0,
 ): BuildingModel {
   let r: { g: GeoBuilder; gl: GeoBuilder; crops?: GeoBuilder; height: number };
@@ -871,7 +936,7 @@ export function buildingModel(
       r = workshop(seed);
       break;
     case 'archive':
-      r = archive(seed);
+      r = archive(era, seed);
       break;
     case 'seed_vault':
       r = seedVault(seed);

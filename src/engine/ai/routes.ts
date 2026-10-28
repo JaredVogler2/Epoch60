@@ -1,6 +1,6 @@
 import type { Campaign, LaborFocus, StoryPrompt, TechId, TraditionId } from '../core/types';
 import { techCost } from '../economy/modifiers';
-import { getScenario } from '../content/scenario';
+import { epochSpec, getScenario } from '../content/scenario';
 import { bestExcavation, type Policy, type Want } from './bots';
 
 /* ------------------------------------------------------------------ */
@@ -10,7 +10,13 @@ import { bestExcavation, type Policy, type Want } from './bots';
 const wantsOnly = (ws: Want[]) => ws;
 
 /** The hazard the current age will bring (a veteran of the scenario knows it). */
-const hazardOf = (c: Campaign) => getScenario(c.scenario).epochs[c.epoch]?.hazard.kind;
+const hazardOf = (c: Campaign) => epochSpec(c, c.epoch).hazard.kind;
+
+/**
+ * The age whose plan a policy follows: its own, or in the long chronicle the scenario age whose catastrophe has come
+ * back (a returning fire is met the way the founders met theirs, with whatever stands by then).
+ */
+export const planAge = (c: Campaign): number => c.epoch % getScenario(c.scenario).epochs.length;
 
 /** Put idle hands on the archive while a wanted technology is still unaffordable. */
 function scholarly(targets: (c: Campaign) => TechId[]): (c: Campaign) => LaborFocus {
@@ -48,9 +54,9 @@ const hardMode = (c: Campaign) => c.difficulty === 'hard';
 // (it doubles their knowledge), learn hydrology in the third and take Open Hands (two more founders) after the flood.
 // Normal and Gentle play are untouched by this.
 const engineersScholar = scholarly((c) =>
-  c.epoch === 0
+  planAge(c) === 0
     ? ['masonry', 'writing']
-    : c.epoch === 1
+    : planAge(c) === 1
       ? ['seismic_engineering']
       : hardMode(c)
         ? ['hydrology']
@@ -75,9 +81,9 @@ const engineersHardTraditions = pick([
 export const engineers: Policy = {
   name: 'engineers',
   // Before an ashfall winter the only thing that matters is the larder.
-  focus: (c) => (c.epoch === 2 && hazardOf(c) === 'ash' ? 'food' : engineersScholar(c)),
+  focus: (c) => (planAge(c) === 2 && hazardOf(c) === 'ash' ? 'food' : engineersScholar(c)),
   wants: (c): Want[] => {
-    const e = c.epoch;
+    const e = planAge(c);
     if (e === 0)
       return wantsOnly([
         {
@@ -149,8 +155,8 @@ export const engineers: Policy = {
     refugees: 'welcome',
   }),
   // High ground after the fire (the flood never reaches that hearth), then the same hearth again after the flood.
-  site: (c) => (c.epoch === 0 ? 2 : 0),
-  tradition: (c) => (hardMode(c) && c.epoch === 1 ? engineersHardTraditions : engineersTraditions)(c),
+  site: (c) => (planAge(c) === 0 ? 2 : 0),
+  tradition: (c) => (hardMode(c) && planAge(c) === 1 ? engineersHardTraditions : engineersTraditions)(c),
   excavate: bestExcavation,
 };
 
@@ -158,10 +164,10 @@ export const engineers: Policy = {
 export const archivists: Policy = {
   name: 'archivists',
   focus: scholarly((c) =>
-    c.epoch === 0 ? ['writing', 'masonry'] : c.epoch === 1 ? ['hydrology'] : ['seismic_engineering'],
+    planAge(c) === 0 ? ['writing', 'masonry'] : planAge(c) === 1 ? ['hydrology'] : ['seismic_engineering'],
   ),
   wants: (c): Want[] => {
-    const e = c.epoch;
+    const e = planAge(c);
     if (e === 0)
       return wantsOnly([
         {
@@ -269,7 +275,7 @@ export const maximizer: Policy = {
 /** The steward: soil, seed and woodland first; a Seed Vault and one Archive; founds on high ground. */
 export const steward: Policy = {
   name: 'steward',
-  focus: scholarly((c) => (c.epoch === 0 ? ['forestry', 'irrigation'] : ['crop_rotation', 'writing'])),
+  focus: scholarly((c) => (planAge(c) === 0 ? ['forestry', 'irrigation'] : ['crop_rotation', 'writing'])),
   wants: (): Want[] =>
     wantsOnly([
       { id: 'farm', kind: 'farm', count: 1, spot: { avoidHazard: true } },
@@ -335,7 +341,7 @@ export function minimalRecipe(landmark: 'none' | 'vault' | 'hold'): Policy {
         { id: 'cottage', kind: 'cottage', count: 3, spot: { avoidHazard: true } },
         { id: 'repair', repair: true },
       ]),
-    site: landmark === 'hold' ? (c) => (c.epoch === 0 ? 2 : 0) : () => 0,
+    site: landmark === 'hold' ? (c) => (planAge(c) === 0 ? 2 : 0) : () => 0,
     tradition: (c) => c.lineage.interregnum?.traditions[0]?.id ?? 'open_hands',
     excavate: () => null,
   };

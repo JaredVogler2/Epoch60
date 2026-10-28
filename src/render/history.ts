@@ -1,4 +1,4 @@
-import { BUILDINGS, getScenario } from '../engine';
+import { BUILDINGS, epochSpec } from '../engine';
 import type { Campaign, HazardCell, HazardKind } from '../engine';
 
 /**
@@ -81,14 +81,25 @@ export function historyLayers(c: Campaign): HistoryLayers {
       const i = y * w.w + x;
       if (w.water[i] !== 1 && w.erosion[i]! >= ERODED_AT) eroded.push({ x, y, intensity: w.erosion[i]! });
     }
-  const ages = getScenario(c.scenario)
-    .epochs.slice(0, c.epoch + 1)
-    .map((e) => e.ageName);
+  const ages = Array.from({ length: c.epoch + 1 }, (_, e) => epochSpec(c, e).ageName);
   return { sites, reach, eroded, ages };
 }
 
-/** One colour per age, oldest first (the overlay and the legend share them). */
-export const AGE_COLORS = ['#f2b33d', '#3fc7c2', '#b48cff', '#ff8a5c', '#7fd28a', '#ff6a9a'];
+/** One colour per age, oldest first (the overlay and the legend share them): twelve, for the long chronicle's ages. */
+export const AGE_COLORS = [
+  '#f2b33d',
+  '#3fc7c2',
+  '#b48cff',
+  '#ff8a5c',
+  '#7fd28a',
+  '#ff6a9a',
+  '#e8d44d',
+  '#56b4ff',
+  '#c7884f',
+  '#a8f0d8',
+  '#e07be0',
+  '#a3d13c',
+];
 /** Works older than the lineage (the Buried Library's people) have their own colour, apart from every age's. */
 export const ELDER_COLOR = '#8fa3b8';
 /** The colour of the age that raised a work. */

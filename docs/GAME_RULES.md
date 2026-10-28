@@ -22,7 +22,8 @@ No `Math.random`, `Date.now`, `performance.now` or frame rate in `src/engine` (E
 
 ### Phase machine
 
-`PREPARE → ACTIVE → COLLAPSE_PENDING → COLLAPSING → DEBRIEF → INTERREGNUM → PREPARE (next epoch)`; terminal `VICTORY` / `DEFEAT`.
+`PREPARE → ACTIVE → COLLAPSE_PENDING → COLLAPSING → DEBRIEF → INTERREGNUM → PREPARE (next epoch)`; terminal `VICTORY` / `DEFEAT`
+(a `VICTORY` in the last age can be carried on with `endure`, which leads to `INTERREGNUM`: the long chronicle, §20).
 `COLLAPSE_PENDING` is transient inside `collapseEpoch` (hazard resolved exactly once, guarded by `collapseResolved`).
 `COLLAPSING` is the read-only presentation window; `continue` moves it to `DEBRIEF` and then onward.
 `paused` is orthogonal. A saved ACTIVE game always reloads paused.
@@ -57,6 +58,8 @@ Changing this order changes state hashes; do it only with a deliberate fixture u
 | `continue`           | COLLAPSING, DEBRIEF          | Advance the presentation / apply verdict or begin the interregnum.                                                        |
 | `survey`, `excavate` | INTERREGNUM                  | Bounded archaeology (below).                                                                                              |
 | `found`              | INTERREGNUM                  | Choose a founding site and a tradition; starts the next epoch.                                                            |
+| `endure`             | VICTORY (last authored age)  | Carry the chronicle on (§20): the centuries pass and a later age can be founded.                                          |
+| `rest`               | DEBRIEF (a later age)        | End the long chronicle there, as a victory (§20).                                                                         |
 
 Plan slots: **3** orders may be queued in PREPARE. ACTIVE queue is bounded at **16**. Queued orders reserve their cost
 against what you own (you cannot over-plan). Failed actions never charge. Rejected-on-apply actions emit an `action.rejected.*` event.
@@ -356,6 +359,7 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                                                                                    |
 | Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                                                                                 |
 | Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                                                                                     |
+| Heritage    | Five Generations          | Carry the chronicle on, and keep a landmark built in the first age standing through the fifth age's catastrophe.                                                              |
 | Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                                                                                     |
 | Engineering | The River Held            | The Great Flood takes no lives, and your Levees or Dam spare a building harm the water would otherwise have done (the same flood is projected with no levee or dam standing). |
 | Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale).                                                          |
@@ -366,12 +370,16 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                                                                          |
 | Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                                                                                |
 | Endings     | Against the Odds          | Win a lineage on Hard.                                                                                                                                                        |
+| Endings     | The Twelfth Age           | Carry the chronicle on to the twelfth age and come through its catastrophe with at least three people.                                                                       |
 | Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.                                                                 |
 
 "Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village
 entirely proves nothing about how it was built. "Reinforced" means the player's own Reinforce order for that hazard in
 that age (a story decision can set the same bonus; it does not count). Every feat is earned by at least one recorded run
-(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`).
+(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`). Five Generations and The Twelfth Age
+need the long chronicle (§20): the recorded Archivists' victory carried on to the twelfth age earns both (its first-age
+Seed Vault stands through the fifth age), and in passing The Grandparents' Library in age X, from an Archive the fierce
+returns brought down.
 
 **The Codex** is the device-local list of every feat this browser has seen a lineage earn (`epoch60.codex.v1`). It only
 copies records from played lineages — the title screen's demo village never counts — so nothing appears in it that was
@@ -487,3 +495,44 @@ of wall time (700 ms while planning, 4 s for the debrief and 1.5 s between ages,
 can be selected, and nothing is saved, carded, branched or added to the Codex. When it ends, the ending says whether it reached
 exactly the lineage's final state (the state hash): it always should, and a test replays recorded lineages through the clock at
 several speeds and frame rates to prove it. Stop, or Back to the ending, returns to the finished lineage as it was.
+
+## 20. The long chronicle (endless play after a victory)
+
+A lineage that wins its scenario's last age may **carry the chronicle on** (`endure`, offered on the ending): the
+centuries pass as after any other age (400 years, `CHRONICLE_YEARS`), and later ages can be founded, up to **twelve
+ages** in all (`MAX_AGES`, which the eleven traditions also bound: each founding adopts one, never twice). The victory
+already won stands and keeps its own run card.
+
+- **What each later age brings** (`epochSpec`, `src/engine/content/scenario.ts`): the scenario's catastrophes return in
+  their order (Greenvale: fire, flood, quake, then again; The Ashen Winter: fire, flood, ash), each return **10 % fiercer
+  per age past the last authored one** (`CHRONICLE_STEP_PM`: age IV ×1.1 … age XII ×1.9), three ways at once: its
+  strength (how far it reaches; difficulty and challenges then scale it as usual), the harm it does to every building
+  it reaches (`chronicleSeverityPm`, applied to each building's damage before it is classified), and every building's
+  resistance against it, divided by the same factor (`effectiveResistance`: walls, reinforcement, materials and
+  traditions alike). The forecast shows exactly this, and its "resistance %" is the divided one. All three were needed:
+  with strength alone, and then with strength and harm, every winning bot lineage measured lived all twelve ages,
+  because a quake's intensity is capped per cell, a fire's harm is the share of a footprint it burns, and a late
+  village's resistances sit at their cap (traditions stack every age), so multiplying its tiny vulnerability changed
+  nothing. With resistance divided too, defences age out while living out of harm's way still works (measured below). Its headline counts the returns ("The Second Great Fire", … "The Fourth
+  Great Quake"); the settlers bring the provisions of the age whose catastrophe returns and build in an architecture of
+  their own, the Age of Spires (copper roofs, spires, turrets and pennants; the render layer's fourth era); each later age
+  has its own people ("The Ember Folk", "The High-Water Folk", …).
+- **Not judged.** A later age has no verdict. At its debrief the chronicle **ends by itself** when fewer than 3 came
+  through (`MIN_FOUNDERS`: "The chronicle ends") or when the twelfth age has passed ("The chronicle is complete");
+  otherwise the player chooses: let the centuries pass, or **rest the chronicle** there (`rest`: "The chronicle rests").
+  Every ending of a long chronicle is a `VICTORY`, since the cycle was already broken.
+- **What it keeps.** Everything carries on as between any two ages: ruins, scars, regrowth, archaeology, traditions,
+  knowledge and its carriers, feats (a later age can earn a feat not yet earned; the victory feats were earned at the
+  victory). The legacy (§9) is read after the last catastrophe, as always.
+- **Cards and ranking.** When a long chronicle ends it gets a second run card, marked with the ages it lasted. It is
+  **never ranked**: more ages mean more legacy, so it is not compared with lineages of the scenario's length.
+- **Replays, saves, branches.** `endure` and `rest` are logged actions, so a transcript replays a long chronicle exactly,
+  and Watch this lineage pauses on the victory (4 s at 1×) before carrying it on. Saves accept an age past the
+  scenario's last only for a lineage carrying its chronicle on (`Campaign.endless`, absent otherwise, so no other
+  lineage's state hash moved). Each later age's founding is a branch point like any other.
+- **Bots.** The route policies meet a returning catastrophe with the plan they made for its first coming (`planAge` in
+  `src/engine/ai/routes.ts`), and site what must outlast a catastrophe against its next, fiercer return (`avoidedAge` in
+  `src/engine/ai/spots.ts`); `playCampaign(…, { ages })` carries a victory on and rests it after that many ages.
+  `scripts/chronicle.ts` measures how long each policy's lineages last (`docs/balance/chronicle.md`). Over seeds 1–20
+  of both scenarios (Normal), the Archivists live all twelve ages on every seed; the Engineers complete on 8 of their 19
+  Greenvale victories and 14 of 20 Ashen ones, the rest falling mostly to the Fourth Great Fire at age X.

@@ -14,9 +14,9 @@ Only claim VERIFIED with executed evidence recorded below.
 | 07 Desktop / iPhone UX         | PARTIAL+: mouse, keyboard and touch placement verified in E2E at 1366×768 and the iPhone-13 profile; `e2e/layout.spec.ts` covers 390×664, 320×568, 844×390 and 667×375 (Begin and the placement bar reachable, no horizontal overflow). Session 4: title, fresh valley, placement, village and collapse captured and inspected at 1920×1080, 1440×900, 1366×768, 390×844, 393×852, 844×390, 360×740 and 667×375; no control under 44×44 px measured at 390 and 360 px wide with a coarse pointer; a desktop hover highlight and pointer cursor (`e2e/interaction.spec.ts`). Real iPhone and WebKit not tested (K-001)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `e2e/*`, `docs/3D_QUALITY_REPORT.md`                                                        |
 | 08 Construction / city life    | PARTIAL: scaffolds + progress sweep + crops + dust; **citizens** (instanced, labor-driven, BFS paths, work/idle animation) and dirt roads; since session 5 they are told apart by job — straw hats on farmers, a red cap and an axe on lumberjacks, leather caps and picks on quarrymen, felt hats and mallets on builders, tablets for scholars — and dress by age (undyed linen, dyed cloth, dark wool). No personas/interiors, no hazard reactions beyond sprinting                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `docs/review/visual/v5-villagers.jpg`, `e2e/life.spec.ts`                                   |
 | 09 Collapse / inheritance      | PARTIAL+: engine complete; **cinematics** for fire (front + embers + char), flood (continuous rising surface), quake (shockwave + camera shake) replay the resolved outcome read-only and skippably; debrief + interregnum verified; since session 6 a "then and now" slider between ages (pictures from one viewpoint, session memory only)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `docs/review/cinematic-*.jpg`, `e2e/campaign.spec.ts`                                       |
-| 10–11 Ages / disasters         | **PARTIAL+**: techs gate Stone House, Levee, Dam, Bridge, Retaining Wall, Forge, Grove with real effects; per-age roofs (thatch → tile → slate); **4 disaster types** (fire, flood, quake, ashfall winter with roof load, famine and lasting soil poison) + 7 state-derived story decisions with chip UI; a second scenario (The Ashen Winter) with its own executed traces; combination effects tested (deforestation ↔ flood/fire, neglected dam, grove ↔ flood ↔ fire, forge ↔ ash)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `tests/engine/{ages,story}.test.ts`, `e2e/story.spec.ts`, `docs/review/ages-*.jpg`          |
+| 10–11 Ages / disasters         | **PARTIAL+**: techs gate Stone House, Levee, Dam, Bridge, Retaining Wall, Forge, Grove with real effects; per-age roofs (thatch → tile → slate; since session 7 copper and spires in the long chronicle's Age of Spires); **4 disaster types** (fire, flood, quake, ashfall winter with roof load, famine and lasting soil poison) + 7 state-derived story decisions with chip UI; a second scenario (The Ashen Winter) with its own executed traces; combination effects tested (deforestation ↔ flood/fire, neglected dam, grove ↔ flood ↔ fire, forge ↔ ash)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `tests/engine/{ages,story}.test.ts`, `e2e/story.spec.ts`, `docs/review/ages-*.jpg`          |
 | 12 Playable 3-epoch slice      | **VERIFIED (engine + Chromium)**: two winning routes that play differently and credible losses, executed on seed 6001 and replayed bit-for-bit headless and in the browser; on seed 6001 each route loses without its key mechanism (ablation tests). **Since session 5 (rules 0.4.0)** an Archive is not a landmark, so a win needs knowledge _and_ a separate landmark, and the routes get their landmark differently (Engineers: the hearth they refound above the flood and hold; Archivists: a Seed Vault). One well-sited Archive alone, which won Greenvale/Normal 40/40 before, now loses (K-003)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `fixtures/greenvale-traces.md`, `tests/engine/routes.test.ts`, `e2e/victory.spec.ts`        |
-| 13–19                          | 13 PARTIAL: seed links, Daily Ruins, local run cards, Assisted ranked apart, twelve challenge modifiers, expeditions and a replay viewer (session 7); no 8–12-epoch campaigns or sandbox (K-004) · 14 PARTIAL: procedural audio (never heard, K-015), villagers by job and age; no personas or interiors · 15 PARTIAL: headless tournament + invariants + fuzz + exploit probes, difficulty tiers (`scripts/sim.ts`, `docs/BALANCE_REPORT.md`) · **16 PARTIAL (session 6): 18 feats awarded from real state, each earned by a recorded run (`fixtures/feats.md`); a device-local Codex; an Atlas of Ages and ideas for the next lineage on the ending; a ruin inspector; replaying an age as an unranked branch; a history lens on the map; a legacy score that counts only what lasted; then-and-now pictures (session only); a chronicle of the most storied works; twelve challenge mutators opened by Codex feats (session 7)** — no endless play or other unlocks (K-022), no land part in the legacy (K-023) · 17 PARTIAL: keyboard-only play, live announcer, reduced motion, phone layouts; no real screen reader or device (K-016, K-001, K-009) · 18 NOT STARTED (deployment needs the owner's confirmation, K-018) · 19 PARTIAL: two independent review passes fixed in session 4; no final adversarial review |
+| 13–19                          | 13 PARTIAL: seed links, Daily Ruins, local run cards, Assisted ranked apart, twelve challenge modifiers, expeditions and a replay viewer (session 7), and the long chronicle, carrying a won lineage on to twelve ages (session 7); no authored 8–12-epoch scenarios or sandbox (K-004) · 14 PARTIAL: procedural audio (never heard, K-015), villagers by job and age; no personas or interiors · 15 PARTIAL: headless tournament + invariants + fuzz + exploit probes, difficulty tiers (`scripts/sim.ts`, `docs/BALANCE_REPORT.md`) · **16 PARTIAL (session 6): 18 feats awarded from real state (20 with session 7's long chronicle), each earned by a recorded run (`fixtures/feats.md`); a device-local Codex; an Atlas of Ages and ideas for the next lineage on the ending; a ruin inspector; replaying an age as an unranked branch; a history lens on the map; a legacy score that counts only what lasted; then-and-now pictures (session only); a chronicle of the most storied works; twelve challenge mutators opened by Codex feats and the long chronicle's endless play, bounded at twelve ages (session 7)** — no other unlocks (K-022), no land part in the legacy (K-023) · 17 PARTIAL: keyboard-only play, live announcer, reduced motion, phone layouts; no real screen reader or device (K-016, K-001, K-009) · 18 NOT STARTED (deployment needs the owner's confirmation, K-018) · 19 PARTIAL: two independent review passes fixed in session 4; no final adversarial review |
 
 ## Log
 
@@ -501,3 +501,114 @@ always reported, the save overwritten, a run card written, a branch point saved,
 the second age, ends with "Replayed exactly" and the same title, and Back returns to the finished lineage's ending), 1 passed
 each (4.8–5.5 min on desktop and 3.1–3.2 min on the phone, while the challenge measurement ran beside them). Captures of the
 replay mid-way and of its result inspected on both profiles (review copy `docs/review/visual/v7-replay.jpg`).
+**The long chronicle (Phase 16's endless play after the capstone, bounded at twelve ages).** A lineage that wins its
+scenario's last age can carry its chronicle on (`endure`): centuries pass as after any age, and each later age brings
+back one of the scenario's catastrophes in their order, 10% fiercer per age past the last authored one three ways at
+once: reach (strength), harm to every building it reaches (`chronicleSeverityPm`), and every building's resistance
+against it, divided by the same factor (`effectiveResistance`; the forecast's "resistance %" is the divided one), up to
+age XII. Later ages carry no verdict:
+the chronicle ends by itself at a debrief that leaves fewer than three people or after the twelfth age, or the player
+rests it there (`rest`); every ending is a victory with its own unranked run card. `epochSpec(c, epoch)` replaced every
+`scenario.epochs[i]` lookup (engine, UI, render), so the long chronicle's ages have names, peoples ("The Ember Folk"),
+headlines ("The Second Great Fire"), provisions and the last age's architecture. `endure` and `rest` are logged actions,
+so transcripts and the replay viewer (which now waits on a victory before carrying it on) reproduce a long chronicle;
+`Campaign.endless` is absent otherwise, so no recorded hash moved. Route policies meet a returning catastrophe with the
+plan they made for its first coming (`planAge`); `playCampaign(…, { ages })` carries a victory on and rests it. Branch
+points keep only the newest that fit 2 million characters: a long chronicle's save reaches 0.57 million characters by
+age XII (measured on the recorded Archivists' and Engineers' lineages carried on), and all of them together would crowd
+the save itself out of the browser's storage. The ending offers one choice of age to replay from when there are more than
+three, and the history lens has a colour for each of twelve ages.
+**Why all three ways (measured while tuning, Greenvale, Normal):** with strength alone, every winning Engineers lineage
+on seeds 1–15 (14 of 14) lived all twelve ages; a quake's intensity is capped per cell and a fire's harm is the share of a
+footprint it burns. With harm scaled too, the Archivists still lived all twelve on seeds 1–6, losing 0–4 people per later
+age, and so did the Engineers; even a 40% step (×4.6 by age XII) left the Archivists completing on seeds 1–4: a late
+village's resistances sit at their cap of 98% (traditions stack every age), and multiplying its 2% vulnerability changes
+little. Dividing resistance as well (the shipped rule, 10% step) keeps the Archivists, who build out of every
+catastrophe's way, completing all twelve ages on seeds 1–6, while the Engineers, who hold the line with walls and
+reinforcement, fall at ages VII–X on 5 of 6 seeds: defences age out; living out of harm's way endures.
+**Verified so far:** typecheck, lint, **366 Vitest tests** (39 files; +6 in `tests/engine/endless.test.ts`: the
+scenario's own ages untouched and later ages cycling their catastrophes with stepped strength, headlines, peoples and
+provisions; every building's resistance divided and its harm scaled in a later age, on the same ground, as the
+forecast's words say; a tradition for every founding up to the twelfth age;
+the Archivists' recorded win carried into a fourth age, the Second Great Fire unjudged, the chronicle replayed exactly and
+saved; resting only at a later age's debrief, ending by itself when too few survive or after the last age; saves
+refusing a malformed chronicle or an age past the last; +3 in `tests/game/endless.test.ts`: the chronicle's own unranked
+card, the store carrying a victory on and carding the chronicle when rested, the replay viewer passing through the
+victory to the chronicle's end with the same hash, showing the victory for its wait; +1 branch test: the storage budget
+keeps the newest points). Every recorded trace and feat hash is unchanged. Ten mutations each fail them: later ages
+judged, too few survivors never ending it, defences never weakened, strength not stepped, resting allowed between ages,
+the chronicle's card unmarked or ranked, the branch budget ignored, saves accepting later ages without the chronicle,
+and the replay not pausing on the victory (that one first survived: the test only checked the victory was seen, not
+for how long). Browser: the new `e2e/chronicle.spec.ts` on both profiles, **2 passed** (1.8 min): the Archivists'
+recorded win carried on, 400 years pass, "Found age IV: The Ember Folk", the age IV briefing's chronicle goals, the
+Second Great Fire, "Let the centuries pass" beside "Rest the chronicle here", the chronicle resting after four ages
+with four Atlas entries and an unranked card on the title. Captures of the offer, the 400 years, the briefing, the
+fire and the ending inspected on both profiles (review copy `docs/review/visual/v7-chronicle.jpg`). Before this work the full suite ran on the build PR #9 shipped
+(`c73e412`/`24f1536`): **76 passed, 3 skipped, 1 failed** (44.0 min): the desktop real-time journey timed out on the
+Skip button mid-catastrophe, and alone on the same build it passed (2 of 2, 1.8 min), the software-GL timing class
+of K-011.
+**Measured over 20 seeds** (`docs/balance/chronicle.md`, from `scripts/chronicle.ts`: both scenarios, Normal, the two
+route bots, every victory carried on toward the twelfth age and never rested early). The Archivists, who build out of
+every catastrophe's way, live all twelve ages on every seed of both scenarios (20/20 and 20/20), with 9.6–13.9 people
+left after each later catastrophe on average. The Engineers, who hold the line with walls and reinforcement, complete the
+chronicle on 8 of their 19 Greenvale victories and 14 of 20 on The Ashen Winter; the rest fall, mostly to the Fourth
+Great Fire at age X (10 Greenvale lineages and 4 Ashen ones end there; the Greenvale mean is 3.2 people after it), a few
+at age VII and one at age IV. The returning fires are the chronicle's killer: the floods and quakes (or ash winters)
+leave the bots' villages largely standing even at ×1.9. Bots replay their first plans, so this is how fiercer returns
+wear down a fixed plan, not how long a player who adapts can last.
+**Two feats from the long chronicle (Phase 16's "keep a living cultural site through 5 generations").** **Five
+Generations**: carry the chronicle on and keep a landmark built in the first age standing through the fifth age's
+catastrophe. **The Twelfth Age**: come through the twelfth age's catastrophe with at least three people. Both are awarded
+at the collapse like every feat, from the report just written; no three-age lineage can earn them, so no recorded hash
+moved. A sixth recorded feat run, `fixtures/feats/long-chronicle.json` (the Archivists' victory on seed 6001 carried on,
+`scripts/record-feats.ts` with `ages: 12`), earns both (Five Generations in age V: its first-age Seed Vault stands out of
+every catastrophe's way) and, in age X, The Grandparents' Library: the fierce returns brought an Archive down and a later
+age dug up its tablets. `tests/engine/feats.test.ts` replays it with its exact list. The Codex now counts 20.
+**The Age of Spires (the long chronicle's look).** Ages IV–XII had reused Age III's slate roofs, so a valley twelve ages deep
+looked three ages deep. Buildings raised in a later age now build in a fourth architecture (`era >= 3` in
+`src/render/models/buildings.ts`): copper roofs gone green, a copper spire and pennant on cottages, a corner turret with a
+lit slit window and a spire on stone houses, a lit lantern cupola on granaries, and a stone bell tower with a lit belfry on
+Archives. The engine names those ages the **Age of Spires** (`epochSpec`), which moved only the long-chronicle feat run's
+hash (its founding records name the age; re-recorded, the same feats). Captured with `scripts/showcase-spires.js` (the same
+buildings raised in age III and in age IV, side by side) and inspected (`docs/3D_QUALITY_REPORT.md`, review copy
+`docs/review/visual/v7-spires.jpg`): the copper and the spires tell the ages apart at play zoom; the pennants read only up
+close.
+**Verified (feats and spires):** typecheck, lint, **367 Vitest tests** (39 files; the long-chronicle feat run in
+`tests/engine/feats.test.ts` with its exact list, the legacy test counting fourteen recorded fixtures, the spec test
+naming the Age of Spires); two mutations (either new feat awarded at any later age) fail them. The full browser suite on
+the long-chronicle build (`19664d0`): **78 passed, 3 skipped, 1 failed** (44.9 min; the desktop then-and-now spec waiting
+in vain for a picture while a screenshot browser of mine ran beside it). On the final build: the then-and-now, Codex
+(now twenty feats) and chronicle specs on both profiles passed, except that desktop then-and-now timeout once more,
+alone; it then passed 6 times running (alone, and after the chronicle and Codex specs). Its cause is not found (K-011).
+
+**Review fixes (PR #10, `fbcdada`).** An independent review of the branch found nine things, all fixed:
+
+- **The bots planned against the wrong catastrophes in later ages.** A policy that sites its Archive clear of "the flood
+  and the quake" (`avoidEpochs`) avoided their first comings at authored strength, not their next and fiercer returns.
+  `avoidedAge` (`src/engine/ai/spots.ts`) now maps each to its next return at or after the current age (none past the
+  twelfth). Re-measured over the same 20 seeds (`docs/balance/chronicle.md`), every lineage ended exactly as before: the
+  Archivists complete 20/20 and 20/20, the Engineers 8 of 19 and 14 of 20. Only the Ashen Archivists' mean survivors
+  moved, by 0.1 at three ages. The blind spot was not what wore the Engineers down; the fiercer fires are.
+- **Harm could pass total.** A later age's damage was scaled after its 0–1000 scale was applied, so at age XII a fully
+  exposed building without resistance could read "damage 190%" in the reasons, and the bots' loss estimate, which
+  treats damage as a permille, was skewed. It is now capped at 1000: a return can at most destroy a building.
+- **Five Generations** now needs a chronicle carried on, as The Twelfth Age does (a scenario with five authored ages would
+  have awarded it in ordinary play).
+- **Saves** refuse a long chronicle in an age before the scenario's last. A tampered save could otherwise play unjudged
+  from age I.
+- **Branch points are budgeted as stored.** Inside the stored list each save is escaped once more: at age XII 645,035
+  characters against 571,021 raw (13% more), so the list could pass the 2 million it claimed to keep. Now it never does.
+- **One model per architecture.** Ages IV–XII build the same Age of Spires models, but the model cache was keyed by age,
+  so a twelve-age lineage built up to nine identical copies of each. It is now keyed by architecture (`eraOf`), as is the
+  placement ghost.
+- **One formula for how much fiercer an age is** (`chronicleStepPm`). Strength, harm and defences, and the briefing's
+  percentage, each wrote it out.
+- A later age's catastrophe cycles as `epoch % n` everywhere, and the scripts import `ROMAN` instead of copying it.
+
+**Verified (review fixes):** typecheck, lint, **368 Vitest tests** (39 files). New or rewritten: foresight mapped to each
+catastrophe's next return; the branch budget fitting exactly the newest three points, and only two at one character
+less; the twelfth age's fire capped at 1000; a save beginning the chronicle in age II refused. Each of these four fails
+against the code it replaces (four mutations). The long-chronicle feat run was re-recorded: its hash moved, its feats
+did not. Every route trace re-recorded unchanged. Browser: `e2e/chronicle.spec.ts` on both profiles, **2 passed**
+(1.6 min). A capture of the same buildings raised in age III and in age VII (ages the shared models now serve) was
+inspected: copper roofs, spires, turrets and the granary's cupola, as in the age IV capture.

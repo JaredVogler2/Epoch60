@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario, victoryFor } from '../content/scenario';
+import { epochSpec, getScenario, victoryFor } from '../content/scenario';
 import { TECHS } from '../content/techs';
-import { UNIT } from '../core/constants';
+import { MIN_FOUNDERS, UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type {
   BuildingKind,
@@ -199,14 +199,19 @@ export const LANDMARK_HINT = `Landmarks are ${(Object.keys(BUILDINGS) as Buildin
   .replace(/, ([^,]*)$/, ' or $1')}; an Archive carries knowledge, not a landmark.`;
 
 export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId[]): Verdict | null {
+  // The long chronicle's ages are not judged: the lineage already won, and its chronicle ends when it cannot go on
+  // (`chronicleOver`) or when the player rests it.
+  if (c.endless) return null;
   const scenario = getScenario(c.scenario);
   const final = c.epoch >= scenario.epochs.length - 1;
-  if (survivors < 3) {
+  if (survivors < MIN_FOUNDERS) {
     return {
       outcome: 'defeat',
       title: 'No one is left to remember',
-      conditions: [{ label: 'Survivors to found a new society', have: survivors, need: 3, met: false }],
-      reason: `Only ${survivors} survived. A society needs at least 3 founders to begin again.`,
+      conditions: [
+        { label: 'Survivors to found a new society', have: survivors, need: MIN_FOUNDERS, met: false },
+      ],
+      reason: `Only ${survivors} survived. A society needs at least ${MIN_FOUNDERS} founders to begin again.`,
     };
   }
   if (!final) return null;
@@ -247,7 +252,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   if (c.collapseResolved) return c.report;
   if (c.phase !== 'ACTIVE') return null;
   c.phase = 'COLLAPSE_PENDING';
-  const spec = getScenario(c.scenario).epochs[c.epoch]!;
+  const spec = epochSpec(c, c.epoch);
   const kind = spec.hazard.kind;
   const result = resolveHazard(c, kind);
   // The same flood with no levee or dam standing: what the defences kept the water from (a pure projection).

@@ -28,7 +28,8 @@ describe('the legacy counts only what lasted', () => {
 
   it('reads every part from the state each recorded lineage ends in', () => {
     const P = LEGACY_POINTS;
-    expect(FIXTURES).toHaveLength(13);
+    // The eight route fixtures and six feat runs, the last carried on to the twelfth age (the long chronicle).
+    expect(FIXTURES).toHaveLength(14);
     for (const name of FIXTURES) {
       const c = replay(name);
       const l = legacyOf(c)!;

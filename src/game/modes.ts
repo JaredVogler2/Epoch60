@@ -1,5 +1,13 @@
 import { hashString } from '../engine/core/hash';
-import { DIFFICULTY, RULES_VERSION, SCENARIOS, checkModifiers, legacyOf } from '../engine';
+import {
+  DIFFICULTY,
+  RULES_VERSION,
+  SCENARIOS,
+  checkModifiers,
+  chronicleEnding,
+  earlierLandmarks,
+  legacyOf,
+} from '../engine';
 import type { Campaign, Difficulty, GameMode, ModifierId } from '../engine';
 import { safeStorage } from './persist';
 
@@ -98,6 +106,11 @@ export interface RunCard extends RunSpec {
   /** The lineage's legacy (what lasted) and the rules it was scored under; cards without them predate both. */
   legacy?: number;
   rules?: string;
+  /**
+   * The end of a long chronicle (a victory carried on past its last age; `epochs` is then the ages lived). Its
+   * victory already has its own card; this one is never ranked, since more ages mean more legacy.
+   */
+  endless?: true;
 }
 
 const RUNS_KEY = 'epoch60.runs.v1';
@@ -140,6 +153,7 @@ function isCard(x: unknown): x is RunCard {
     (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1)) &&
     (c.legacy === undefined || finite(c.legacy)) &&
     (c.rules === undefined || typeof c.rules === 'string') &&
+    (c.endless === undefined || c.endless === true) &&
     (c.modifiers === undefined || storedModifiersOk(c.modifiers, c.scenario))
   );
 }
@@ -151,9 +165,13 @@ export function cardOf(
   at: Date,
   branch: number | null = null,
 ): RunCard | null {
-  if ((c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') || !c.report?.verdict) return null;
-  const v = c.report.verdict;
-  const by = (i: number) => v.conditions[i]?.have ?? 0;
+  if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return null;
+  const end = chronicleEnding(c);
+  // A long chronicle ends without a verdict of its own: its card counts what it ended with.
+  const v = end ? null : c.report?.verdict;
+  if (!c.report || (!end && !v)) return null;
+  const r = c.report;
+  const by = (i: number) => v?.conditions[i]?.have ?? 0;
   const spec: RunSpec = { seed: c.seed, scenario: c.scenario, difficulty: c.difficulty };
   if (daily) spec.daily = daily;
   if (c.modifiers) spec.modifiers = [...c.modifiers];
@@ -161,11 +179,11 @@ export function cardOf(
     ...spec,
     id: `${c.seed}-${c.scenario}-${c.difficulty}-${at.getTime()}`,
     at: at.toISOString(),
-    outcome: v.outcome,
-    title: v.title,
-    survivors: by(0),
-    heritage: by(1),
-    techs: by(2),
+    outcome: v?.outcome ?? 'victory',
+    title: end?.title ?? v?.title ?? '',
+    survivors: end ? r.survivors : by(0),
+    heritage: end ? earlierLandmarks(c, c.epoch).length : by(1),
+    techs: end ? r.retainedTechs.length : by(2),
     epochs: c.lineage.reports.length,
     hash: hashString(
       JSON.stringify([
@@ -182,6 +200,7 @@ export function cardOf(
     legacy: legacyOf(c)?.total ?? 0,
     // The rules the lineage began under: one resumed from an older save or branch point is not a current-rules run.
     rules: c.rules,
+    ...(end ? { endless: true as const } : {}),
   };
 }
 
@@ -203,7 +222,7 @@ export const sameModifiers = (a?: readonly ModifierId[], b?: readonly ModifierId
 /**
  * The best local result for a spec: victories beat defeats, then the greater legacy, then more survivors. Only runs
  * scored under these rules and begun with the same challenges are compared; Assisted runs rank only among themselves;
- * a branch (an age replayed from its start) is never ranked.
+ * a branch (an age replayed from its start) and the end of a long chronicle are never ranked.
  */
 export function bestFor(
   runs: RunCard[],
@@ -218,6 +237,7 @@ export function bestFor(
       sameModifiers(r.modifiers, spec.modifiers) &&
       (r.mode ?? 'standard') === mode &&
       r.branch === undefined &&
+      r.endless === undefined &&
       r.rules === RULES_VERSION,
   );
   mine.sort(

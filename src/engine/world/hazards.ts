@@ -1,6 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
 import { hazardStrength } from '../content/modifiers';
-import { getScenario } from '../content/scenario';
+import { chronicleStepPm, epochSpec } from '../content/scenario';
 import type {
   BuildingKind,
   Campaign,
@@ -185,10 +185,7 @@ export function catchmentForestFraction(w: World): number {
 }
 
 /** Peak river rise (centi-cells) this epoch: bare slopes shed water faster, so deforestation raises it. */
-export function floodPeak(
-  c: Campaign,
-  strength: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
-): number {
+export function floodPeak(c: Campaign, strength: number = epochSpec(c, c.epoch).hazard.strength): number {
   const fc = catchmentForestFraction(c.world);
   const factor = clamp(1000 + Math.round((0.42 - fc) * 1500), 650, 1550);
   return Math.round((strength * factor) / 1000);
@@ -375,14 +372,14 @@ const KIND_NAME: Record<BuildingKind, string> = Object.fromEntries(
 ) as Record<BuildingKind, string>;
 
 function describe(
-  c: Campaign,
   s: Structure,
   hazard: HazardKind,
+  resist: number,
   exposure: number,
   damage: number,
   after: StructureStatus,
 ): string {
-  const res = Math.round(resistanceOf(c, s, hazard) / 10);
+  const res = Math.round(resist / 10);
   const nm = KIND_NAME[s.kind];
   const what =
     hazard === 'fire'
@@ -397,17 +394,40 @@ function describe(
 }
 
 /**
+ * In the long chronicle a returning catastrophe is fiercer in every way, by the same step per age past the scenario's
+ * last as its strength (permille; 1000 in every other age): it reaches further (strength), harms every building it
+ * reaches more, and old defences hold less against it (`effectiveResistance`). Harm alone was not enough: a late
+ * village's resistances reach their cap (traditions stack every age), so multiplying its tiny vulnerability changed
+ * nothing, and every winning bot lineage lived all twelve ages.
+ */
+export function chronicleSeverityPm(c: Pick<Campaign, 'scenario' | 'endless' | 'epoch'>): number {
+  return c.endless ? chronicleStepPm(c.scenario, c.epoch) : 1000;
+}
+
+/** A building's resistance as this age's catastrophe meets it: in the long chronicle, divided by its severity. */
+export function effectiveResistance(
+  c: Campaign,
+  s: Structure,
+  hazard: HazardKind,
+  severity = chronicleSeverityPm(c),
+): number {
+  const r = resistanceOf(c, s, hazard);
+  return severity === 1000 ? r : Math.round((r * 1000) / severity);
+}
+
+/**
  * Pure projection of what the hazard would do right now. The live forecast and the final resolution both call
  * this, so the player's mitigation choices have exactly the effect the overlay promised.
  */
 export function resolveHazard(
   c: Campaign,
-  kind: HazardKind = getScenario(c.scenario).epochs[c.epoch]!.hazard.kind,
-  nominal: number = getScenario(c.scenario).epochs[c.epoch]!.hazard.strength,
+  kind: HazardKind = epochSpec(c, c.epoch).hazard.kind,
+  nominal: number = epochSpec(c, c.epoch).hazard.strength,
 ): HazardResult {
   // Difficulty and challenges scale the authored strength here, once, so the forecast, the resolution and every
   // caller agree.
   const strength = hazardStrength(c, kind, nominal);
+  const severity = chronicleSeverityPm(c);
   const cells =
     kind === 'fire'
       ? simulateFire(c, strength)
@@ -434,7 +454,7 @@ export function resolveHazard(
       depthSum += hc.intensity / 4;
     }
     if (hit === 0) continue;
-    const resist = resistanceOf(c, s, kind);
+    const resist = effectiveResistance(c, s, kind, severity);
     let exposure: number;
     let damage: number;
     if (kind === 'fire') {
@@ -454,6 +474,8 @@ export function resolveHazard(
       damage = Math.round((maxI * (1000 - resist) * QUAKE_SEVERITY_PM) / 1_000_000);
     }
     const before = s.status;
+    // Damage is a permille like the rest: a fiercer return can at most destroy a building.
+    if (severity !== 1000) damage = Math.min(1000, Math.round((damage * severity) / 1000));
     const after = classify(damage);
     impacts.push({
       id: s.id,
@@ -464,7 +486,7 @@ export function resolveHazard(
       after,
       exposure,
       damage,
-      reason: describe(c, s, kind, exposure, damage, after),
+      reason: describe(s, kind, resist, exposure, damage, after),
     });
   }
   let span = 0;

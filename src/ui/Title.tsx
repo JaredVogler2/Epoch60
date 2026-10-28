@@ -389,6 +389,7 @@ export function TitleScreen() {
               {r.daily ? ` · daily ${r.daily}` : ''}
               {r.modifiers ? ` · ${r.modifiers.map((m) => MODIFIERS[m].name).join(', ')}` : ''}
               {r.branch ? ` · branch from age ${ROMAN[r.branch]}` : ''}
+              {r.endless ? ` · ${r.title.toLowerCase()} after ${r.epochs} ages` : ''}
             </li>
           ))}
         </ul>

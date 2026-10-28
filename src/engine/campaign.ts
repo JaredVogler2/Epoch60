@@ -1,6 +1,6 @@
 import { BUILDINGS, costOf, getDef } from './content/buildings';
 import { MODIFIERS, checkModifiers, modifierMods } from './content/modifiers';
-import { getScenario } from './content/scenario';
+import { epochSpec, getScenario } from './content/scenario';
 import { TECHS } from './content/techs';
 import {
   CONTENT_VERSION,
@@ -39,6 +39,7 @@ import { canAfford, hasTech, reservedCost, techCost } from './economy/modifiers'
 import { checkPlacement, countKind, epochAge } from './economy/placement';
 import { createStructure, findStructure, levelPad, removeStructure } from './economy/structures';
 import { collapseEpoch, computeDeaths } from './legacy/collapse';
+import { canEndure, chronicleOver } from './legacy/endless';
 import { enterInterregnum, excavateRuin, foundNextEpoch, surveyRuin } from './legacy/inheritance';
 import { applyChoice, checkChoice, stepStories } from './events/story';
 import { generateWorld } from './world/generate';
@@ -191,7 +192,7 @@ export function getCatalog(c: Campaign): CatalogEntry[] {
 }
 
 export function getForecast(c: Campaign): Forecast {
-  const spec = getScenario(c.scenario).epochs[c.epoch]!;
+  const spec = epochSpec(c, c.epoch);
   const predicted = resolveHazard(c);
   const { deaths } = computeDeaths(c, predicted.impacts, predicted.kind);
   return {
@@ -208,7 +209,7 @@ export function secondsLeft(c: Campaign): number {
 }
 
 export function currentSpec(c: Campaign) {
-  return getScenario(c.scenario).epochs[c.epoch]!;
+  return epochSpec(c, c.epoch);
 }
 
 /* ------------------------------------------------------------------ */
@@ -245,6 +246,15 @@ export const REINFORCE_BONUS = 220;
  * become bounded plan slots applied at tick 0. Between epochs they apply immediately because no time passes.
  */
 export function dispatchAction(c: Campaign, action: Action): ActionResult {
+  if (action.type === 'endure') {
+    if (!canEndure(c)) return err('wrong_phase', 'Only a victory in the last age can be carried on');
+    c.endless = { rested: false };
+    log(c, action);
+    // The centuries pass as after any age; the next one brings back the first catastrophe, fiercer.
+    enterInterregnum(c);
+    emit(c, { code: 'chronicle.continues', msg: 'The chronicle goes on', important: true });
+    return { ok: true };
+  }
   if (c.phase === 'VICTORY' || c.phase === 'DEFEAT') return err('game_over', 'The campaign is over');
 
   switch (action.type) {
@@ -266,6 +276,12 @@ export function dispatchAction(c: Campaign, action: Action): ActionResult {
       }
       if (c.phase === 'DEBRIEF') {
         log(c, action);
+        // An age of the long chronicle is not judged: it goes on unless it cannot.
+        if (c.endless) {
+          if (chronicleOver(c)) c.phase = 'VICTORY';
+          else enterInterregnum(c);
+          return { ok: true };
+        }
         const v = c.report?.verdict ?? null;
         if (v) {
           c.phase = v.outcome === 'victory' ? 'VICTORY' : 'DEFEAT';
@@ -275,6 +291,15 @@ export function dispatchAction(c: Campaign, action: Action): ActionResult {
         return { ok: true };
       }
       return err('wrong_phase', 'Nothing to continue');
+    }
+    case 'rest': {
+      if (c.phase !== 'DEBRIEF' || !c.endless || chronicleOver(c))
+        return err('wrong_phase', 'The chronicle can be rested only at the debrief of a later age');
+      log(c, action);
+      c.endless.rested = true;
+      c.phase = 'VICTORY';
+      emit(c, { code: 'chronicle.rests', msg: 'The chronicle rests', important: true });
+      return { ok: true };
     }
     case 'unplan':
       return unplan(c, action.seq);

@@ -3,13 +3,20 @@ import {
   BUILDINGS,
   DIFFICULTY,
   FEAT_IDS,
+  MAX_AGES,
+  MIN_FOUNDERS,
   MODIFIERS,
   TECHS,
   TRADITIONS,
   UNIT,
+  canEndure,
+  capstoneEpoch,
+  chronicleEnding,
+  chronicleStepPm,
   currentSpec,
   getScenario,
   legacyOf,
+  nextEpochSpec,
   ruinYield,
   unplan,
   victoryFor,
@@ -142,25 +149,50 @@ export function PrepareCard() {
             </div>
           ))}
         </div>
-        <div className="victory-goals" data-testid="victory-goals">
-          <b>To break the cycle, after {scenario.epochs.at(-1)!.hazard.headline}:</b>
-          <ul>
-            <li>
-              <Icon name="people" size={14} /> {win.minSurvivors} people alive
-            </li>
-            <li>
-              <Icon name="hearth" size={14} /> {win.minHeritage} landmark{win.minHeritage === 1 ? '' : 's'}{' '}
-              from an earlier age: a hearth you keep, a Seed Vault, a Dam or a Bridge
-              {c.epoch > 0 && <span className="dim"> ({landmarksNow} now)</span>}
-            </li>
-            <li>
-              <Icon name="archive" size={14} /> {win.minRetainedTechs} technologies carried through: memory
-              keeps one, a standing hearth one, an Archive the rest
-            </li>
-          </ul>
-        </div>
+        {c.endless ? (
+          <div className="victory-goals" data-testid="chronicle-goals">
+            <b>
+              The long chronicle: age {ROMAN[c.epoch]} of at most {ROMAN[MAX_AGES - 1]}
+            </b>
+            <ul>
+              <li>
+                <Icon name={hazardIcon(spec.hazard.kind)} size={14} /> {spec.hazard.headline} comes back{' '}
+                {(chronicleStepPm(c.scenario, c.epoch) - 1000) / 10}% fiercer than its first coming: it
+                reaches further, does more harm, and walls, reinforcement and traditions hold less against it
+              </li>
+              <li>
+                <Icon name="people" size={14} /> The chronicle ends if fewer than {MIN_FOUNDERS} survive it
+              </li>
+              <li>
+                <Icon name="star" size={14} /> The victory is already yours: rest the chronicle at any debrief
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <div className="victory-goals" data-testid="victory-goals">
+            <b>To break the cycle, after {scenario.epochs.at(-1)!.hazard.headline}:</b>
+            <ul>
+              <li>
+                <Icon name="people" size={14} /> {win.minSurvivors} people alive
+              </li>
+              <li>
+                <Icon name="hearth" size={14} /> {win.minHeritage} landmark{win.minHeritage === 1 ? '' : 's'}{' '}
+                from an earlier age: a hearth you keep, a Seed Vault, a Dam or a Bridge
+                {c.epoch > 0 && <span className="dim"> ({landmarksNow} now)</span>}
+              </li>
+              <li>
+                <Icon name="archive" size={14} /> {win.minRetainedTechs} technologies carried through: memory
+                keeps one, a standing hearth one, an Archive the rest
+              </li>
+            </ul>
+          </div>
+        )}
         <p className="dim small">
-          {scenario.name} · epoch {c.epoch + 1} of {scenario.epochs.length} · preparing takes no time.
+          {scenario.name} ·{' '}
+          {c.endless
+            ? `age ${c.epoch + 1} of the long chronicle`
+            : `epoch ${c.epoch + 1} of ${scenario.epochs.length}`}{' '}
+          · preparing takes no time.
           {s.branch !== null && (
             <span data-testid="branch-mark">
               {' '}
@@ -243,6 +275,8 @@ export function DebriefScreen() {
   if (c.phase !== 'DEBRIEF' || !c.report) return null;
   const r = c.report;
   const final = r.verdict;
+  // An age of the long chronicle has no verdict; it ends here only when it cannot go on.
+  const ending = chronicleEnding(c);
   return (
     <div
       ref={ref}
@@ -326,19 +360,33 @@ export function DebriefScreen() {
             </ul>
           </div>
         )}
-        <button
-          type="button"
-          className="btn primary big"
-          data-testid="debrief-continue"
-          data-autofocus
-          onClick={() => s.dispatch({ type: 'continue' })}
-        >
-          {final
-            ? final.outcome === 'victory'
-              ? 'See the ending'
-              : 'See the ending'
-            : 'Let the centuries pass'}
-        </button>
+        {ending && (
+          <div className="verdict victory" data-testid="chronicle-end">
+            <h3>{ending.title}</h3>
+            <p>{ending.reason}</p>
+          </div>
+        )}
+        <div className="debrief-actions">
+          <button
+            type="button"
+            className="btn primary big"
+            data-testid="debrief-continue"
+            data-autofocus
+            onClick={() => s.dispatch({ type: 'continue' })}
+          >
+            {final || ending ? 'See the ending' : 'Let the centuries pass'}
+          </button>
+          {c.endless && !ending && (
+            <button
+              type="button"
+              className="btn"
+              data-testid="rest"
+              onClick={() => s.dispatch({ type: 'rest' })}
+            >
+              Rest the chronicle here
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -439,7 +487,7 @@ export function InterregnumScreen() {
     (x) => x.kind === 'hearth' && (x.status === 'active' || x.status === 'damaged'),
   );
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
-  const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
+  const nextSpec = nextEpochSpec(c);
   const pics = s.snapshots[c.epoch];
   return (
     <aside ref={interRef} className="interregnum" data-testid="interregnum" aria-label="Between ages">
@@ -546,7 +594,9 @@ export function InterregnumScreen() {
             if (r.ok) s.setInter({ site: 0, tradition: null, ruin: null });
           }}
         >
-          Found the {nextSpec?.ageName ?? 'next age'}
+          {c.endless && nextSpec
+            ? `Found age ${ROMAN[c.epoch + 1]}: ${nextSpec.name}`
+            : `Found the ${nextSpec?.ageName ?? 'next age'}`}
         </button>
       </div>
     </aside>
@@ -560,10 +610,16 @@ export function EndScreen() {
   const c = s.campaign!;
   const ref = useRef<HTMLDivElement>(null);
   useDialog(ref, undefined, true, c.phase === 'VICTORY' || c.phase === 'DEFEAT');
+  // A long chronicle has many ages to replay from: one choice and one button instead of a button each.
+  const [replayAge, setReplayAge] = useState<number | null>(null);
   if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return null;
   const win = c.phase === 'VICTORY';
   const branchAges = s.branchAges();
+  const pickAge = replayAge !== null && branchAges.includes(replayAge) ? replayAge : branchAges.at(-1);
   const v = c.report?.verdict;
+  // A long chronicle ends with its own words; the victory that began it is recalled beneath them.
+  const ending = chronicleEnding(c);
+  const capstone = ending ? c.lineage.reports.find((r) => r.epoch === capstoneEpoch(c))?.verdict : null;
   const legacy = legacyOf(c);
   const chronicle = chronicleOf(c);
   return (
@@ -587,9 +643,26 @@ export function EndScreen() {
               : 'This replay did not end where the lineage did.'}
           </p>
         )}
-        <p className="eyebrow">{win ? 'Victory' : 'Defeat'}</p>
-        <h1 data-testid="end-title">{v?.title ?? (win ? 'The cycle is broken' : 'The valley is silent')}</h1>
-        <p className="headline">{v?.reason}</p>
+        <p className="eyebrow">{ending ? 'Victory · the long chronicle' : win ? 'Victory' : 'Defeat'}</p>
+        <h1 data-testid="end-title">
+          {ending?.title ?? v?.title ?? (win ? 'The cycle is broken' : 'The valley is silent')}
+        </h1>
+        <p className="headline">{ending?.reason ?? v?.reason}</p>
+        {ending && (
+          <p className="chronicle-ages" data-testid="chronicle-ages">
+            <b>{ending.ages}</b> ages · the cycle broken in Age {ROMAN[capstoneEpoch(c)]}
+            {capstone && (
+              <span className="dim">
+                {' '}
+                (
+                {capstone.conditions
+                  .map((cd) => `${cd.label.toLowerCase()} ${cd.have}/${cd.need}`)
+                  .join(' · ')}
+                )
+              </span>
+            )}
+          </p>
+        )}
         {v && (
           <ul className="verdict-list">
             {v.conditions.map((cd) => (
@@ -665,6 +738,13 @@ export function EndScreen() {
             <span data-testid="branch-mark"> · a branch from Age {ROMAN[s.branch]}, not ranked</span>
           )}
         </p>
+        {!s.replay && canEndure(c) && (
+          <p className="dim small" data-testid="endure-note">
+            The valley can go on: carried on, the chronicle brings back its catastrophes one by one, each
+            fiercer than the last, for up to {MAX_AGES} ages. This victory keeps its own card; the chronicle
+            gets another when it ends, never ranked.
+          </p>
+        )}
         {branchAges.length > 0 && (
           <p className="dim small" data-testid="replay-note">
             Replaying an age starts a branch from its founding: everything after it is played again. Its feats
@@ -703,6 +783,16 @@ export function EndScreen() {
               >
                 Play again
               </button>
+              {canEndure(c) && (
+                <button
+                  type="button"
+                  className="btn"
+                  data-testid="endure"
+                  onClick={() => s.dispatch({ type: 'endure' })}
+                >
+                  Carry the chronicle on
+                </button>
+              )}
               <button
                 type="button"
                 className="btn"
@@ -711,17 +801,42 @@ export function EndScreen() {
               >
                 Watch this lineage
               </button>
-              {branchAges.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  className="btn"
-                  data-testid={`replay-age-${e}`}
-                  onClick={() => s.branchFrom(e)}
-                >
-                  Replay from Age {ROMAN[e]}
-                </button>
-              ))}
+              {branchAges.length > 3 && pickAge !== undefined ? (
+                <span className="replay-pick">
+                  <select
+                    aria-label="Age to replay from"
+                    data-testid="replay-age-pick"
+                    value={pickAge}
+                    onChange={(e) => setReplayAge(Number(e.target.value))}
+                  >
+                    {branchAges.map((e) => (
+                      <option key={e} value={e}>
+                        Age {ROMAN[e]}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn"
+                    data-testid="replay-age"
+                    onClick={() => s.branchFrom(pickAge)}
+                  >
+                    Replay from Age {ROMAN[pickAge]}
+                  </button>
+                </span>
+              ) : (
+                branchAges.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    className="btn"
+                    data-testid={`replay-age-${e}`}
+                    onClick={() => s.branchFrom(e)}
+                  >
+                    Replay from Age {ROMAN[e]}
+                  </button>
+                ))
+              )}
               <button
                 type="button"
                 className="btn"

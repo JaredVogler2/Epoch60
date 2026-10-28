@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (PRs #1–#5 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (#10, the long chronicle; PRs #1–#9 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
 
 ## State
 
@@ -12,7 +12,7 @@ and fixed what a second independent review proved (unreachable traditions, repai
 exact arithmetic in hashed state) with mutation-checked behavioural tests. Visual iteration 3 covered every required viewport (scores 4/5 on the seven criteria
 judged from stills); desktop hover highlights buildings. Session 5 (rules 0.4.0) made Normal need two separate preparations: an Archive carries the
 knowledge but is no longer a landmark, so a win also needs a Hearth a later society kept, a Seed Vault, a Dam or a Bridge — and the planning card says
-so. Session 6 began Phase 16: **18 feats** awarded by the engine at the moment they happen (`src/engine/legacy/feats.ts`, kept in
+so. Session 6 began Phase 16: **18 feats** (20 since session 7's long chronicle) awarded by the engine at the moment they happen (`src/engine/legacy/feats.ts`, kept in
 `lineage.feats`, so replays earn exactly the same ones), each earned by at least one recorded run (`fixtures/feats.md`); a device-local
 **Codex** on the title; and on the ending an **Atlas of Ages** (one entry per age) plus two or three **ideas for the next lineage** drawn
 from what the run lacked. Pressing a ruin tells its age, purpose, how it fell and what clearing or restoring does now; a lineage can replay an age
@@ -28,7 +28,12 @@ challenge mutators: twelve in the engine (`src/engine/content/modifiers.ts`, `wo
 recorded hash moved), opened on the title by Codex feats (`src/game/challenges.ts`), carried by share links, run cards and branch
 points, ranked only against the same set, listed on the briefing and the ending; an expedition draws one to three of the open ones
 for a random valley; `scripts/challenges.ts` measures each with the bots (`docs/balance/challenges.md`). A finished lineage can be
-**watched again** from the ending: replayed through the clock at 1–4×, ending in exactly its recorded state hash. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+**watched again** from the ending: replayed through the clock at 1–4×, ending in exactly its recorded state hash. A victory
+can be **carried on** as **the long chronicle** (endless play after the capstone, bounded at twelve ages;
+`src/engine/legacy/endless.ts`, `epochSpec` in `content/scenario.ts`): each later age brings back one of the scenario's
+catastrophes, 10% fiercer per age in reach, harm and every building's resistance; later ages are not judged, the chronicle
+ends when fewer than three survive or after age XII, or is rested at a debrief, and gets its own unranked card. Over 20 seeds
+the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -46,11 +51,11 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 16 remainder (K-022):** endless play after the capstone; other variety unlocks (terrain packs, real-art building
-   skins); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
+4. **Phase 16 remainder (K-022):** other variety unlocks (terrain packs, real-art building skins); the long chronicle's
+   later ages have their own architecture (the Age of Spires) but reuse the catastrophes and buildings (K-024); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
-5. **Phase 13 / 14:** 8–12-epoch campaigns (expeditions' variable epoch target needs them), sandbox (K-004); a
-   recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
+5. **Phase 13 / 14:** authored 8–12-epoch scenarios (expeditions' variable epoch target needs them; the long chronicle
+   already lets a won lineage live twelve ages), sandbox (K-004); a recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
    story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.

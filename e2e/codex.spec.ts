@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { campaign, openGame, replayTranscript, shot, startNewGame } from './helpers';
 import type { RecordedTranscript } from './helpers';
 
-const TOTAL = 18;
+const TOTAL = 20;
 const feats = (page: import('@playwright/test').Page) =>
   page.evaluate(() =>
     (

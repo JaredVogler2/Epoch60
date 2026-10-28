@@ -1,6 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
 import { addMods, hazardStrength, modifierMods, regrowthPm } from '../content/modifiers';
-import { getScenario } from '../content/scenario';
+import { epochSpec, nextEpochSpec } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { TRADITIONS, sumModifiers } from '../content/traditions';
 import { UNIT } from '../core/constants';
@@ -213,8 +213,7 @@ function lastHearth(c: Campaign): { x: number; y: number; standing: boolean } {
 
 /** The places the next age could be founded, each with its exposure to the next catastrophe. */
 export function findSites(c: Campaign): FoundingSite[] {
-  const scenario = getScenario(c.scenario);
-  const next = scenario.epochs[c.epoch + 1];
+  const next = nextEpochSpec(c);
   if (!next) return [];
   const riskKind: HazardKind = next.hazard.kind;
   const probe: Campaign = { ...c, epoch: c.epoch + 1 };
@@ -337,7 +336,7 @@ function lessonOf(rep: CollapseReport): string {
 function traditionOptions(c: Campaign): TraditionOption[] {
   const rep = c.report;
   const struck = rep?.hazard ?? null;
-  const next = getScenario(c.scenario).epochs[c.epoch + 1]?.hazard.kind ?? null;
+  const next = nextEpochSpec(c)?.hazard.kind ?? null;
   const have = c.lineage.traditions;
   const out: TraditionOption[] = [];
   const free = (id: TraditionId) => !have.includes(id) && !out.some((o) => o.id === id);
@@ -374,8 +373,7 @@ function traditionOptions(c: Campaign): TraditionOption[] {
 /* ------------------------------------------------------------------ */
 
 export function enterInterregnum(c: Campaign): void {
-  const scenario = getScenario(c.scenario);
-  const spec = scenario.epochs[c.epoch]!;
+  const spec = epochSpec(c, c.epoch);
   const centuries = centuriesOf(spec.yearsAfter);
   const log: string[] = [`${spec.yearsAfter} years pass.`];
   decayStructures(c, centuries, log);
@@ -504,10 +502,9 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   if (!inter.traditions.some((t) => t.id === tradition))
     return { ok: false, code: 'invalid_choice', message: 'That tradition is not offered' };
 
-  const scenario = getScenario(c.scenario);
   const report = c.report!;
   const nextEpoch = c.epoch + 1;
-  const spec = scenario.epochs[nextEpoch]!;
+  const spec = epochSpec(c, nextEpoch);
 
   // Settle the hearth: a standing one is reused; otherwise rubble underfoot is cleared for a new foundation.
   const standingHearth = c.structures.find((s) => s.kind === 'hearth' && isStanding(s));

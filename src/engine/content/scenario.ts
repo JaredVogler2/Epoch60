@@ -1,4 +1,4 @@
-import type { Difficulty, HazardKind, ResourceKey, Resources } from '../core/types';
+import type { Campaign, Difficulty, HazardKind, ResourceKey, Resources } from '../core/types';
 
 export interface HazardSpec {
   kind: HazardKind;
@@ -211,6 +211,112 @@ export function victoryFor(s: ScenarioSpec, d: Difficulty): ScenarioSpec['victor
     minHeritage: s.victory.minHeritage + k.heritage,
     minRetainedTechs: s.victory.minRetainedTechs + k.techs,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* The long chronicle: ages past the scenario's last                    */
+/* ------------------------------------------------------------------ */
+
+/** A lineage that won may carry its chronicle on past the scenario's last age, up to this many ages in all. */
+export const MAX_AGES = 12;
+/** Years between the ages of the long chronicle (the authored ages set their own). */
+export const CHRONICLE_YEARS = 400;
+/** Each age past the scenario's last meets its catastrophe this much fiercer, in permille of the authored strength. */
+export const CHRONICLE_STEP_PM = 100;
+
+const ORDINAL = ['First', 'Second', 'Third', 'Fourth', 'Fifth'];
+const COUNT = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven'];
+/**
+ * The peoples of the long chronicle, named (like the authored ages' peoples) for the catastrophe that returns in their
+ * age: one name per return.
+ */
+const CHRONICLE_NAMES: Record<HazardKind, [string, string, string]> = {
+  fire: ['The Ember Folk', 'The Smoke Kings', 'The Ash-Grove People'],
+  flood: ['The High-Water Folk', 'The Drowned Kings', 'The Rain People'],
+  quake: ['The Broken-Ground Folk', 'The Shaking Kings', 'The Fault People'],
+  ash: ['The Grey-Sky Folk', 'The Pale Kings', 'The Long-Dark People'],
+};
+const RETURNS: Record<HazardKind, string> = {
+  fire: 'The forests have grown back old and dry, and the fire is coming again, fiercer than the founders knew.',
+  flood: 'The river has had centuries to gather itself; it will rise higher than the River Kingdom ever saw.',
+  quake: 'Deep under the old stones the fault is waking again, stronger than any quake the valley remembers.',
+  ash: 'In the east the mountain smokes once more, and its ash will lie deeper than in the first winter.',
+};
+const SCARCE: Record<ResourceKey, string> = {
+  food: 'Food is scarce: the settlers carry little, and the old fields must feed them.',
+  timber: 'Timber is scarce: the settlers carry little, and must cut or salvage the rest.',
+  stone: 'Stone is scarce: the settlers carry little, and must quarry or salvage the rest.',
+  knowledge: 'Knowledge is scarce: the settlers carry little of it.',
+};
+/** The later ages build in copper and raise spires (the render layer's fourth architecture). */
+const CHRONICLE_AGE_NAME = 'Age of Spires';
+const CHRONICLE_GOAL =
+  'Endure: every returning catastrophe is fiercer than the last. Rest the chronicle at any debrief, or carry it to the twelfth age.';
+
+const specCache = new Map<string, EpochSpec>();
+
+/**
+ * How much fiercer an age's catastrophe is, in permille: 1000 for the scenario's own ages, one step more for each age
+ * past its last. The one formula behind the long chronicle's strength, harm and weakened defences.
+ */
+export function chronicleStepPm(scenarioId: string, epoch: number): number {
+  const later = epoch - (getScenario(scenarioId).epochs.length - 1);
+  return later > 0 ? 1000 + CHRONICLE_STEP_PM * later : 1000;
+}
+
+/**
+ * The spec of any age of a lineage. The scenario's own ages are as authored; a lineage carrying its chronicle on
+ * (`endless`) waits centuries after the last of them, and each later age brings back the scenario's catastrophes in
+ * their order, each return a step fiercer, in an architecture of its own (the Age of Spires) with the returning age's
+ * provisions.
+ */
+export function epochSpec(c: Pick<Campaign, 'scenario' | 'endless'>, epoch: number): EpochSpec {
+  const s = getScenario(c.scenario);
+  const n = s.epochs.length;
+  if (epoch < n - 1 || (epoch === n - 1 && !c.endless)) return s.epochs[epoch]!;
+  const key = `${s.id}:${epoch}`;
+  const hit = specCache.get(key);
+  if (hit) return hit;
+  const last = s.epochs[n - 1]!;
+  let spec: EpochSpec;
+  if (epoch === n - 1) spec = { ...last, yearsAfter: CHRONICLE_YEARS };
+  else {
+    const base = s.epochs[epoch % n]!;
+    const kind = base.hazard.kind;
+    let times = 0;
+    for (let e = 0; e < epoch; e++) if (s.epochs[e % n]!.hazard.kind === kind) times++;
+    spec = {
+      index: epoch,
+      id: `${base.id}_${epoch + 1}`,
+      name: CHRONICLE_NAMES[kind][Math.min(2, Math.floor((epoch - n) / n))]!,
+      ageName: CHRONICLE_AGE_NAME,
+      age: last.age + 1,
+      hazard: {
+        ...base.hazard,
+        headline: base.hazard.headline.replace(
+          /^The /,
+          `The ${ORDINAL[Math.min(times, ORDINAL.length - 1)]} `,
+        ),
+        strength: Math.round((base.hazard.strength * chronicleStepPm(s.id, epoch)) / 1000),
+      },
+      scarcity: base.scarcity,
+      scarcityNote: SCARCE[base.scarcity],
+      start: base.start,
+      startPop: base.startPop,
+      yearsAfter: CHRONICLE_YEARS,
+      brief: `${COUNT[epoch] ?? epoch} ages have risen and fallen in this valley. ${RETURNS[kind]}`,
+      goal: CHRONICLE_GOAL,
+    };
+  }
+  specCache.set(key, spec);
+  return spec;
+}
+
+/** The age that would follow this one, or null when the lineage cannot go on to another. */
+export function nextEpochSpec(c: Pick<Campaign, 'scenario' | 'endless' | 'epoch'>): EpochSpec | null {
+  const n = getScenario(c.scenario).epochs.length;
+  const next = c.epoch + 1;
+  return next < n || (c.endless && next < MAX_AGES) ? epochSpec(c, next) : null;
 }
 
 export function scaledStrength(d: Difficulty | undefined, strength: number): number {

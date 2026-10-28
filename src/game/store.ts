@@ -109,13 +109,15 @@ export interface Replay {
 
 /**
  * Wall time before the next replayed action in each phase, at 1× (the collapse waits out its cinematic, whatever the
- * speed). Unlisted phases pass at once.
+ * speed). Unlisted phases pass at once. A victory is only ever left by carrying the chronicle on: its ending is shown
+ * as long as a debrief before the lineage goes on.
  */
 export const REPLAY_WAIT_MS: Partial<Record<Campaign['phase'], number>> = {
   PREPARE: 700,
   COLLAPSING: 6500,
   DEBRIEF: 4000,
   INTERREGNUM: 1500,
+  VICTORY: 4000,
 };
 
 /** "Then" is taken in the last seconds of the minute, before the catastrophe resolves. */

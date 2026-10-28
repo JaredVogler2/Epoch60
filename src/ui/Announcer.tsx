@@ -1,4 +1,4 @@
-import { getScenario } from '../engine';
+import { chronicleEnding, epochSpec } from '../engine';
 import { useStore } from './useStore';
 
 /**
@@ -9,19 +9,19 @@ export function Announcer() {
   const s = useStore();
   const c = s.campaign;
   if (!c || s.screen !== 'game') return null;
-  const spec = getScenario(c.scenario).epochs[c.epoch];
+  const spec = epochSpec(c, c.epoch);
   let text = '';
   switch (c.phase) {
     case 'PREPARE':
-      text = `${spec?.name ?? 'A new age'}, ${spec?.ageName ?? ''}. ${spec?.brief ?? ''} Plan up to three orders, then begin.`;
+      text = `${spec.name}, ${spec.ageName}. ${spec.brief} Plan up to three orders, then begin.`;
       break;
     case 'ACTIVE': {
       const left = Math.ceil((600 - c.tick) / 10);
       if (c.paused) text = 'Paused.';
-      else if (c.forecastLevel > 0) text = spec?.hazard.warnings[c.forecastLevel - 1] ?? '';
+      else if (c.forecastLevel > 0) text = spec.hazard.warnings[c.forecastLevel - 1] ?? '';
       else if (left <= 10) text = '10 seconds left.';
       else if (left <= 30) text = '30 seconds left.';
-      else text = `${spec?.name ?? 'Epoch'} is under way.`;
+      else text = `${spec.name} is under way.`;
       break;
     }
     case 'COLLAPSING':
@@ -37,9 +37,12 @@ export function Announcer() {
       text = 'Between ages. Choose what to uncover, where to found the next village, and a tradition.';
       break;
     case 'VICTORY':
-    case 'DEFEAT':
-      text = c.report?.verdict ? `${c.report.verdict.title}. ${c.report.verdict.reason}` : '';
+    case 'DEFEAT': {
+      // A long chronicle ends with its own words; any other lineage with its verdict.
+      const v = chronicleEnding(c) ?? c.report?.verdict;
+      text = v ? `${v.title}. ${v.reason}` : '';
       break;
+    }
   }
   return (
     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="announcer">

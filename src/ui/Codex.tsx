@@ -1,13 +1,4 @@
-import {
-  BUILDINGS,
-  DIFFICULTY,
-  FEATS,
-  FEAT_GROUPS,
-  FEAT_IDS,
-  SCENARIOS,
-  TECHS,
-  getScenario,
-} from '../engine';
+import { BUILDINGS, DIFFICULTY, FEATS, FEAT_GROUPS, FEAT_IDS, SCENARIOS, TECHS, epochSpec } from '../engine';
 import type { Campaign, FeatGroup, FeatId } from '../engine';
 import type { CodexEntry } from '../game/codex';
 import type { AgeSnapshots } from '../game/store';
@@ -100,11 +91,10 @@ function bestInvention(techs: string[]): string | null {
  * afterwards shows the two side by side.
  */
 export function AtlasOfAges({ c, pics = {} }: { c: Campaign; pics?: Record<number, AgeSnapshots> }) {
-  const scenario = getScenario(c.scenario);
   return (
     <ol className="atlas" data-testid="atlas">
       {c.lineage.reports.map((r) => {
-        const spec = scenario.epochs[r.epoch];
+        const spec = epochSpec(c, r.epoch);
         const landmarks = r.heritage
           .map((id) => c.structures.find((s) => s.id === id))
           .filter((s) => !!s)
@@ -115,8 +105,8 @@ export function AtlasOfAges({ c, pics = {} }: { c: Campaign; pics?: Record<numbe
           <li key={r.epoch} className="atlas-age" data-testid="atlas-age">
             <p className="atlas-head">
               <span className="roman">{ROMAN[r.epoch]}</span>
-              <b>{spec?.name ?? `Age ${r.epoch + 1}`}</b>
-              <span className="dim"> · {spec?.ageName}</span>
+              <b>{spec.name}</b>
+              <span className="dim"> · {spec.ageName}</span>
             </p>
             <p className="atlas-facts">
               <span>
@@ -142,11 +132,11 @@ export function AtlasOfAges({ c, pics = {} }: { c: Campaign; pics?: Record<numbe
             {pics[r.epoch]?.then && pics[r.epoch]?.after && (
               <div className="atlas-pics" data-testid="atlas-pics">
                 <figure>
-                  <img src={pics[r.epoch]!.then} alt={`${spec?.name ?? 'This age'} as its minute ended`} />
+                  <img src={pics[r.epoch]!.then} alt={`${spec.name} as its minute ended`} />
                   <figcaption>As the minute ended</figcaption>
                 </figure>
                 <figure>
-                  <img src={pics[r.epoch]!.after} alt={`${spec?.name ?? 'This age'} afterwards`} />
+                  <img src={pics[r.epoch]!.after} alt={`${spec.name} afterwards`} />
                   <figcaption>Afterwards</figcaption>
                 </figure>
               </div>
