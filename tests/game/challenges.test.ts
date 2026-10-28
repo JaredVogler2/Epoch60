@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FEATS, MODIFIERS, createCampaign, dispatchAction, runTicks } from '../../src/engine';
+import { FEATS, MODIFIERS, checkModifiers, createCampaign, dispatchAction, runTicks } from '../../src/engine';
 import type { ModifierId } from '../../src/engine';
-import { CHALLENGE_IDS, UNLOCKED_BY, challengeBlocked, unlockedChallenges } from '../../src/game/challenges';
+import {
+  CHALLENGE_IDS,
+  UNLOCKED_BY,
+  challengeBlocked,
+  expeditionFor,
+  unlockedChallenges,
+} from '../../src/game/challenges';
 import type { CodexEntry } from '../../src/game/codex';
 import { bestFor, cardOf, loadRuns, parseShare, shareQuery } from '../../src/game/modes';
 import type { RunCard } from '../../src/game/modes';
@@ -59,6 +65,32 @@ describe('challenges open from the Codex', () => {
     // A chosen one can always be taken off again.
     expect(challengeBlocked('soft_rock', ['soft_rock'], 'greenvale', new Set(), 3)).toBeNull();
     expect(challengeBlocked('soft_rock', [], 'greenvale', open, 3)).toBeNull();
+  });
+});
+
+describe('expeditions', () => {
+  it('draw one to three challenges from the open ones by the seed: the same seed, the same draw', () => {
+    const all = new Set(CHALLENGE_IDS);
+    expect(expeditionFor(7, 'greenvale', new Set())).toEqual([]);
+    expect(expeditionFor(7, 'greenvale', all)).toEqual(expeditionFor(7, 'greenvale', all));
+    const sizes = new Set<number>();
+    const seen = new Set<ModifierId>();
+    for (let seed = 1; seed <= 300; seed++) {
+      for (const scenario of ['greenvale', 'ashen']) {
+        const drawn = expeditionFor(seed, scenario, all);
+        sizes.add(drawn.length);
+        drawn.forEach((m) => seen.add(m));
+        // Always a set the engine accepts as written: canonical, suited, no clash, at most three.
+        expect(checkModifiers(drawn, scenario)).toEqual({ ok: true, ids: drawn });
+      }
+    }
+    expect([...sizes].sort()).toEqual([1, 2, 3]);
+    expect(seen.size).toBe(CHALLENGE_IDS.length);
+    // Only what is open is drawn.
+    const two = new Set<ModifierId>(['blight', 'buried_library']);
+    for (let seed = 1; seed <= 40; seed++)
+      for (const m of expeditionFor(seed, 'greenvale', two)) expect(two.has(m)).toBe(true);
+    expect(expeditionFor(3, 'ashen', new Set<ModifierId>(['soft_rock']))).toEqual([]);
   });
 });
 

@@ -36,7 +36,7 @@ const entry = (id: string) => ({
 });
 
 /**
- * Challenges open from the Codex: a new device sees all six, none open. Once it has seen the feats that open two of them,
+ * Challenges open from the Codex: a new device sees all twelve, none open. Once it has seen the feats that open two of them,
  * they can be chosen, the lineage begins with them (fourteen people, a buried library in the valley), the briefing lists
  * them, and the library tells its own story.
  */
@@ -45,7 +45,7 @@ test('challenges open from the Codex, begin a lineage that has them, and are lis
 }, info) => {
   await openGame(page);
   const summary = page.getByTestId('challenges-summary');
-  await expect(summary).toHaveText('none · 0 of 6 open');
+  await expect(summary).toHaveText('none · 0 of 12 open');
   await page.getByTestId('challenges').locator('summary').click();
   const library = page.getByTestId('challenge-buried_library');
   await expect(library).toHaveAttribute('aria-disabled', 'true');
@@ -60,7 +60,7 @@ test('challenges open from the Codex, begin a lineage that has them, and are lis
   );
   await page.reload();
   await ready(page);
-  await expect(summary).toHaveText('none · 2 of 6 open');
+  await expect(summary).toHaveText('none · 2 of 12 open');
   await page.getByTestId('challenges').locator('summary').click();
   await library.click();
   await page.getByTestId('challenge-overcrowded_refuge').click();
@@ -109,5 +109,26 @@ test('a shared link brings its challenges, even ones this device has not opened;
 
   await page.goto(`${URL}&seed=42&mods=dry_summers,fertile_floodplain`);
   await ready(page);
-  await expect(page.getByTestId('challenges-summary')).toHaveText('none · 0 of 6 open');
+  await expect(page.getByTestId('challenges-summary')).toHaveText('none · 0 of 12 open');
+});
+
+test('an expedition is a random valley with challenges drawn from those open', async ({ page }) => {
+  await openGame(page);
+  await page.getByTestId('challenges').locator('summary').click();
+  await expect(page.getByTestId('expedition')).toBeDisabled();
+  await page.evaluate(
+    (codex) => localStorage.setItem('epoch60.codex.v1', codex),
+    JSON.stringify([entry('archive_built'), entry('cycle_broken')]),
+  );
+  await page.reload();
+  await ready(page);
+  await page.getByTestId('challenges').locator('summary').click();
+  await page.getByTestId('expedition').click();
+  await expect(page.getByTestId('hud')).toBeVisible();
+  const c = await run(page);
+  expect(c.modifiers?.length).toBeGreaterThanOrEqual(1);
+  for (const m of c.modifiers!) expect(['overcrowded_refuge', 'buried_library']).toContain(m);
+  const brief = page.getByTestId('challenge-brief');
+  if (!(await brief.isVisible())) await page.locator('.prepare-toggle').click();
+  await expect(brief.locator('li')).toHaveCount(c.modifiers!.length);
 });

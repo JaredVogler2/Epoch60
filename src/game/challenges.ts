@@ -1,5 +1,6 @@
-import { MODIFIERS } from '../engine';
+import { MAX_MODIFIERS, MODIFIERS } from '../engine';
 import type { FeatId, ModifierId } from '../engine';
+import { hashString } from '../engine/core/hash';
 import type { CodexEntry } from './codex';
 
 /**
@@ -10,10 +11,16 @@ import type { CodexEntry } from './codex';
  */
 export const UNLOCKED_BY: Record<ModifierId, FeatId> = {
   fertile_floodplain: 'every_field',
+  storm_front: 'flood_held',
   dry_summers: 'fire_contained',
+  thin_woods: 'forest_returns',
+  overgrown: 'light_footprint',
+  blight: 'winter_fed',
   soft_rock: 'quake_unshaken',
+  rich_vein: 'old_foundations',
   fractured_fault: 'reinforced_stood',
   overcrowded_refuge: 'cycle_broken',
+  elders_lore: 'three_branches',
   buried_library: 'archive_built',
 };
 
@@ -40,4 +47,23 @@ export function challengeBlocked(
     return 'clash';
   if (chosen.length >= max) return 'full';
   return null;
+}
+
+/**
+ * An expedition: one to three challenges drawn from the open ones by the valley's seed, so the same seed always brings the
+ * same draw (and a shared link of it, the same lineage). Only challenges that suit the scenario and fit together are drawn.
+ */
+export function expeditionFor(seed: number, scenario: string, open: ReadonlySet<ModifierId>): ModifierId[] {
+  const roll = (k: string) => parseInt(hashString(`expedition-${seed}-${scenario}-${k}`).slice(-8), 16);
+  const pool = CHALLENGE_IDS.filter(
+    (m) => open.has(m) && (!MODIFIERS[m].scenarios || MODIFIERS[m].scenarios!.includes(scenario)),
+  );
+  if (!pool.length) return [];
+  const want = 1 + (roll('count') % Math.min(MAX_MODIFIERS, pool.length));
+  const drawn: ModifierId[] = [];
+  for (const m of [...pool].sort((a, b) => roll(a) - roll(b) || a.localeCompare(b))) {
+    if (drawn.length >= want) break;
+    if (challengeBlocked(m, drawn, scenario, open, MAX_MODIFIERS) === null) drawn.push(m);
+  }
+  return CHALLENGE_IDS.filter((m) => drawn.includes(m));
 }

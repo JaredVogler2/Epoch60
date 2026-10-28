@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { hasSave } from '../game/persist';
-import { CHALLENGE_IDS, UNLOCKED_BY, challengeBlocked, unlockedChallenges } from '../game/challenges';
+import {
+  CHALLENGE_IDS,
+  UNLOCKED_BY,
+  challengeBlocked,
+  expeditionFor,
+  unlockedChallenges,
+} from '../game/challenges';
 import { bestFor, dailyRun, parseShare, seedFromText, utcDate } from '../game/modes';
 import { DIFFICULTY, FEATS, FEAT_IDS, MAX_MODIFIERS, MODIFIERS, SCENARIOS, getScenario } from '../engine';
 import type { Difficulty, ModifierId } from '../engine';
@@ -144,6 +150,21 @@ export function TitleScreen() {
                 Each changes the valley, a catastrophe or your people for the whole lineage. A lineage with
                 challenges is compared only with lineages that had the same ones.
               </p>
+              <button
+                type="button"
+                className="btn"
+                data-testid="expedition"
+                disabled={open.size === 0}
+                onClick={() => {
+                  const n = 1 + Math.floor(Math.random() * 999_999);
+                  const drawn = expeditionFor(n, scenarioId, open);
+                  setSeedText(String(n));
+                  setChosen(drawn);
+                  s.newGame(n, undefined, scenarioId, difficulty, undefined, drawn);
+                }}
+              >
+                Expedition: a random valley, challenges drawn from those open
+              </button>
             </details>
             <button
               type="button"

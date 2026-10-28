@@ -18,6 +18,10 @@ export interface ModifierDef {
   hazard?: Partial<Record<HazardKind, number>>;
   /** Rate and start deltas, like a tradition's. Start extras apply when the lineage begins and at every founding. */
   mods?: Partial<Modifiers>;
+  /** Technologies the first founders already know. */
+  startTechs?: TechId[];
+  /** Forest regrowth between ages, permille (1000 = as usual). */
+  regrowthPm?: number;
   /** The scenarios it suits (absent: all). A quake challenge means nothing where no quake comes. */
   scenarios?: string[];
   /** Challenges it cannot be combined with. */
@@ -35,6 +39,14 @@ export const SOFT_ROCK_PM = 1500;
 export const FAULT_OFFSET = { dx: 3, dy: -3 };
 /** Buried Library: what its tablets hold. */
 export const LIBRARY_TECHS: TechId[] = ['writing', 'hydrology'];
+/** Thin Woods and Overgrown: the forest at the start, permille. */
+export const THIN_WOODS_PM = 500;
+export const OVERGROWN_PM = 1400;
+/** Blight: farm output until the lineage knows Crop Rotation, permille. */
+export const BLIGHT_PM = 750;
+/** Rich Vein: no rock this close to the first hearth (cells, in every direction); every other deposit doubled. */
+export const VEIN_CLEAR = 9;
+export const VEIN_PM = 2000;
 
 /** In canonical order: a lineage's challenges are always stored in this order. */
 export const MODIFIERS: Record<ModifierId, ModifierDef> = {
@@ -49,6 +61,18 @@ export const MODIFIERS: Record<ModifierId, ModifierDef> = {
     hazard: { flood: 300 },
     excludes: ['dry_summers'],
   },
+  storm_front: {
+    id: 'storm_front',
+    name: 'Storm Front',
+    summary: 'Storms off the hills: higher floods, faster-growing woods.',
+    effects: [
+      'The Great Flood runs 40% higher.',
+      'The rains make the woods regrow half as fast again between ages.',
+    ],
+    hazard: { flood: 400 },
+    regrowthPm: 1500,
+    excludes: ['dry_summers'],
+  },
   dry_summers: {
     id: 'dry_summers',
     name: 'Dry Summers',
@@ -60,7 +84,34 @@ export const MODIFIERS: Record<ModifierId, ModifierDef> = {
     ],
     hazard: { fire: 300, flood: -200 },
     mods: { foodRate: -150 },
-    excludes: ['fertile_floodplain'],
+    excludes: ['fertile_floodplain', 'storm_front'],
+  },
+  thin_woods: {
+    id: 'thin_woods',
+    name: 'Thin Woods',
+    summary: 'Logged bare before the founders came.',
+    effects: [
+      'Half the forest at the start, and the woods regrow at half speed between ages.',
+      'Timber is scarce and the fire finds less to burn; with less forest to hold the rain, the floods run higher.',
+    ],
+    regrowthPm: 500,
+    excludes: ['overgrown'],
+  },
+  overgrown: {
+    id: 'overgrown',
+    name: 'Overgrown',
+    summary: 'Old forest everywhere: plenty of timber, plenty to burn.',
+    effects: [
+      'The forest is 40% denser at the start (at most 95%).',
+      'Timber is plentiful, but the fire has more to burn; the forest holds the rain, so the floods run lower.',
+    ],
+    excludes: ['thin_woods'],
+  },
+  blight: {
+    id: 'blight',
+    name: 'Blight',
+    summary: 'Sick soil, until the lineage learns to rest its fields.',
+    effects: ['Farms yield 25% less until the lineage knows Crop Rotation (which needs Irrigation).'],
   },
   soft_rock: {
     id: 'soft_rock',
@@ -73,6 +124,15 @@ export const MODIFIERS: Record<ModifierId, ModifierDef> = {
     hazard: { quake: 200 },
     mods: { stoneRate: 250 },
     scenarios: ['greenvale'],
+  },
+  rich_vein: {
+    id: 'rich_vein',
+    name: 'Rich Vein',
+    summary: 'No stone near the village, rich deposits in the hills.',
+    effects: [
+      `No stone lies within ${VEIN_CLEAR} cells of the first hearth.`,
+      'Every other deposit holds twice as much.',
+    ],
   },
   fractured_fault: {
     id: 'fractured_fault',
@@ -93,6 +153,17 @@ export const MODIFIERS: Record<ModifierId, ModifierDef> = {
       'Their stores are thin: 10 less food at the start of every age.',
     ],
     mods: { startPop: 4, startFood: -10 },
+  },
+  elders_lore: {
+    id: 'elders_lore',
+    name: 'Elders’ Lore',
+    summary: 'The founders arrive knowing Masonry; new learning comes slowly.',
+    effects: [
+      'The first founders already know Masonry, so Stone Houses can be built from the first day.',
+      'Research costs 20% more.',
+    ],
+    mods: { researchCost: 200 },
+    startTechs: ['masonry'],
   },
   buried_library: {
     id: 'buried_library',
@@ -134,6 +205,13 @@ export function modifierMods(c: Pick<Campaign, 'modifiers'>): Modifiers {
   for (const id of c.modifiers ?? [])
     for (const [k, v] of Object.entries(MODIFIERS[id].mods ?? {}) as [keyof Modifiers, number][]) out[k] += v;
   return out;
+}
+
+/** Forest regrowth between ages under a lineage's challenges, permille. */
+export function regrowthPm(c: Pick<Campaign, 'modifiers'>): number {
+  let pm = 1000;
+  for (const id of c.modifiers ?? []) pm = Math.round((pm * (MODIFIERS[id].regrowthPm ?? 1000)) / 1000);
+  return pm;
 }
 
 /** Two modifier bundles added together. */

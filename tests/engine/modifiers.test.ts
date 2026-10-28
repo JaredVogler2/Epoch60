@@ -4,6 +4,7 @@ import {
   MODIFIERS,
   TRADITIONS,
   checkModifiers,
+  cloneCampaign,
   computeHash,
   createCampaign,
   deserialize,
@@ -15,6 +16,7 @@ import {
   resolveHazard,
   scaledStrength,
   serialize,
+  techCost,
   transcriptOf,
 } from '../../src/engine';
 import type { Campaign, ModifierId, Transcript } from '../../src/engine';
@@ -24,10 +26,12 @@ import {
   FLOODPLAIN_FERTILITY,
   FLOODPLAIN_REACH,
   LIBRARY_TECHS,
+  VEIN_CLEAR,
+  regrowthPm,
 } from '../../src/engine/content/modifiers';
 import { findSites } from '../../src/engine/legacy/inheritance';
 import { idx } from '../../src/engine/world/query';
-import { act, begin, runTicks, scriptedEpoch } from './helpers';
+import { act, begin, place, runTicks, scriptedEpoch } from './helpers';
 
 const SEED = 6001;
 const make = (m: ModifierId[], scenario = 'greenvale', seed = SEED) =>
@@ -163,6 +167,86 @@ describe('challenges: each changes what it says', () => {
     for (const t of LIBRARY_TECHS) expect(c.civ.techs).toContain(t);
     // Its people were not this lineage's grandparents.
     expect(c.lineage.feats.map((f) => f.id)).not.toContain('grandparents_library');
+  });
+
+  it('Thin Woods and Overgrown: half or 1.4 times the forest at the start', () => {
+    const thin = make(['thin_woods']);
+    const thick = make(['overgrown']);
+    for (let i = 0; i < base.world.forest.length; i++) {
+      const f = base.world.forest[i]!;
+      expect(thin.world.forest[i]).toBe(Math.round((f * 500) / 1000));
+      expect(thick.world.forest[i]).toBe(Math.min(950, Math.round((f * 1400) / 1000)));
+    }
+    // Less forest to hold the rain: the flood runs higher; more, and it runs lower.
+    expect(flood(thin).cells.length).toBeGreaterThan(flood(base).cells.length);
+    expect(flood(thick).cells.length).toBeLessThan(flood(base).cells.length);
+  });
+
+  it('Thin Woods and Storm Front: the woods regrow at half and one and a half the speed between ages', () => {
+    expect([regrowthPm(make(['thin_woods'])), regrowthPm(make(['storm_front'])), regrowthPm(base)]).toEqual([
+      500, 1500, 1000,
+    ]);
+    // The same world crossing the same centuries, with and without the challenge.
+    const atDebrief = createCampaign(SEED);
+    scriptedEpoch(atDebrief);
+    act(atDebrief, { type: 'continue' });
+    expect(atDebrief.phase).toBe('DEBRIEF');
+    const cross = (m?: ModifierId[]) => {
+      const x = cloneCampaign(atDebrief);
+      if (m) x.modifiers = m;
+      const before = [...x.world.forest];
+      act(x, { type: 'continue' });
+      expect(x.phase).toBe('INTERREGNUM');
+      return x.world.forest.map((f, i) => f - before[i]!);
+    };
+    const plain = cross();
+    const full = Math.max(...plain);
+    expect(full).toBeGreaterThan(100);
+    const thin = cross(['thin_woods']);
+    const storm = cross(['storm_front']);
+    const fulls = plain.flatMap((g, i) => (g === full ? [i] : []));
+    expect(fulls.length).toBeGreaterThan(10);
+    for (const i of fulls) expect(thin[i]).toBe(Math.round((full * 500) / 1000));
+    expect(storm.reduce((a, b) => a + b, 0)).toBeGreaterThan(plain.reduce((a, b) => a + b, 0));
+    expect(hazardStrength(make(['storm_front']), 'flood', 200)).toBe(280);
+    expect(checkModifiers(['storm_front', 'dry_summers'], 'greenvale').ok).toBe(false);
+  });
+
+  it('Blight: farms yield a quarter less until the lineage knows Crop Rotation', () => {
+    const food = (m: ModifierId[], rotation: boolean) => {
+      const x = make(m);
+      if (rotation) x.civ.techs.push('irrigation', 'crop_rotation');
+      place(x, 'farm', { avoidHazard: true });
+      begin(x);
+      runTicks(x, 200);
+      return x.civ.stats.foodMade;
+    };
+    const ratio = food(['blight'], false) / food([], false);
+    expect(ratio).toBeGreaterThan(0.73);
+    expect(ratio).toBeLessThan(0.77);
+    expect(food(['blight'], true)).toBe(food([], true));
+  });
+
+  it('Elders’ Lore: the founders know Masonry, and every research costs a fifth more', () => {
+    const c = make(['elders_lore']);
+    expect(c.civ.techs).toEqual(['masonry']);
+    expect(c.lineage.everKnown).toEqual(['masonry']);
+    expect(techCost(c, 'writing')).toBe(Math.round((techCost(base, 'writing') * 1200) / 1000));
+  });
+
+  it('Rich Vein: no stone near the first hearth, twice as much everywhere else', () => {
+    const c = make(['rich_vein']);
+    const h = c.world.anchors.hearth;
+    let near = 0;
+    for (let y = 0; y < c.world.h; y++)
+      for (let x = 0; x < c.world.w; x++) {
+        const i = idx(x, y, c.world.w);
+        const close = Math.max(Math.abs(x - h.x), Math.abs(y - h.y)) <= VEIN_CLEAR;
+        if (close && base.world.rock[i]! > 0) near++;
+        expect(c.world.rock[i]).toBe(close ? 0 : Math.min(1000, base.world.rock[i]! * 2));
+      }
+    // The knoll near the village really was there before.
+    expect(near).toBeGreaterThan(0);
   });
 
   it('every valley of the first 120 seeds has room for the library, and keeps the fault inside the map', () => {

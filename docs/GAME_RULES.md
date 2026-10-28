@@ -325,9 +325,10 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
   after it is played again. The lineage is then a **branch**: the briefing and the ending say so, its run card is marked, its
   feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages.
 
-- **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins (§18).
+- **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins, or
+  drawn for a random valley by an **expedition** (§18).
 
-Not built yet: 8–12-epoch campaigns, the other six of the twelve world modifiers Phase 13 asks for, expeditions, a replay viewer.
+Not built yet: 8–12-epoch campaigns, a replay viewer.
 
 ## 16. Accessibility and audio
 
@@ -416,33 +417,43 @@ the opening, the knowledge and the closing, each sentence retells one of the bui
 
 ## 18. Challenges (world modifiers)
 
-A lineage can begin with up to three **challenges** (`content/modifiers.ts`). Each changes the world, a catastrophe or the people
+A lineage can begin with up to three of twelve **challenges** (`content/modifiers.ts`). Each changes the world, a catastrophe or the people
 for the whole lineage, never the clock or the rules of play, and lists exactly what it changes. They are part of the campaign:
 stored in canonical order, hashed, saved and replayed (a transcript carries them). A standard lineage has no challenge field at
 all, so it hashes exactly as before challenges existed. A save naming a challenge this build does not know, an empty list, an
 unknown order, a clash or a challenge that does not suit the scenario is refused, never trimmed (trimming would change the
 simulation).
 
-| Challenge          | What changes                                                                                                                        | Scenarios | Not with           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| Fertile Floodplain | Fertility +250 (of 1000, at most 950) on land within 6 cells of the river's centre line; flood strength ×1.30.                      | all       | Dry Summers        |
-| Dry Summers        | Fire strength ×1.30; flood strength ×0.80; food production −15%.                                                                    | all       | Fertile Floodplain |
-| Soft Rock          | Every stone deposit ×1.5; quarry output +25%; quake strength ×1.20.                                                                 | Greenvale | —                  |
-| Fractured Fault    | The quake's epicentre is 3 cells east and 3 north of the first hearth (instead of 8 and 8). Founding-site risk shows it.            | Greenvale | —                  |
-| Overcrowded Refuge | +4 people and −10 food when the lineage begins and at every founding (people at most 16 after a founding, as always).               | all       | —                  |
-| Buried Library     | An Archive older than the founders lies buried (depth 3) about seven cells west of the first hearth, holding Writing and Hydrology. | all       | —                  |
+| Challenge          | What changes                                                                                                                        | Scenarios | Not with                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------- |
+| Fertile Floodplain | Fertility +250 (of 1000, at most 950) on land within 6 cells of the river's centre line; flood strength ×1.30.                      | all       | Dry Summers                     |
+| Storm Front        | Flood strength ×1.40; forest regrowth between ages ×1.5.                                                                            | all       | Dry Summers                     |
+| Dry Summers        | Fire strength ×1.30; flood strength ×0.80; food production −15%.                                                                    | all       | Fertile Floodplain, Storm Front |
+| Thin Woods         | Forest ×0.5 at the start; regrowth between ages ×0.5 (less fuel for the fire; less forest in the catchment, so higher floods).      | all       | Overgrown                       |
+| Overgrown          | Forest ×1.4 at the start, at most 950 (more fuel for the fire; more forest in the catchment, so lower floods).                      | all       | Thin Woods                      |
+| Blight             | Farm output ×0.75 until the lineage knows Crop Rotation.                                                                            | all       | —                               |
+| Soft Rock          | Every stone deposit ×1.5; quarry output +25%; quake strength ×1.20.                                                                 | Greenvale | —                               |
+| Rich Vein          | No rock within 9 cells of the first hearth; every other deposit ×2.                                                                 | all       | —                               |
+| Fractured Fault    | The quake's epicentre is 3 cells east and 3 north of the first hearth (instead of 8 and 8). Founding-site risk shows it.            | Greenvale | —                               |
+| Overcrowded Refuge | +4 people and −10 food when the lineage begins and at every founding (people at most 16 after a founding, as always).               | all       | —                               |
+| Elders' Lore       | The first founders know Masonry; research costs +20%.                                                                               | all       | —                               |
+| Buried Library     | An Archive older than the founders lies buried (depth 3) about seven cells west of the first hearth, holding Writing and Hydrology. | all       | —                               |
 
 Strength deltas add up and multiply the difficulty-scaled strength (Hard and Dry Summers: fire ×1.15 then ×1.30). Rate and
-start deltas add to the traditions' (`mods`). The quake challenges do not suit The Ashen Winter, where no quake comes.
+start deltas add to the traditions' (`mods`); regrowth factors multiply. The quake challenges do not suit The Ashen Winter,
+where no quake comes. Thin Woods and Overgrown change nothing about the hazards' rules: the fire burns what fuel there is, and
+the flood's peak follows the catchment's forest, as always.
 
 The Buried Library is an ordinary ruin from the founders' first day: no catastrophe strikes it, it can be surveyed and dug up
 between ages (its tablets then reach the next age like any other dug-up tablets, with 6 knowledge), restored once excavated,
 cleared, or built over, which destroys it. Its people are older than the lineage: digging it up does not earn The
 Grandparents' Library, which asks for an Archive the lineage itself built.
 
-**Choosing them.** The title's Challenges list shows all six. Each opens once this device's Codex holds the feat that shows
-its kind of trouble has been met: Fertile Floodplain with Not One Field Lost, Dry Summers with The Fire Stopped Here, Soft Rock
-with Unshaken, Fractured Fault with Shored Up, Overcrowded Refuge with The Cycle Is Broken, and Buried Library with Words Kept.
+**Choosing them.** The title's Challenges list shows all twelve. Each opens once this device's Codex holds the feat that shows
+its kind of trouble has been met: Fertile Floodplain with Not One Field Lost, Storm Front with The River Held, Dry Summers with
+The Fire Stopped Here, Thin Woods with The Forest Returns, Overgrown with Light on the Land, Blight with Full Larders, Soft Rock
+with Unshaken, Rich Vein with On Old Foundations, Fractured Fault with Shored Up, Overcrowded Refuge with The Cycle Is Broken,
+Elders' Lore with Three Kinds of Knowing, and Buried Library with Words Kept.
 They open variety, never power: each has a cost, and a lineage begun with challenges is compared ("best for this valley") only
 with lineages begun with the same ones. A shared link may name challenges (`mods=`, validated like everything else in a
 link: one unknown, clashing or unsuited name and the link carries none), and is honoured even where this device has not
@@ -450,3 +461,9 @@ opened them. The Daily Ruins never carry challenges: they are the same challenge
 keep a lineage's challenges; the briefing lists them every age, the ending names them, Play again and New valley keep them,
 and Copy link includes them. Clearing or building over an Archive that was never dug up warns that any tablets inside are
 lost with it (what it holds stays unknown until it is surveyed).
+
+**Expeditions.** An expedition is a random valley (a random seed, drawn in the UI layer, shown and shareable like any other)
+with one to three challenges drawn from the open ones by that seed: the same seed always draws the same challenges, and only
+ones that suit the scenario and fit together. It is then an ordinary lineage with challenges: ranked against the same seed and
+set, kept on its run card, carried by its link. Nothing else about an expedition differs (Phase 13's variable 6–12-epoch target
+needs campaigns longer than three ages, which are not built).

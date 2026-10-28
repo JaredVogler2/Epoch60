@@ -572,6 +572,10 @@ h3 {
 .challenges > p {
   margin: 0 0 8px;
 }
+.challenges > .btn {
+  width: 100%;
+  margin: 0 0 10px;
+}
 
 /* ---------- story decisions ---------- */
 .story {

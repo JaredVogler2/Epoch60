@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { addMods, hazardStrength, modifierMods } from '../content/modifiers';
+import { addMods, hazardStrength, modifierMods, regrowthPm } from '../content/modifiers';
 import { getScenario } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { TRADITIONS, sumModifiers } from '../content/traditions';
@@ -109,6 +109,8 @@ function decayStructures(c: Campaign, centuries: number, log: string[]): void {
 
 function regrowWorld(c: Campaign, centuries: number, log: string[]): void {
   const w = c.world;
+  // Some challenges speed or slow the woods' return (1000 = as usual).
+  const regrowth = regrowthPm(c);
   let burntCells = 0;
   let siltedCells = 0;
   for (let i = 0; i < w.height.length; i++) {
@@ -129,7 +131,8 @@ function regrowWorld(c: Campaign, centuries: number, log: string[]): void {
     const slope = Math.max(0, w.height[i]! - 300);
     const potential = clamp(Math.round(w.fertility[i]! * 0.9 + 100 - slope * 0.5), 100, 950);
     if (!built) {
-      const rate = Math.round(90 * centuries * (w.scar[i]! > 400 ? 0.6 : 1) * (s ? 0.4 : 1));
+      let rate = Math.round(90 * centuries * (w.scar[i]! > 400 ? 0.6 : 1) * (s ? 0.4 : 1));
+      if (regrowth !== 1000) rate = Math.round((rate * regrowth) / 1000);
       if (w.forest[i]! < potential) w.forest[i] = Math.min(potential, w.forest[i]! + rate);
     }
     w.scar[i] = Math.round(w.scar[i]! * 0.45);

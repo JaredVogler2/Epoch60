@@ -24,10 +24,10 @@ farms nothing; **then and now** pictures of each age, from one viewpoint, compar
 that work found nine real defects (run cards stamped with the current rules, two feats checked too loosely or too rarely, a worn building lightly
 struck counted as damaged and mended, unknown feats able to crash the ending, a building under construction called a ruin), all fixed with
 mutation-checked tests (`docs/PROGRESS.md`, session 6). **Session 7** adds **challenges**, Phase 13's world modifiers as Phase 16's
-challenge mutators: six in the engine (`src/engine/content/modifiers.ts`, `world/modify.ts`; absent from standard lineages, so no
+challenge mutators: twelve in the engine (`src/engine/content/modifiers.ts`, `world/modify.ts`; absent from standard lineages, so no
 recorded hash moved), opened on the title by Codex feats (`src/game/challenges.ts`), carried by share links, run cards and branch
-points, ranked only against the same set, listed on the briefing and the ending; `scripts/challenges.ts` measures each with the
-bots (`docs/balance/challenges.md`). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+points, ranked only against the same set, listed on the briefing and the ending; an expedition draws one to three of the open ones
+for a random valley; `scripts/challenges.ts` measures each with the bots (`docs/balance/challenges.md`). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -48,8 +48,8 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 4. **Phase 16 remainder (K-022):** endless play after the capstone; other variety unlocks (terrain packs, real-art building
    skins); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
-5. **Phase 13 / 14:** 8–12-epoch campaigns, six more modifiers (twelve asked for; a recurring fire season would also answer
-   K-019), expeditions mixing modifiers, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, more
+5. **Phase 13 / 14:** 8–12-epoch campaigns (expeditions' variable epoch target needs them), sandbox, replay viewer (K-004); a
+   recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
    story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.

@@ -4,7 +4,11 @@ import {
   FLOODPLAIN_FERTILITY,
   FLOODPLAIN_REACH,
   LIBRARY_TECHS,
+  OVERGROWN_PM,
   SOFT_ROCK_PM,
+  THIN_WOODS_PM,
+  VEIN_CLEAR,
+  VEIN_PM,
 } from '../content/modifiers';
 import { UNIT } from '../core/constants';
 import type { Campaign, ModifierId, Structure } from '../core/types';
@@ -29,10 +33,22 @@ export function applyWorldModifiers(c: Campaign): void {
       }
     }
   }
-  if (has(c, 'soft_rock')) {
-    for (let i = 0; i < w.rock.length; i++)
-      if (w.rock[i]! > 0) w.rock[i] = Math.min(1000, Math.round((w.rock[i]! * SOFT_ROCK_PM) / 1000));
+  const scale = (field: number[], pm: number, cap: number) => {
+    for (let i = 0; i < field.length; i++)
+      if (field[i]! > 0) field[i] = Math.min(cap, Math.round((field[i]! * pm) / 1000));
+  };
+  if (has(c, 'thin_woods')) scale(w.forest, THIN_WOODS_PM, 950);
+  if (has(c, 'overgrown')) scale(w.forest, OVERGROWN_PM, 950);
+  if (has(c, 'rich_vein')) {
+    const h = w.anchors.hearth;
+    for (let y = 0; y < w.h; y++)
+      for (let x = 0; x < w.w; x++) {
+        const i = idx(x, y, w.w);
+        if (Math.max(Math.abs(x - h.x), Math.abs(y - h.y)) <= VEIN_CLEAR) w.rock[i] = 0;
+      }
+    scale(w.rock, VEIN_PM, 1000);
   }
+  if (has(c, 'soft_rock')) scale(w.rock, SOFT_ROCK_PM, 1000);
   if (has(c, 'fractured_fault')) {
     const h = w.anchors.hearth;
     w.anchors.quakeEpicenter = {

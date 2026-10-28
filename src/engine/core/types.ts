@@ -518,7 +518,13 @@ export type ModifierId =
   | 'soft_rock'
   | 'fractured_fault'
   | 'overcrowded_refuge'
-  | 'buried_library';
+  | 'buried_library'
+  | 'thin_woods'
+  | 'overgrown'
+  | 'storm_front'
+  | 'blight'
+  | 'elders_lore'
+  | 'rich_vein';
 
 export interface Campaign {
   schema: number;

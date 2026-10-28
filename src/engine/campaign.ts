@@ -1,5 +1,5 @@
 import { BUILDINGS, costOf, getDef } from './content/buildings';
-import { checkModifiers, modifierMods } from './content/modifiers';
+import { MODIFIERS, checkModifiers, modifierMods } from './content/modifiers';
 import { getScenario } from './content/scenario';
 import { TECHS } from './content/techs';
 import {
@@ -67,6 +67,7 @@ export function createCampaign(
   const world = generateWorld(seed);
   const m = modifierMods({ modifiers: chosen.ids });
   const pop = spec.startPop + m.startPop;
+  const startTechs = chosen.ids.flatMap((id) => MODIFIERS[id].startTechs ?? []);
   const c: Campaign = {
     schema: SCHEMA_VERSION,
     rules: RULES_VERSION,
@@ -95,7 +96,7 @@ export function createCampaign(
       },
       pop,
       morale: 700,
-      techs: [],
+      techs: [...startTechs],
       research: null,
       focus: 'balanced',
       traditions: [],
@@ -118,7 +119,7 @@ export function createCampaign(
     },
     lineage: {
       history: [],
-      everKnown: [],
+      everKnown: [...startTechs],
       lostTechs: [],
       reports: [],
       traditions: [],
