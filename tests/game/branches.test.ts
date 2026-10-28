@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MAX_AGES, computeHash, dispatchAction, replayCampaign, runTicks, serialize } from '../../src/engine';
+import { MAX_AGES, computeHash, dispatchAction, replayCampaign, runTicks } from '../../src/engine';
 import type { Transcript } from '../../src/engine';
 import { branchPoints, saveBranchPoint } from '../../src/game/branches';
 import { bestFor } from '../../src/game/modes';
@@ -114,12 +114,24 @@ describe('branching from the founding of an age', () => {
     dispatchAction(c, { type: 'endure' });
     // Each later age's founding, as far as the stored point is concerned: the lineage at the start of an age.
     c.phase = 'PREPARE';
-    const one = serialize(c).length;
-    for (let e = 1; e < MAX_AGES; e++) {
-      c.epoch = e;
-      saveBranchPoint(c, one * 3 + 100);
-    }
+    const foundAll = (budget: number) => {
+      localStorage.removeItem('epoch60.branches.v1');
+      for (let e = 1; e < MAX_AGES; e++) {
+        c.epoch = e;
+        saveBranchPoint(c, budget);
+      }
+    };
+    foundAll(Infinity);
+    expect(branchPoints(c)).toHaveLength(MAX_AGES - 1);
+    // The budget is measured as stored, each save escaped once more inside the list: exactly the newest three fit...
+    const all = JSON.parse(localStorage.getItem('epoch60.branches.v1')!) as unknown[];
+    const three = JSON.stringify(all.slice(-3)).length;
+    foundAll(three);
     expect(branchPoints(c)).toEqual([MAX_AGES - 3, MAX_AGES - 2, MAX_AGES - 1]);
+    // ...and one character less leaves room for only two.
+    foundAll(three - 1);
+    expect(branchPoints(c)).toEqual([MAX_AGES - 2, MAX_AGES - 1]);
+    expect(localStorage.getItem('epoch60.branches.v1')!.length).toBeLessThanOrEqual(three - 1);
     // However small the budget, the newest point is kept.
     saveBranchPoint(c, 1);
     expect(branchPoints(c)).toEqual([MAX_AGES - 1]);

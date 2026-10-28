@@ -13,7 +13,7 @@ import { BUILDINGS, GRID_H, GRID_W, footprint } from '../engine';
 import type { BuildingKind, HazardKind, Structure } from '../engine';
 import { store } from '../game/store';
 import { ERODED_COLOR, REACH_COLORS, ageColor, historyLayers, lensShown } from './history';
-import { buildingModel } from './models/buildings';
+import { buildingModel, eraOf } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
 import { sampleSmooth } from './terrain';
@@ -298,7 +298,7 @@ export function ForecastOverlay() {
 
 const ghostModels = new Map<string, BuildingModel>();
 function ghostModel(kind: BuildingKind, rot: 0 | 1): BuildingModel {
-  const era = store.campaign?.epoch ?? 0;
+  const era = eraOf(store.campaign?.epoch ?? 0);
   const key = `${kind}:${rot}:${era}`;
   let m = ghostModels.get(key);
   if (!m) {

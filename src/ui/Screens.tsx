@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   BUILDINGS,
-  CHRONICLE_STEP_PM,
   DIFFICULTY,
   FEAT_IDS,
   MAX_AGES,
@@ -13,6 +12,7 @@ import {
   canEndure,
   capstoneEpoch,
   chronicleEnding,
+  chronicleStepPm,
   currentSpec,
   getScenario,
   legacyOf,
@@ -157,7 +157,7 @@ export function PrepareCard() {
             <ul>
               <li>
                 <Icon name={hazardIcon(spec.hazard.kind)} size={14} /> {spec.hazard.headline} comes back{' '}
-                {((c.epoch - capstoneEpoch(c)) * CHRONICLE_STEP_PM) / 10}% fiercer than its first coming: it
+                {(chronicleStepPm(c.scenario, c.epoch) - 1000) / 10}% fiercer than its first coming: it
                 reaches further, does more harm, and walls, reinforcement and traditions hold less against it
               </li>
               <li>

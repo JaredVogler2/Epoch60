@@ -256,6 +256,15 @@ const CHRONICLE_GOAL =
 const specCache = new Map<string, EpochSpec>();
 
 /**
+ * How much fiercer an age's catastrophe is, in permille: 1000 for the scenario's own ages, one step more for each age
+ * past its last. The one formula behind the long chronicle's strength, harm and weakened defences.
+ */
+export function chronicleStepPm(scenarioId: string, epoch: number): number {
+  const later = epoch - (getScenario(scenarioId).epochs.length - 1);
+  return later > 0 ? 1000 + CHRONICLE_STEP_PM * later : 1000;
+}
+
+/**
  * The spec of any age of a lineage. The scenario's own ages are as authored; a lineage carrying its chronicle on
  * (`endless`) waits centuries after the last of them, and each later age brings back the scenario's catastrophes in
  * their order, each return a step fiercer, in an architecture of its own (the Age of Spires) with the returning age's
@@ -272,10 +281,10 @@ export function epochSpec(c: Pick<Campaign, 'scenario' | 'endless'>, epoch: numb
   let spec: EpochSpec;
   if (epoch === n - 1) spec = { ...last, yearsAfter: CHRONICLE_YEARS };
   else {
-    const base = s.epochs[(epoch - n) % n]!;
+    const base = s.epochs[epoch % n]!;
     const kind = base.hazard.kind;
     let times = 0;
-    for (let e = 0; e < epoch; e++) if (s.epochs[e < n ? e : (e - n) % n]!.hazard.kind === kind) times++;
+    for (let e = 0; e < epoch; e++) if (s.epochs[e % n]!.hazard.kind === kind) times++;
     spec = {
       index: epoch,
       id: `${base.id}_${epoch + 1}`,
@@ -288,7 +297,7 @@ export function epochSpec(c: Pick<Campaign, 'scenario' | 'endless'>, epoch: numb
           /^The /,
           `The ${ORDINAL[Math.min(times, ORDINAL.length - 1)]} `,
         ),
-        strength: Math.round((base.hazard.strength * (1000 + CHRONICLE_STEP_PM * (epoch - n + 1))) / 1000),
+        strength: Math.round((base.hazard.strength * chronicleStepPm(s.id, epoch)) / 1000),
       },
       scarcity: base.scarcity,
       scarcityNote: SCARCE[base.scarcity],

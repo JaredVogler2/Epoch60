@@ -16,10 +16,7 @@ const hazardOf = (c: Campaign) => epochSpec(c, c.epoch).hazard.kind;
  * The age whose plan a policy follows: its own, or in the long chronicle the scenario age whose catastrophe has come
  * back (a returning fire is met the way the founders met theirs, with whatever stands by then).
  */
-export const planAge = (c: Campaign): number => {
-  const n = getScenario(c.scenario).epochs.length;
-  return c.epoch < n ? c.epoch : (c.epoch - n) % n;
-};
+export const planAge = (c: Campaign): number => c.epoch % getScenario(c.scenario).epochs.length;
 
 /** Put idle hands on the archive while a wanted technology is still unaffordable. */
 function scholarly(targets: (c: Campaign) => TechId[]): (c: Campaign) => LaborFocus {

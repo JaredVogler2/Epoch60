@@ -83,9 +83,9 @@ export function saveBranchPoint(c: Campaign, budget = BRANCH_BUDGET): void {
       save: serialize(c),
     },
   ].sort((a, b) => a.epoch - b.epoch);
-  // The oldest go first; the newest point is always kept.
-  let size = points.reduce((n, p) => n + p.save.length, 0);
-  while (points.length > 1 && size > budget) size -= points.shift()!.save.length;
+  // Measured as stored (each save is itself JSON, so its quotes are escaped once more); the oldest go first and the
+  // newest point is always kept.
+  while (points.length > 1 && JSON.stringify(points).length > budget) points.shift();
   store(points);
 }
 

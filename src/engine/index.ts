@@ -14,6 +14,7 @@ export {
   GREENVALE,
   MAX_AGES,
   SCENARIOS,
+  chronicleStepPm,
   epochSpec,
   getScenario,
   nextEpochSpec,

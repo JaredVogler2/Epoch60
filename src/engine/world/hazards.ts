@@ -1,6 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
 import { hazardStrength } from '../content/modifiers';
-import { CHRONICLE_STEP_PM, epochSpec, getScenario } from '../content/scenario';
+import { chronicleStepPm, epochSpec } from '../content/scenario';
 import type {
   BuildingKind,
   Campaign,
@@ -401,8 +401,7 @@ function describe(
  * nothing, and every winning bot lineage lived all twelve ages.
  */
 export function chronicleSeverityPm(c: Pick<Campaign, 'scenario' | 'endless' | 'epoch'>): number {
-  const later = c.epoch - (getScenario(c.scenario).epochs.length - 1);
-  return c.endless && later > 0 ? 1000 + CHRONICLE_STEP_PM * later : 1000;
+  return c.endless ? chronicleStepPm(c.scenario, c.epoch) : 1000;
 }
 
 /** A building's resistance as this age's catastrophe meets it: in the long chronicle, divided by its severity. */
@@ -475,7 +474,8 @@ export function resolveHazard(
       damage = Math.round((maxI * (1000 - resist) * QUAKE_SEVERITY_PM) / 1_000_000);
     }
     const before = s.status;
-    if (severity !== 1000) damage = Math.round((damage * severity) / 1000);
+    // Damage is a permille like the rest: a fiercer return can at most destroy a building.
+    if (severity !== 1000) damage = Math.min(1000, Math.round((damage * severity) / 1000));
     const after = classify(damage);
     impacts.push({
       id: s.id,

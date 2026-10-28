@@ -20,6 +20,7 @@ import type { Campaign, Difficulty, FeatId, Transcript } from '../src/engine';
 import { playCampaign, type Policy, type Want } from '../src/engine/ai/bots';
 import { sumField } from '../src/engine/ai/spots';
 import { archivists, minimalRecipe } from '../src/engine/ai/routes';
+import { ROMAN } from '../src/ui/format';
 
 const SEED = 6001;
 const has = (t: string) => (c: Campaign) => c.civ.techs.includes(t as never);
@@ -191,12 +192,11 @@ for (const r of RUNS) {
 const unproven = FEAT_IDS.filter((id) => ![...earned.values()].some((e) => e.feats.some((f) => f.id === id)));
 if (unproven.length) throw new Error(`No recorded run earns: ${unproven.join(', ')}`);
 
-const AGE = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const rows = FEAT_IDS.map((id) => {
   const by = [...earned.entries()]
     .flatMap(([name, e]) => {
       const f = e.feats.find((x) => x.id === id);
-      return f ? [`${name} (age ${AGE[f.epoch] ?? f.epoch + 1})`] : [];
+      return f ? [`${name} (age ${ROMAN[f.epoch] ?? f.epoch + 1})`] : [];
     })
     .join(', ');
   const d = FEATS[id];

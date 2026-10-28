@@ -30,6 +30,8 @@ const ROOFS: RGB[][] = [
 ];
 /** The architecture of the long chronicle's later ages: copper roofs, spires, turrets and pennants. */
 const SPIRES = 3;
+/** The architecture a building raised in this age is built in (every age past the third builds the same). */
+export const eraOf = (epoch: number): number => Math.min(epoch, SPIRES);
 function roofFor(era: number, seed: number): RGB {
   const set = ROOFS[Math.min(SPIRES, Math.max(0, era))]!;
   return set[seed % set.length]!;

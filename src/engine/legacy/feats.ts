@@ -296,7 +296,7 @@ export function featsOnCollapse(
   const founders = standing.some((s) => BUILDINGS[s.kind].heritage && s.originEpoch === 0);
   if (last && founders) award(c, 'living_heritage');
   // The fifth age (index 4) and the twelfth are reached only by carrying the chronicle on.
-  if (c.epoch === 4 && founders) award(c, 'five_generations');
+  if (c.endless && c.epoch === 4 && founders) award(c, 'five_generations');
   if (c.endless && c.epoch === MAX_AGES - 1 && r.survivors >= MIN_FOUNDERS) award(c, 'twelfth_age');
   if (r.verdict?.outcome === 'victory') {
     award(c, 'cycle_broken');

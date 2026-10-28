@@ -28,6 +28,7 @@ import {
 import type { Campaign, Transcript } from '../../src/engine';
 import { playCampaign } from '../../src/engine/ai/bots';
 import { ROUTES } from '../../src/engine/ai/routes';
+import { avoidedAge } from '../../src/engine/ai/spots';
 
 const load = (name: string) => JSON.parse(readFileSync(`fixtures/${name}.json`, 'utf8')) as Transcript;
 const long = (scenario: string) => ({ scenario, endless: { rested: false } });
@@ -112,6 +113,22 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     const first = harder.impacts[0]!;
     const s0 = c.structures.find((s) => s.id === first.id)!;
     expect(first.reason).toContain(`resistance ${Math.round(effectiveResistance(c, s0, 'quake') / 10)}%`);
+    // The twelfth age's return can at most destroy a building: harm stays a permille.
+    const fiercest = resolveHazard({ ...c, epoch: MAX_AGES - 1 }, 'fire', 400);
+    expect(fiercest.impacts.some((i) => i.damage === 1000)).toBe(true);
+    expect(fiercest.impacts.every((i) => i.damage <= 1000)).toBe(true);
+  });
+
+  it('points a policy’s foresight at the next return of each catastrophe it keeps clear of', () => {
+    // In the scenario's own ages a policy's ages are the ones it names (none past them)...
+    expect([0, 1, 2, 3].map((e) => avoidedAge({ epoch: 1 }, e, 3))).toEqual([0, 1, 2, null]);
+    // ...and in the long chronicle, each catastrophe's next coming at or after this age, while there is one.
+    const at = (epoch: number) =>
+      [0, 1, 2].map((e) => avoidedAge({ epoch, endless: { rested: false } }, e, 3));
+    expect(at(3)).toEqual([3, 4, 5]);
+    expect(at(4)).toEqual([6, 4, 5]);
+    expect(at(10)).toEqual([null, 10, 11]);
+    expect(at(MAX_AGES - 1)).toEqual([null, null, 11]);
   });
 
   it('has a tradition to adopt at every founding up to the twelfth age', () => {
@@ -210,7 +227,7 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     }
   });
 
-  it('saves a long chronicle and refuses one that is malformed or past the last age', () => {
+  it('saves a long chronicle and refuses one that is malformed, begun before the last age or past the twelfth', () => {
     const c = replayCampaign(load('greenvale/archivists'));
     dispatchAction(c, { type: 'endure' });
     playCampaign(c, ROUTES.archivists!, { ages: 5, maxEpochs: 1 });
@@ -223,6 +240,8 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     };
     expect(() => deserialize(tampered((x) => delete x.endless))).toThrow(/epoch out of range/);
     expect(() => deserialize(tampered((x) => (x.epoch = MAX_AGES)))).toThrow(/epoch out of range/);
+    // A chronicle is only ever carried on from the scenario's last age.
+    expect(() => deserialize(tampered((x) => (x.epoch = 1)))).toThrow(/long chronicle before the last age/);
     expect(() =>
       deserialize(tampered((x) => ((x as unknown as { endless: unknown }).endless = { rested: 'no' }))),
     ).toThrow(/malformed long chronicle/);

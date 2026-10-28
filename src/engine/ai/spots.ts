@@ -46,6 +46,17 @@ export function currentHearth(c: Campaign): { x: number; y: number } {
 
 const futureCache = new WeakMap<Campaign, Map<string, Set<number>>>();
 
+/**
+ * The age whose catastrophe a policy's `avoidEpochs` entry means (`n`: the scenario's ages). Policies name the
+ * scenario's own ages; in the long chronicle each stands for its next return at or after the current age, as fierce as
+ * that return will be (none once the twelfth age has passed).
+ */
+export function avoidedAge(c: Pick<Campaign, 'endless' | 'epoch'>, e: number, n: number): number | null {
+  if (!c.endless || c.epoch < n) return e < n ? e : null;
+  const next = c.epoch + (((((e % n) - (c.epoch % n)) % n) + n) % n);
+  return next < MAX_AGES ? next : null;
+}
+
 /** Cells the hazards of the given scenario epochs would reach on the map as it stands (cached per state). */
 function futureHazardCells(c: Campaign, epochs: number[]): Set<number> {
   let perCampaign = futureCache.get(c);
@@ -55,9 +66,10 @@ function futureHazardCells(c: Campaign, epochs: number[]): Set<number> {
   if (hit) return hit;
   perCampaign.clear();
   const out = new Set<number>();
-  const ages = c.endless ? MAX_AGES : getScenario(c.scenario).epochs.length;
+  const n = getScenario(c.scenario).epochs.length;
   for (const e of epochs) {
-    const hz = e < ages ? epochSpec(c, e).hazard : null;
+    const age = avoidedAge(c, e, n);
+    const hz = age === null ? null : epochSpec(c, age).hazard;
     if (!hz) continue;
     for (const h of resolveHazard(c, hz.kind, hz.strength).cells) {
       if (hz.kind === 'quake' && h.intensity < 420) continue;

@@ -62,6 +62,9 @@ function validateShape(c: Campaign): void {
   if (!own(SCENARIOS, c.scenario)) bad('unknown scenario');
   if (c.endless !== undefined && (!c.endless || typeof c.endless.rested !== 'boolean'))
     bad('malformed long chronicle');
+  // A chronicle is carried on from a victory in the scenario's last age, never before it.
+  if (c.endless && c.epoch < SCENARIOS[c.scenario]!.epochs.length - 1)
+    bad('long chronicle before the last age');
   // The long chronicle runs past the scenario's ages, to MAX_AGES at most.
   const epochs = c.endless ? MAX_AGES : SCENARIOS[c.scenario]!.epochs.length;
   if (!Number.isInteger(c.epoch) || c.epoch < 0 || c.epoch >= epochs) bad('epoch out of range');

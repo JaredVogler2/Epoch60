@@ -9,6 +9,7 @@ import { writeFileSync } from 'node:fs';
 import { MAX_AGES, chronicleEnding, createCampaign, epochSpec } from '../src/engine';
 import { playCampaign } from '../src/engine/ai/bots';
 import { ROUTES } from '../src/engine/ai/routes';
+import { ROMAN } from '../src/ui/format';
 
 const arg = (name: string, d: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -18,7 +19,6 @@ const N = Number(arg('seeds', '20'));
 const FROM = Number(arg('from', '1'));
 const out = arg('out', '');
 const POLICIES = ['engineers', 'archivists'];
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
 const lines: string[] = [
   `# The long chronicle, measured (generated)`,
