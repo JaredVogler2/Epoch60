@@ -6,12 +6,14 @@ import {
   GRID_W,
   TICKS_PER_SECOND,
   checkPlacement,
+  computeHash,
   createCampaign,
   dispatchAction,
   footprint,
   getCatalog,
   getForecast,
   setPaused,
+  transcriptOf,
 } from '../engine';
 import { isStanding } from '../engine/economy/modifiers';
 import { suggestSpots } from '../engine/economy/suggest';
@@ -26,6 +28,7 @@ import type {
   FeatId,
   Forecast,
   GameMode,
+  LoggedAction,
   ModifierId,
   PlacementOk,
   ActionError,
@@ -86,6 +89,35 @@ export interface SnapshotRequest {
   kind: 'then' | 'after';
   focus: { x: number; z: number };
 }
+/**
+ * Watching a finished lineage again: its accepted actions, applied through the same engine at the ticks they were
+ * logged, so it ends in exactly the state the lineage did (the replay checks the hash). Outside the minute each
+ * action waits a moment of wall time, so the briefing, the debrief and the dig can be read.
+ */
+export interface Replay {
+  actions: LoggedAction[];
+  next: number;
+  speed: 1 | 2 | 4;
+  finalHash: string;
+  /** Wall-clock milliseconds before the next action outside the minute. */
+  wait: number;
+  /** The finished lineage, shown again when the replay is left. */
+  original: Campaign;
+  /** Once over: whether it ended in exactly the lineage's final state. */
+  matched: boolean | null;
+}
+
+/**
+ * Wall time before the next replayed action in each phase, at 1× (the collapse waits out its cinematic, whatever the
+ * speed). Unlisted phases pass at once.
+ */
+export const REPLAY_WAIT_MS: Partial<Record<Campaign['phase'], number>> = {
+  PREPARE: 700,
+  COLLAPSING: 6500,
+  DEBRIEF: 4000,
+  INTERREGNUM: 1500,
+};
+
 /** "Then" is taken in the last seconds of the minute, before the catastrophe resolves. */
 export const THEN_TICK = EPOCH_TICKS - 3 * TICKS_PER_SECOND;
 
@@ -159,6 +191,8 @@ export class GameStore {
   suggest: { kind: BuildingKind; key: string; spots: SuggestedSpot[]; i: number } | null = null;
   /** Then-and-now pictures per age of this lineage, taken by the render layer. Session memory only: never saved. */
   snapshots: Record<number, AgeSnapshots> = {};
+  /** A finished lineage being watched again (null: playing). Nothing is saved, carded or recorded while it runs. */
+  replay: Replay | null = null;
 
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);
@@ -189,6 +223,7 @@ export class GameStore {
     modifiers: readonly ModifierId[] = [],
   ): void {
     this.runDaily = daily ?? null;
+    this.replay = null;
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
     // The Daily Ruins are the same challenge for everyone: never with challenges of one's own.
     this.campaign = createCampaign(seed, m, scenarioId, difficulty, daily ? [] : modifiers);
@@ -221,6 +256,7 @@ export class GameStore {
   continueGame(): boolean {
     const c = loadCampaign();
     if (!c) return false;
+    this.replay = null;
     this.campaign = c;
     this.runDaily = loadDailyTag(c.seed, (day) => dailyRun(day).seed);
     this.branch = loadBranchTag(c.seed);
@@ -234,6 +270,7 @@ export class GameStore {
 
   /** Adopt an existing campaign (used by tests and the browser debug hooks). */
   adopt(c: Campaign): void {
+    this.replay = null;
     this.campaign = c;
     this.branch = null;
     this.afterReplace();
@@ -243,6 +280,8 @@ export class GameStore {
   }
 
   quitToTitle(): void {
+    // Leaving a replay leaves the finished lineage it was watching, as it was.
+    if (this.replay) this.stopReplay();
     const c = this.campaign;
     // A finished lineage is already on its run card; saving it again would bring the ending back as "Continue".
     if (c && c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') {
@@ -282,6 +321,95 @@ export class GameStore {
     this.autosave(true);
     this.emit();
     return true;
+  }
+
+  /* ------------------------------ replay ------------------------------ */
+
+  /** Watch the finished lineage again from its first day: the same seed, challenges and actions, at the same ticks. */
+  watchLineage(): boolean {
+    const c = this.campaign;
+    if (!c || this.replay || (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT')) return false;
+    const t = transcriptOf(c);
+    this.replay = {
+      actions: t.actions,
+      next: 0,
+      speed: 2,
+      finalHash: t.finalHash!,
+      wait: REPLAY_WAIT_MS.PREPARE!,
+      original: c,
+      matched: null,
+    };
+    this.campaign = createCampaign(t.seed, t.mode, t.scenario, t.difficulty ?? 'normal', t.modifiers ?? []);
+    this.afterReplace();
+    this.clockResetSeq++;
+    this.screen = 'game';
+    this.emit();
+    return true;
+  }
+
+  /** Leave the replay: back to the finished lineage's ending. */
+  stopReplay(): void {
+    const r = this.replay;
+    if (!r) return;
+    this.replay = null;
+    this.campaign = r.original;
+    this.afterReplace();
+    this.screen = 'game';
+    this.emit();
+  }
+
+  setReplaySpeed(speed: Replay['speed']): void {
+    if (!this.replay) return;
+    this.replay.speed = speed;
+    this.emit();
+  }
+
+  /** Called by the clock before every tick of the minute: the actions logged at this tick, in their order. */
+  replayDue(): void {
+    const r = this.replay;
+    const c = this.campaign;
+    if (!r || !c) return;
+    while (r.next < r.actions.length && c.phase === 'ACTIVE' && r.actions[r.next]!.tick <= c.tick)
+      this.applyReplay(r.actions[r.next]!.action);
+  }
+
+  /** Called by the clock every frame: outside the minute, the next action once its moment of wall time has passed. */
+  replayFrame(dtMs: number): void {
+    const r = this.replay;
+    const c = this.campaign;
+    if (!r || !c || r.matched !== null || c.phase === 'ACTIVE') return;
+    if (r.next >= r.actions.length) return this.replayCheckEnd();
+    r.wait -= c.phase === 'COLLAPSING' ? dtMs : dtMs * r.speed;
+    if (r.wait > 0) return;
+    this.applyReplay(r.actions[r.next]!.action);
+  }
+
+  private applyReplay(action: Action): void {
+    const r = this.replay!;
+    const c = this.campaign!;
+    r.next++;
+    const res = dispatchAction(c, action);
+    if (res.ok && action.type === 'beginEpoch') this.clockResetSeq++;
+    if (res.ok && action.type === 'found') {
+      const h = [...c.structures]
+        .reverse()
+        .find((st) => st.kind === 'hearth' && (st.status === 'active' || st.status === 'damaged'));
+      if (h) this.focusOn(h.x + h.w / 2, h.y + h.h / 2, 30);
+    }
+    r.wait = REPLAY_WAIT_MS[c.phase] ?? 0;
+    this.refreshRevs();
+    if (c.phase !== this.lastPhase) this.onPhaseChange(c.phase);
+    this.replayCheckEnd();
+    this.emit();
+  }
+
+  /** The replay is over once every action is applied and the lineage has ended: did it end where it did before? */
+  private replayCheckEnd(): void {
+    const r = this.replay;
+    const c = this.campaign;
+    if (!r || !c || r.matched !== null || r.next < r.actions.length) return;
+    if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return;
+    r.matched = computeHash(c) === r.finalHash;
   }
 
   abandonSave(): void {
@@ -346,6 +474,7 @@ export class GameStore {
     if (c) {
       if (c.phase !== this.lastPhase) this.onPhaseChange(c.phase);
       else if (c.tick - this.lastSaveTick >= 50) this.autosave(false);
+      if (this.replay) this.replayCheckEnd();
     }
     this.syncCodex(true);
     this.emit();
@@ -355,13 +484,15 @@ export class GameStore {
     this.lastPhase = phase;
     this.skipRequested = false;
     if (phase === 'VICTORY' || phase === 'DEFEAT') {
-      const card = this.campaign
-        ? cardOf(this.campaign, this.runDaily ?? undefined, new Date(), this.branch)
-        : null;
+      const card =
+        this.campaign && !this.replay
+          ? cardOf(this.campaign, this.runDaily ?? undefined, new Date(), this.branch)
+          : null;
       if (card) this.runs = saveRun(card);
     }
     // Each later age's founding is a point the player can come back to.
-    if (phase === 'PREPARE' && this.campaign && this.screen === 'game') saveBranchPoint(this.campaign);
+    if (phase === 'PREPARE' && this.campaign && this.screen === 'game' && !this.replay)
+      saveBranchPoint(this.campaign);
     if (phase !== 'ACTIVE') {
       this.placing = null;
       this.ghost = null;
@@ -371,7 +502,8 @@ export class GameStore {
 
   private autosave(force: boolean): void {
     const c = this.campaign;
-    if (!c) return;
+    // A replay is a viewing of a finished lineage, not a game: it must never overwrite the save.
+    if (!c || this.replay) return;
     if (!force && c.tick === this.lastSaveTick) return;
     this.lastSaveTick = c.tick;
     saveCampaign(c);
@@ -412,6 +544,8 @@ export class GameStore {
   dispatch(action: Action, opts: { quiet?: boolean } = {}): ActionResult {
     const c = this.campaign;
     if (!c) return { ok: false, code: 'wrong_phase', message: 'No game' };
+    // While a lineage is being watched, only its own recorded actions are applied.
+    if (this.replay) return { ok: false, code: 'wrong_phase', message: 'Watching a replay' };
     const r = dispatchAction(c, action);
     if (r.ok && action.type === 'beginEpoch') this.clockResetSeq++;
     if (r.ok && action.type === 'found') {
@@ -437,7 +571,7 @@ export class GameStore {
    */
   private syncCodex(announce: boolean): void {
     const c = this.campaign;
-    if (!c || this.screen !== 'game' || c.lineage.feats.length === this.seenFeats) return;
+    if (!c || this.screen !== 'game' || this.replay || c.lineage.feats.length === this.seenFeats) return;
     this.seenFeats = c.lineage.feats.length;
     const r = recordFeats(this.codex, c, this.runDaily, new Date());
     if (!r.added.length) return;
@@ -472,6 +606,8 @@ export class GameStore {
   /* ------------------------------ selection and placement ------------------------------ */
 
   select(id: number | null): void {
+    // While a replay runs its panels are inert, so nothing is opened that could not be closed again.
+    if (this.replay && this.replay.matched === null) return;
     this.selectedId = id;
     if (id !== null) this.placing = null;
     this.emit();

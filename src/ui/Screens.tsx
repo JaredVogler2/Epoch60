@@ -576,6 +576,17 @@ export function EndScreen() {
       aria-label="Ending"
     >
       <div className="card-modal wide">
+        {s.replay && (
+          <p
+            className={`replay-result ${s.replay.matched ? 'good' : 'bad'}`}
+            data-testid="replay-result"
+            data-matched={String(s.replay.matched)}
+          >
+            {s.replay.matched
+              ? 'Replayed exactly: the same actions at the same moments led to the same valley, stone for stone.'
+              : 'This replay did not end where the lineage did.'}
+          </p>
+        )}
         <p className="eyebrow">{win ? 'Victory' : 'Defeat'}</p>
         <h1 data-testid="end-title">{v?.title ?? (win ? 'The cycle is broken' : 'The valley is silent')}</h1>
         <p className="headline">{v?.reason}</p>
@@ -661,70 +672,99 @@ export function EndScreen() {
           </p>
         )}
         <div className="end-actions">
-          <button
-            type="button"
-            className="btn primary big"
-            data-testid="play-again"
-            data-autofocus
-            onClick={() => {
-              clearSave();
-              s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined, c.modifiers);
-            }}
-          >
-            Play again
-          </button>
-          {branchAges.map((e) => (
+          {s.replay ? (
             <button
-              key={e}
               type="button"
-              className="btn"
-              data-testid={`replay-age-${e}`}
-              onClick={() => s.branchFrom(e)}
+              className="btn primary big"
+              data-testid="replay-back"
+              data-autofocus
+              onClick={() => s.stopReplay()}
             >
-              Replay from Age {ROMAN[e]}
+              Back to the ending
             </button>
-          ))}
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              clearSave();
-              s.newGame(
-                ((c.seed * 1103515245 + 12345) >>> 0) % 99999 || 1,
-                undefined,
-                c.scenario,
-                c.difficulty,
-                undefined,
-                c.modifiers,
-              );
-            }}
-          >
-            New valley
-          </button>
-          <button
-            type="button"
-            className="btn"
-            data-testid="copy-link"
-            onClick={() => {
-              const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined, modifiers: c.modifiers })}`;
-              void navigator.clipboard?.writeText(url).then(
-                () => s.showToast('Link to this valley copied.', 'good'),
-                () => s.showToast(url, 'info'),
-              );
-            }}
-          >
-            Copy link to this valley
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => {
-              clearSave();
-              s.quitToTitle();
-            }}
-          >
-            Title
-          </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn primary big"
+                data-testid="play-again"
+                data-autofocus
+                onClick={() => {
+                  clearSave();
+                  s.newGame(
+                    c.seed,
+                    undefined,
+                    c.scenario,
+                    c.difficulty,
+                    s.runDaily ?? undefined,
+                    c.modifiers,
+                  );
+                }}
+              >
+                Play again
+              </button>
+              <button
+                type="button"
+                className="btn"
+                data-testid="watch-lineage"
+                onClick={() => s.watchLineage()}
+              >
+                Watch this lineage
+              </button>
+              {branchAges.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className="btn"
+                  data-testid={`replay-age-${e}`}
+                  onClick={() => s.branchFrom(e)}
+                >
+                  Replay from Age {ROMAN[e]}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  clearSave();
+                  s.newGame(
+                    ((c.seed * 1103515245 + 12345) >>> 0) % 99999 || 1,
+                    undefined,
+                    c.scenario,
+                    c.difficulty,
+                    undefined,
+                    c.modifiers,
+                  );
+                }}
+              >
+                New valley
+              </button>
+              <button
+                type="button"
+                className="btn"
+                data-testid="copy-link"
+                onClick={() => {
+                  const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined, modifiers: c.modifiers })}`;
+                  void navigator.clipboard?.writeText(url).then(
+                    () => s.showToast('Link to this valley copied.', 'good'),
+                    () => s.showToast(url, 'info'),
+                  );
+                }}
+              >
+                Copy link to this valley
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => {
+                  clearSave();
+                  s.quitToTitle();
+                }}
+              >
+                Title
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

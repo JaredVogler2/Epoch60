@@ -3,6 +3,7 @@ import { BuildTray, PlacementBar, ResourceBar, TopBar } from './Hud';
 import { FocusPanel, HelpPanel, Inspector, PauseOverlay, ResearchPanel, Toast } from './Panels';
 import { CollapseOverlay, DebriefScreen, EndScreen, InterregnumScreen, PrepareCard } from './Screens';
 import { Announcer } from './Announcer';
+import { ReplayBar } from './ReplayBar';
 import { StoryChip } from './Story';
 import { useStore } from './useStore';
 
@@ -17,6 +18,14 @@ function useShortcuts(): void {
       if (!c || s.screen !== 'game') return;
       // Behind the pause card only Space (resume) works; the dialog itself handles Escape and Tab.
       if (c.phase === 'ACTIVE' && c.paused) {
+        if (e.key === ' ' && tag !== 'BUTTON') {
+          e.preventDefault();
+          s.togglePause();
+        }
+        return;
+      }
+      // While a lineage is being watched, only Space (pause) means anything.
+      if (s.replay) {
         if (e.key === ' ' && tag !== 'BUTTON') {
           e.preventDefault();
           s.togglePause();
@@ -76,9 +85,11 @@ export function GameHud() {
   useShortcuts();
   const c = s.campaign!;
   const timed = c.phase === 'PREPARE' || c.phase === 'ACTIVE';
-  const showTray = timed && !s.placing;
+  // A replay is watched, not played: no tray, and the HUD's controls are inert until it is over.
+  const watching = !!s.replay && s.replay.matched === null;
+  const showTray = timed && !s.placing && !s.replay;
   return (
-    <div className="hud" data-testid="hud" data-phase={c.phase}>
+    <div className={`hud ${watching ? 'replaying' : ''}`} data-testid="hud" data-phase={c.phase}>
       <Announcer />
       <TopBar />
       <ResourceBar />
@@ -99,6 +110,7 @@ export function GameHud() {
       <DebriefScreen />
       <InterregnumScreen />
       <EndScreen />
+      <ReplayBar />
       <PauseOverlay />
     </div>
   );

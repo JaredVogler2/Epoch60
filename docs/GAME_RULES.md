@@ -328,7 +328,7 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
 - **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins, or
   drawn for a random valley by an **expedition** (§18).
 
-Not built yet: 8–12-epoch campaigns, a replay viewer.
+Not built yet: 8–12-epoch campaigns. A finished lineage can be watched again from the ending (§19).
 
 ## 16. Accessibility and audio
 
@@ -467,3 +467,14 @@ with one to three challenges drawn from the open ones by that seed: the same see
 ones that suit the scenario and fit together. It is then an ordinary lineage with challenges: ranked against the same seed and
 set, kept on its run card, carried by its link. Nothing else about an expedition differs (Phase 13's variable 6–12-epoch target
 needs campaigns longer than three ages, which are not built).
+
+## 19. Watching a lineage again
+
+The ending offers **Watch this lineage**: the finished lineage replayed from its first day through the same engine (the same
+seed, scenario, difficulty, mode and challenges), each of its accepted actions applied at the tick it was logged, before that
+tick runs, exactly as a replayed transcript. The minute runs on the clock at 1×, 2× or 4×; outside it each action waits a moment
+of wall time (700 ms while planning, 4 s for the debrief and 1.5 s between ages, at 1×), and the collapse waits out its
+6.5 s cinematic at any speed. A replay is a viewing, not a game: the HUD's controls are inert, only Space (pause) works, nothing
+can be selected, and nothing is saved, carded, branched or added to the Codex. When it ends, the ending says whether it reached
+exactly the lineage's final state (the state hash): it always should, and a test replays recorded lineages through the clock at
+several speeds and frame rates to prove it. Stop, or Back to the ending, returns to the finished lineage as it was.

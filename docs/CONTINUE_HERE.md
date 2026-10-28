@@ -27,7 +27,8 @@ mutation-checked tests (`docs/PROGRESS.md`, session 6). **Session 7** adds **cha
 challenge mutators: twelve in the engine (`src/engine/content/modifiers.ts`, `world/modify.ts`; absent from standard lineages, so no
 recorded hash moved), opened on the title by Codex feats (`src/game/challenges.ts`), carried by share links, run cards and branch
 points, ranked only against the same set, listed on the briefing and the ending; an expedition draws one to three of the open ones
-for a random valley; `scripts/challenges.ts` measures each with the bots (`docs/balance/challenges.md`). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+for a random valley; `scripts/challenges.ts` measures each with the bots (`docs/balance/challenges.md`). A finished lineage can be
+**watched again** from the ending: replayed through the clock at 1–4×, ending in exactly its recorded state hash. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -48,7 +49,7 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 4. **Phase 16 remainder (K-022):** endless play after the capstone; other variety unlocks (terrain packs, real-art building
    skins); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
-5. **Phase 13 / 14:** 8–12-epoch campaigns (expeditions' variable epoch target needs them), sandbox, replay viewer (K-004); a
+5. **Phase 13 / 14:** 8–12-epoch campaigns (expeditions' variable epoch target needs them), sandbox (K-004); a
    recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
    story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
