@@ -1,5 +1,6 @@
 import { deserialize, serialize } from '../engine';
 import type { Campaign } from '../engine';
+import { safeStorage } from './persist';
 
 /**
  * Branch points: the lineage as it stood when each later age was founded, kept so a player can go back and play that
@@ -22,20 +23,12 @@ const BRANCHES_KEY = 'epoch60.branches.v1';
 /** The age a saved lineage was last replayed from (kept beside the save, which is engine state and knows no branches). */
 const BRANCH_TAG_KEY = 'epoch60.save-branch.v1';
 
-function storage(): Storage | null {
-  try {
-    return typeof localStorage === 'undefined' ? null : localStorage;
-  } catch {
-    return null;
-  }
-}
-
 const sameLineage = (p: BranchPoint, c: Campaign) =>
   p.seed === c.seed && p.scenario === c.scenario && p.difficulty === c.difficulty && p.mode === c.mode;
 
 function load(): BranchPoint[] {
   try {
-    const raw = storage()?.getItem(BRANCHES_KEY);
+    const raw = safeStorage()?.getItem(BRANCHES_KEY);
     const v = raw ? (JSON.parse(raw) as unknown) : [];
     if (!Array.isArray(v)) return [];
     return v.filter(
@@ -56,7 +49,7 @@ function load(): BranchPoint[] {
 
 function store(points: BranchPoint[]): void {
   try {
-    storage()?.setItem(BRANCHES_KEY, JSON.stringify(points));
+    safeStorage()?.setItem(BRANCHES_KEY, JSON.stringify(points));
   } catch {
     /* quota or disabled storage: the lineage plays on, only without a way back */
   }
@@ -108,8 +101,8 @@ export function takeBranch(c: Campaign, epoch: number): Campaign | null {
 
 export function clearBranchPoints(): void {
   try {
-    storage()?.removeItem(BRANCHES_KEY);
-    storage()?.removeItem(BRANCH_TAG_KEY);
+    safeStorage()?.removeItem(BRANCHES_KEY);
+    safeStorage()?.removeItem(BRANCH_TAG_KEY);
   } catch {
     /* ignore */
   }
@@ -118,8 +111,8 @@ export function clearBranchPoints(): void {
 /** Remember (or forget, with null) that the saved lineage with this seed was replayed from `epoch`. */
 export function saveBranchTag(seed: number, epoch: number | null): void {
   try {
-    if (epoch === null) storage()?.removeItem(BRANCH_TAG_KEY);
-    else storage()?.setItem(BRANCH_TAG_KEY, JSON.stringify({ seed, epoch }));
+    if (epoch === null) safeStorage()?.removeItem(BRANCH_TAG_KEY);
+    else safeStorage()?.setItem(BRANCH_TAG_KEY, JSON.stringify({ seed, epoch }));
   } catch {
     /* ignore */
   }
@@ -128,7 +121,7 @@ export function saveBranchTag(seed: number, epoch: number | null): void {
 /** The age the saved lineage with this seed was replayed from, or null for a straight lineage. */
 export function loadBranchTag(seed: number): number | null {
   try {
-    const raw = storage()?.getItem(BRANCH_TAG_KEY);
+    const raw = safeStorage()?.getItem(BRANCH_TAG_KEY);
     if (!raw) return null;
     const v = JSON.parse(raw) as { seed?: unknown; epoch?: unknown };
     return v.seed === seed && Number.isInteger(v.epoch) && (v.epoch as number) >= 1

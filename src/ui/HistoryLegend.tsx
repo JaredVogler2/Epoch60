@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ROMAN } from './format';
 import { AGE_COLORS, ERODED_COLOR, REACH_COLORS, historyLayers } from '../render/history';
 import { useStore } from './useStore';
@@ -15,7 +15,12 @@ export function HistoryLegend({ reveal = false }: { reveal?: boolean }) {
   useEffect(() => {
     if (reveal) ref.current?.scrollIntoView({ block: 'nearest' });
   }, [reveal]);
-  const h = historyLayers(c);
+  // Rebuilt only when the structures, the world or the age change (the store emits far more often than that).
+  const h = useMemo(
+    () => historyLayers(c),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [c, s.structRev, s.worldRev, c.epoch],
+  );
   return (
     <ul ref={ref} className="history-legend" data-testid="history-legend" aria-label="History on the map">
       {h.ages.map((name, e) => {

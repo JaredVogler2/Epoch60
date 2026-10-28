@@ -25,7 +25,8 @@ export function installDebug(): void {
     hash: () => (store.campaign ? computeHash(store.campaign) : null),
     /**
      * Run `n` ticks instantly (tests only) and refresh the UI exactly as the real clock would. The frame that
-     * straddles this synchronous jump is ignored by the clock, like a begin or resume, so it never reads as a stall.
+     * straddles this synchronous jump is ignored by the clock, like a begin or resume, so it never reads as a stall;
+     * so are the next few, because the redraw the jump causes can itself take seconds under software GL (K-011).
      */
     fastForward: (n: number) => {
       const c = store.campaign;
@@ -33,6 +34,12 @@ export function installDebug(): void {
       const ran = runTicks(c, n);
       store.clockResetSeq++;
       store.notifyTicks(ran);
+      let frames = 3;
+      const forgive = () => {
+        store.clockResetSeq++;
+        if (--frames > 0) requestAnimationFrame(forgive);
+      };
+      requestAnimationFrame(forgive);
       return ran;
     },
   };

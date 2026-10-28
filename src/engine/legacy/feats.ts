@@ -1,7 +1,7 @@
 import { BUILDINGS } from '../content/buildings';
 import { getScenario } from '../content/scenario';
 import { TECHS } from '../content/techs';
-import type { Campaign, CollapseReport, FeatId, Structure, TechId } from '../core/types';
+import type { Campaign, CollapseReport, FeatId, HazardResult, Structure, TechId } from '../core/types';
 import { isStanding } from '../economy/modifiers';
 import { cellsOf, idx } from '../world/query';
 
@@ -47,7 +47,7 @@ export const FEATS: Record<FeatId, FeatDef> = {
     id: 'three_branches',
     group: 'knowledge',
     name: 'Three Kinds of Knowing',
-    how: 'In one lineage, discover a technology of industry, one of ecology and one of resilience.',
+    how: 'In one lineage, know a technology of industry, one of ecology and one of resilience (researched, or read from dug-up tablets).',
     lesson:
       'Each branch answers something different: Masonry and tools build, Irrigation and Forestry tend the land, Writing and Hydrology keep memory and hold rivers.',
   },
@@ -101,7 +101,7 @@ export const FEATS: Record<FeatId, FeatDef> = {
     id: 'flood_held',
     group: 'engineering',
     name: 'The River Held',
-    how: 'The Great Flood takes no lives while a Levee or Dam you built stands.',
+    how: 'The Great Flood takes no lives, and your Levees or Dam spare a building harm the water would otherwise have done.',
     lesson: 'Hydrology unlocks the Levee and the Dam; the forecast shows where the water will come.',
   },
   quake_unshaken: {
@@ -199,10 +199,15 @@ export function featsOnCompleted(c: Campaign, s: Structure): void {
   if (s.excavated && s.originEpoch < c.epoch) award(c, 'old_foundations');
 }
 
-/** A research job just finished. */
-export function featsOnResearched(c: Campaign): void {
+/** Every technology the lineage has known, from research or from tablets dug up between ages. */
+function checkBranches(c: Campaign): void {
   const branches = new Set(c.lineage.everKnown.map((t) => TECHS[t].branch));
   if (branches.size >= 3) award(c, 'three_branches');
+}
+
+/** A research job just finished. */
+export function featsOnResearched(c: Campaign): void {
+  checkBranches(c);
 }
 
 /**
@@ -213,12 +218,16 @@ export function featsOnCollapse(
   c: Campaign,
   r: CollapseReport,
   larder: { need: number; have: number } | null,
+  undefended: HazardResult | null = null,
 ): void {
   const standing = c.structures.filter(isStanding);
   // Impacts on buildings that were finished before the hazard (a construction site is not yet a home or a field).
   const finished = r.result.impacts.filter((i) => i.before === 'active' || i.before === 'damaged');
   // A catastrophe that never reached the village proves nothing about how it was built.
   const reached = r.result.impacts.length > 0;
+  // Any standing firebreak, levee or dam counts as this age's own: in both scenarios the fire comes in the first age and
+  // the flood in the second, the age levees and dams can first be built, so neither meets a defence an earlier age left.
+  // A scenario that moves them later must also compare `originEpoch` with `c.epoch`.
   if (
     r.hazard === 'fire' &&
     reached &&
@@ -227,7 +236,11 @@ export function featsOnCollapse(
   )
     award(c, 'fire_contained');
   if (r.hazard === 'flood') {
-    if (r.deaths === 0 && standing.some((s) => s.kind === 'levee' || s.kind === 'dam'))
+    // Held: without its levees and dams the water would have reached a building it now spared, or hit it harder.
+    const held = (undefended?.impacts ?? []).some(
+      (u) => !r.result.impacts.some((d) => d.id === u.id && d.damage >= u.damage),
+    );
+    if (r.deaths === 0 && held && standing.some((s) => s.kind === 'levee' || s.kind === 'dam'))
       award(c, 'flood_held');
     const farms = standing.filter((s) => s.kind === 'farm').length;
     if (farms >= 2 && !finished.some((i) => i.kind === 'farm' && i.after !== 'active'))
@@ -286,4 +299,6 @@ export function featsOnExcavated(c: Campaign, s: Structure, techs: TechId[]): vo
 /** A new age was just founded; `keptHearth` when its people moved into a standing hearth from the age before. */
 export function featsOnFounded(c: Campaign, keptHearth: boolean): void {
   if (keptHearth) award(c, 'hearth_kept');
+  // The founding brings in what the dig recovered: a third branch can arrive on tablets, not by research.
+  checkBranches(c);
 }

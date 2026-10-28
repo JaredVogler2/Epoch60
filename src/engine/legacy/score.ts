@@ -1,6 +1,6 @@
-import { BUILDINGS } from '../content/buildings';
 import type { Campaign } from '../core/types';
 import { isStanding } from '../economy/modifiers';
+import { earlierLandmarks } from './collapse';
 
 /**
  * The legacy of a lineage: what lasted, read from the state after its latest catastrophe. Every part is a count of
@@ -50,7 +50,7 @@ export function legacyOf(c: Campaign): Legacy | null {
   const people = last.survivors;
   const techs = last.retainedTechs.length;
   const standing = c.structures.filter(isStanding);
-  const landmarks = standing.filter((s) => BUILDINGS[s.kind].heritage && s.originEpoch < last.epoch).length;
+  const landmarks = earlierLandmarks(c, last.epoch).length;
   const feats = c.lineage.feats.length;
   const parts: LegacyPart[] = [
     {

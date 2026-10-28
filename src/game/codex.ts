@@ -1,5 +1,6 @@
 import { DIFFICULTY, FEATS, SCENARIOS } from '../engine';
 import type { Campaign, Difficulty, FeatId, GameMode } from '../engine';
+import { safeStorage } from './persist';
 
 /**
  * The Codex: every feat this device has seen a lineage earn, kept in local storage beside the run cards. It only ever
@@ -23,14 +24,6 @@ export interface CodexEntry {
 
 const CODEX_KEY = 'epoch60.codex.v1';
 const own = (o: object, k: unknown) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
-
-function storage(): Storage | null {
-  try {
-    return typeof localStorage === 'undefined' ? null : localStorage;
-  } catch {
-    return null;
-  }
-}
 
 function isEntry(x: unknown): x is CodexEntry {
   if (!x || typeof x !== 'object') return false;
@@ -63,7 +56,7 @@ export function sanitizeCodex(raw: unknown): CodexEntry[] {
 
 export function loadCodex(): CodexEntry[] {
   try {
-    const raw = storage()?.getItem(CODEX_KEY);
+    const raw = safeStorage()?.getItem(CODEX_KEY);
     return raw ? sanitizeCodex(JSON.parse(raw)) : [];
   } catch {
     return [];
@@ -100,7 +93,7 @@ export function recordFeats(
   }
   if (added.length) {
     try {
-      storage()?.setItem(CODEX_KEY, JSON.stringify(next));
+      safeStorage()?.setItem(CODEX_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
     }

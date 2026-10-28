@@ -141,7 +141,7 @@ Intensity at a cell = `strength × 46 / (46 + d²)` (d from the epicentre), ×0.
 `damage = exposure × (1000 − resistance) / 1000` (fire: share of footprint burned; flood: `min(1000, 12 × depth_cm) × share`; quake: peak intensity × **1.6**,
 because ground motion does far more harm than the same "amount" of heat or water).
 Resistance = building + reinforce bonus + traditions + techs (Seismic Engineering +25 % quake) + a Retaining Wall within 5 cells (+25 % quake) − state (damaged −15 %), capped at 98 %.
-Outcome: `damage ≥ 600` → **rubble**, `≥ 250` → **damaged**, else intact. Statuses only ever worsen.
+Outcome: `damage ≥ 600` → **rubble**, `≥ 250` → **damaged**, else intact. Statuses and integrity only ever worsen: a building already damaged that a catastrophe touches without new harm is no worse for it (it is not counted as damaged by it, and its provenance says it came through still in disrepair), and a light blow never raises an older building's integrity, which decides how it weathers between ages.
 
 ### People in a collapse
 
@@ -344,26 +344,26 @@ research job ends, a catastrophe's report is written, a ruin is dug up or an age
 produced, and keeps it in `lineage.feats` (`src/engine/legacy/feats.ts`). They are part of the hashed, replayed and saved
 state, so a recorded run always earns exactly the same feats. They change nothing in play.
 
-| Group       | Feat                      | Rule                                                                                                                 |
-| ----------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Knowledge   | Words Kept                | Finish an Archive.                                                                                                   |
-| Knowledge   | Three Kinds of Knowing    | In one lineage, discover a technology of industry, one of ecology and one of resilience.                             |
-| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive built two ages before the people who find it, its tablets still legible.             |
-| Heritage    | The Hearth Endures        | Found a new age in a hearth kept from the age before.                                                                |
-| Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                           |
-| Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                        |
-| Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                            |
-| Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                            |
-| Engineering | The River Held            | The Great Flood takes no lives while a Levee or Dam you built stands.                                                |
-| Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale). |
-| Engineering | Full Larders              | No one starves in the Ashen Winter, with at least six people to feed (The Ashen Winter).                             |
-| Engineering | Shored Up                 | A building you reinforced against the coming catastrophe is struck by it and still stands.                           |
-| Stewardship | Not One Field Lost        | Bring at least two farms whole through the Great Flood.                                                              |
-| Stewardship | The Forest Returns        | Plant a Grove on ground the fire burned (fire scar ≥ 100 of 1000 under it).                                          |
-| Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                 |
-| Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                       |
-| Endings     | Against the Odds          | Win a lineage on Hard.                                                                                               |
-| Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.        |
+| Group       | Feat                      | Rule                                                                                                                                                                          |
+| ----------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Knowledge   | Words Kept                | Finish an Archive.                                                                                                                                                            |
+| Knowledge   | Three Kinds of Knowing    | In one lineage, know a technology of industry, one of ecology and one of resilience (researched, or read from dug-up tablets).                                                |
+| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive built two ages before the people who find it, its tablets still legible.                                                                      |
+| Heritage    | The Hearth Endures        | Found a new age in a hearth kept from the age before.                                                                                                                         |
+| Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                                                                                    |
+| Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                                                                                 |
+| Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                                                                                     |
+| Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                                                                                     |
+| Engineering | The River Held            | The Great Flood takes no lives, and your Levees or Dam spare a building harm the water would otherwise have done (the same flood is projected with no levee or dam standing). |
+| Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale).                                                          |
+| Engineering | Full Larders              | No one starves in the Ashen Winter, with at least six people to feed (The Ashen Winter).                                                                                      |
+| Engineering | Shored Up                 | A building you reinforced against the coming catastrophe is struck by it and still stands.                                                                                    |
+| Stewardship | Not One Field Lost        | Bring at least two farms whole through the Great Flood.                                                                                                                       |
+| Stewardship | The Forest Returns        | Plant a Grove on ground the fire burned (fire scar ≥ 100 of 1000 under it).                                                                                                   |
+| Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                                                                          |
+| Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                                                                                |
+| Endings     | Against the Odds          | Win a lineage on Hard.                                                                                                                                                        |
+| Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.                                                                 |
 
 "Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village
 entirely proves nothing about how it was built. "Reinforced" means the player's own Reinforce order for that hazard in

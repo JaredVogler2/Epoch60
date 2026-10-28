@@ -365,5 +365,43 @@ provenance line is retold, with no epoch number or address left and every senten
 hearth tells its own founding and a ruin how it lies). Two mutations (keeping the address, naming the wrong age) fail them. The
 four browser victories also check every chronicle entry's form (title, story, how it stands), and with the campaign specs **14
 passed** on both profiles. The chronicle captured on desktop and phone and inspected.
+**Review fixes.** A code review of this session's work returned ten findings. Each was checked against the code first, and
+nine were real:
+
+- Run cards were stamped with the current rules version, not the lineage's own. A lineage resumed from an older save or branch
+  point would have been ranked against runs scored under today's rules. Cards now carry the campaign's `rules`.
+- _The River Held_ was earned by any flood that killed nobody while a levee or dam stood, even one that never reached the
+  village. The engine now also projects the same flood with no levee or dam standing (`collapseEpoch`, a pure projection), and the
+  feat needs the defences to have kept the water off a building, or hit it less hard. The levees-and-grove run still earns it.
+- A building already in disrepair that a catastrophe touched without new harm was counted as "damaged by" it, which alone
+  refused _An Age Without Loss_. Its integrity was also reset to what the light blow left, mending an older wound. It now
+  "came through" the catastrophe "still in disrepair", is not counted as damaged, and integrity, like status, only worsens.
+- _Three Kinds of Knowing_ was checked only when research finished, so a third branch read from dug-up tablets never counted.
+  Founding an age checks it now.
+- A save or branch point naming a feat this build does not know would have crashed the debrief and the ending. Loading drops
+  unknown feats.
+- The chronicle called a building still under construction or restoration a ruin. It now says the work was unfinished when
+  the end came, and a repair is told as begun ("set about restoring it"), since the record is written when it is ordered.
+- Three cleanups: the victory and the legacy share one landmark rule (`earlierLandmarks`); the four guarded storage helpers
+  are one (`safeStorage`); the history legend rebuilds its layers only when buildings, the world or the age change.
+
+The tenth finding was that _Fire Contained_ and _The River Held_ would accept a firebreak, levee or dam left by an earlier age.
+In both scenarios the fire comes in the first age and the flood in the second, the age levees and dams can first be built, so
+no inherited defence can stand at either. Nothing was changed; a comment at the check says what a scenario moving those hazards
+later must add. The two feats' rule texts now say what is checked.
+
+**Verified (review fixes):** typecheck, lint, **323 Vitest tests** (34 files; +5: an unknown feat dropped on load; the
+levees-and-grove flood held against the same flood undefended, and for a building it reached less hard, and refused for
+defences that changed nothing, a flood that reached no one, or no projection; a third branch from the dig counted at founding; an Archive in disrepair lightly hit is no
+worse, keeps its integrity, and the report's damaged count matches the provenance; a building under construction is not called
+a ruin; the run-card test also checks a card from older rules is never ranked). One mutation per fix fails the tests: the
+current rules on cards, the flood without `held`, only buildings the water missed counted as spared, no check at founding, integrity reset, every touched building "damaged", no
+filter of unknown feats, and the old chronicle ending. `scripts/record-traces.ts` and `scripts/record-feats.ts` re-run: only
+hashes moved, on the five lineages where a catastrophe lightly strikes a building already worn by the centuries; every outcome,
+survivor count, condition, action and feat is unchanged. Browser: the full suite on the fixed build gave 68 passed, 3 skipped,
+1 failed (28.7 min). The failure was the desktop story spec: the stall guard paused the game right after a 176-tick fast-forward,
+and the pause overlay took the click (K-011). The test-only hook ignored only the frame that straddles a jump, but the redraw a
+jump causes can itself pass 2.5 s under software GL, so it now forgives the next three frames too. The full suite on that
+build: **69 passed, 3 skipped, 0 failed** (27.2 min).
 
 **Not verified:** a human playtest of whether the feats invite another lineage; WebKit; a real iPhone.

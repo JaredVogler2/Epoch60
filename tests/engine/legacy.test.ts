@@ -6,10 +6,12 @@ import {
   computeHash,
   createCampaign,
   dispatchAction,
+  resolveHazard,
   runTicks,
   UNIT,
 } from '../../src/engine';
-import { createStructure } from '../../src/engine/economy/structures';
+import type { Structure } from '../../src/engine';
+import { createStructure, removeStructure } from '../../src/engine/economy/structures';
 import { idx, inBounds } from '../../src/engine/world/query';
 import { act, begin, fresh, scriptedEpoch } from './helpers';
 
@@ -53,6 +55,47 @@ describe('collapse', () => {
     for (const s of c.structures) {
       if (before.has(s.id)) expect(rank[s.status]!).toBeGreaterThanOrEqual(before.get(s.id)!);
     }
+  });
+
+  it('a building already in disrepair that the hazard barely touches is no worse for it, and is never mended', () => {
+    const c = fresh();
+    begin(c);
+    runTicks(c, 599);
+    // In the fire's path, an Archive already in disrepair is touched (some damage: it resists fire well) but not
+    // harmed further.
+    let s: Structure | undefined;
+    const free = (x: number, y: number) =>
+      [0, 1].every((dx) =>
+        [0, 1].every((dy) => {
+          if (!inBounds(x + dx, y + dy, c.world.w, c.world.h)) return false;
+          const i = idx(x + dx, y + dy, c.world.w);
+          return !c.world.water[i] && c.world.occ[i] === -1;
+        }),
+      );
+    for (const q of resolveHazard(c).cells.sort((a, b) => a.intensity - b.intensity)) {
+      if (!free(q.x, q.y)) continue;
+      const t = createStructure(c, 'archive', q.x, q.y, 0, 'damaged');
+      t.integrity = 400;
+      const hit = resolveHazard(c).impacts.find((x) => x.id === t.id);
+      if (hit && hit.after === 'active' && hit.damage > 0) {
+        s = t;
+        break;
+      }
+      removeStructure(c, t.id);
+    }
+    expect(s).toBeDefined();
+    runTicks(c, 1);
+    expect(c.report).not.toBeNull();
+    expect(s!.status).toBe('damaged');
+    // A light blow does not mend it (it used to reset integrity to what that blow alone left).
+    expect(s!.integrity).toBe(400);
+    expect(s!.provenance.at(-1)).toBe(
+      `Archive at (${s!.x},${s!.y}) came through The Great Fire, still in disrepair.`,
+    );
+    // "Damaged by" in the report means damaged by this catastrophe, and the provenance says the same.
+    const damagedBy = c.structures.filter((x) => x.provenance.at(-1)?.includes('was damaged by'));
+    expect(damagedBy).not.toContain(s);
+    expect(c.report!.structuresDamaged).toBe(damagedBy.length);
   });
 
   it('deaths come only from homes lost or people caught outdoors, and never exceed the population', () => {

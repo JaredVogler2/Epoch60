@@ -1,6 +1,7 @@
 import { hashString } from '../engine/core/hash';
 import { DIFFICULTY, RULES_VERSION, SCENARIOS, legacyOf } from '../engine';
 import type { Campaign, Difficulty, GameMode } from '../engine';
+import { safeStorage } from './persist';
 
 /**
  * Ways to start a lineage beyond the story: a shared seed, today's Daily Ruins, or a random expedition.
@@ -93,17 +94,9 @@ export interface RunCard extends RunSpec {
 const RUNS_KEY = 'epoch60.runs.v1';
 export const MAX_CARDS = 40;
 
-function store(): Storage | null {
-  try {
-    return typeof localStorage === 'undefined' ? null : localStorage;
-  } catch {
-    return null;
-  }
-}
-
 export function loadRuns(): RunCard[] {
   try {
-    const raw = store()?.getItem(RUNS_KEY);
+    const raw = safeStorage()?.getItem(RUNS_KEY);
     if (!raw) return [];
     const v = JSON.parse(raw) as unknown;
     if (!Array.isArray(v)) return [];
@@ -160,7 +153,8 @@ export function cardOf(
     ...(c.mode === 'assisted' ? { mode: 'assisted' as const } : {}),
     ...(branch !== null ? { branch } : {}),
     legacy: legacyOf(c)?.total ?? 0,
-    rules: RULES_VERSION,
+    // The rules the lineage began under: one resumed from an older save or branch point is not a current-rules run.
+    rules: c.rules,
   };
 }
 
@@ -168,7 +162,7 @@ export function cardOf(
 export function saveRun(card: RunCard): RunCard[] {
   const all = [card, ...loadRuns().filter((r) => r.id !== card.id)].slice(0, MAX_CARDS);
   try {
-    store()?.setItem(RUNS_KEY, JSON.stringify(all));
+    safeStorage()?.setItem(RUNS_KEY, JSON.stringify(all));
   } catch {
     /* ignore */
   }

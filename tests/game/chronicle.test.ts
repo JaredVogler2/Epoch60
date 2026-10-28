@@ -39,7 +39,7 @@ describe('the chronicle of works tells what the engine recorded, and nothing els
       'Survived The Great Fire.',
       'Untouched by The Great Flood.',
       'Weathered into disrepair over the centuries.',
-      'Restored by the people of the Age of Iron.',
+      'The people of the Age of Iron set about restoring it.',
       'Untouched by The Great Quake.',
       `Knowledge kept here: ${['seismic_engineering', 'hydrology', 'masonry', 'writing'].map((t) => TECHS[t as keyof typeof TECHS].name).join(', ')}.`,
       'It stands.',
@@ -49,7 +49,14 @@ describe('the chronicle of works tells what the engine recorded, and nothing els
     expect(quarry.story).toContain(
       'Dug up by the people of the Age of Bronze: Cut blocks stacked beside the face, never hauled away.',
     );
-    expect(quarry.story.filter((l) => l.startsWith('Restored by the people of the'))).toHaveLength(2);
+    expect(quarry.story.filter((l) => / set about restoring it\.$/.test(l))).toHaveLength(2);
+  });
+
+  it('a building still being worked on when the end came is not called a ruin', () => {
+    const c = archivists();
+    const quarry = c.structures.find((x) => x.id === chronicleOf(c)[2]!.id)!;
+    quarry.status = 'constructing';
+    expect(chronicleOf(c)[2]!.story.at(-1)).toBe('The work on it was unfinished when the end came.');
   });
 
   it('a hearth tells its own founding, and a ruin how it lies', () => {

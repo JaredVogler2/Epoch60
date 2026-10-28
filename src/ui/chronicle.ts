@@ -25,9 +25,10 @@ export function retell(c: Campaign, s: Structure, line: string): string {
   const prefix = `${BUILDINGS[s.kind].name} at (${s.x},${s.y}) `;
   const t = (line.startsWith(prefix) ? line.slice(prefix.length) : line)
     // Ages are numbered from 1 in these lines: "Repaired in epoch 3." is the third age's doing.
+    // Written when the work was ordered: whether it was finished is told by the story's last sentence.
     .replace(
       /^Repaired in epoch (\d+)\.$/,
-      (_, n: string) => `Restored by the people of the ${ageName(c, Number(n) - 1)}.`,
+      (_, n: string) => `The people of the ${ageName(c, Number(n) - 1)} set about restoring it.`,
     )
     .replace(
       /^Excavated in epoch (\d+): /,
@@ -64,9 +65,11 @@ export function chronicleOf(c: Campaign, max = 3): Biography[] {
       story.push(
         s.status === 'active' || s.status === 'damaged'
           ? 'It stands.'
-          : s.status === 'buried'
-            ? 'It lies buried.'
-            : 'It lies in ruins.',
+          : s.status === 'constructing'
+            ? 'The work on it was unfinished when the end came.'
+            : s.status === 'buried'
+              ? 'It lies buried.'
+              : 'It lies in ruins.',
       );
       return { id: s.id, title: `The ${BUILDINGS[s.kind].name} at (${s.x},${s.y})`, story };
     });

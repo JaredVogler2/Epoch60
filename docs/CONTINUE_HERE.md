@@ -20,7 +20,10 @@ from its founding as an unranked branch; a **history lens** on the map (always o
 age's buildings and ruins, where each catastrophe reached (from its report) and the eroded ground; the ending's **legacy** counts only what
 lasted (people, knowledge, works, feats), and since rules 0.4.1 the debrief's livelihood counts standing works, so clearing and rebuilding
 farms nothing; **then and now** pictures of each age, from one viewpoint, compare as a slider between ages and pair up in the Atlas
-(session memory only); a **chronicle of works** on the ending retells the most storied buildings' lives from their recorded events. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+(session memory only); a **chronicle of works** on the ending retells the most storied buildings' lives from their recorded events. A code review of
+that work found nine real defects (run cards stamped with the current rules, two feats checked too loosely or too rarely, a worn building lightly
+struck counted as damaged and mended, unknown feats able to crash the ending, a building under construction called a ruin), all fixed with
+mutation-checked tests (`docs/PROGRESS.md`, session 6). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -41,8 +44,8 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 4. **Phase 16 remainder (K-022):** endless play after the capstone and variety unlocks with no power (challenge mutators that
    are also Phase 13's world modifiers would serve both); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
-5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
-   then-vs-now slider, more story decisions.
+5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, more
+   story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.
 

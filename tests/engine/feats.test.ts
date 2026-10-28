@@ -8,7 +8,10 @@ import {
   computeHash,
   createCampaign,
   deserialize,
+  dispatchAction,
   replayCampaign,
+  resolveHazard,
+  runTicks,
   serialize,
 } from '../../src/engine';
 import type { Campaign, Structure, Transcript } from '../../src/engine';
@@ -212,6 +215,16 @@ describe('feats', () => {
     }
   });
 
+  it('a save naming a feat this build does not know loads without it, never crashing on it', () => {
+    const c = createCampaign(6001);
+    c.lineage.feats = [
+      { id: 'archive_built', epoch: 0 },
+      { id: 'tamed_the_comet' as never, epoch: 0 },
+    ];
+    // Written by another build: its own hash is valid, but one record names a feat unknown here.
+    expect(deserialize(serialize(c)).lineage.feats).toEqual([{ id: 'archive_built', epoch: 0 }]);
+  });
+
   it('a save written before feats existed loads with none', () => {
     const c = createCampaign(6001);
     const old = structuredClone(c) as unknown as { lineage: Record<string, unknown> };
@@ -300,5 +313,51 @@ describe('feat rules at their edges', () => {
     };
     expect(keep(2)).toContain('every_field');
     expect(keep(1)).not.toContain('every_field');
+  });
+
+  it('the river is held only where the levees and dams spared a building harm the water would have done', () => {
+    // The levees-and-grove run one tick before its flood: the flood as it comes, and the same flood undefended.
+    const t = load('feats/levees-and-grove');
+    const k = t.actions.findIndex((a) => a.epoch === 1 && a.tick >= 600);
+    const c = replayCampaign({ ...t, actions: t.actions.slice(0, k), totalTicks: 0 });
+    runTicks(c, 599 - c.tick);
+    expect([c.phase, c.epoch, c.tick]).toEqual(['ACTIVE', 1, 599]);
+    const defended = resolveHazard(c, 'flood');
+    const undefended = resolveHazard(
+      { ...c, structures: c.structures.filter((s) => s.kind !== 'levee' && s.kind !== 'dam') },
+      'flood',
+    );
+    expect(undefended.impacts.length).toBeGreaterThan(defended.impacts.length);
+    const flood = replay('feats/levees-and-grove').lineage.reports[1]!;
+    const award = (u: typeof undefended | null) => {
+      const x = fresh();
+      featsOnCollapse(x, flood, null, u);
+      return ids(x);
+    };
+    expect(award(undefended)).toContain('flood_held');
+    // A building the water still reached, but less hard than it would have with no levee or dam, was spared harm too.
+    const hit = flood.result.impacts[0]!;
+    expect(award({ ...flood.result, impacts: [{ ...hit, damage: hit.damage + 50 }] })).toContain(
+      'flood_held',
+    );
+    // Defences that changed nothing, or a flood that could never have reached anyone, hold nothing back.
+    expect(award(defended)).not.toContain('flood_held');
+    expect(award({ ...undefended, impacts: [] })).not.toContain('flood_held');
+    expect(award(null)).not.toContain('flood_held');
+  });
+
+  it('a third branch of knowledge dug up between ages counts when the next age is founded', () => {
+    const t = load('greenvale/archivists');
+    const k = t.actions.findIndex((a) => a.action.type === 'found');
+    const c = replayCampaign({ ...t, actions: t.actions.slice(0, k), totalTicks: 0 });
+    expect(c.phase).toBe('INTERREGNUM');
+    c.lineage.feats = [];
+    // Industry and ecology from research; resilience only on the tablets the dig recovered.
+    c.lineage.everKnown = ['masonry', 'forestry'];
+    c.report!.retainedTechs = [];
+    c.lineage.interregnum!.techs = ['writing'];
+    expect(dispatchAction(c, t.actions[k]!.action).ok).toBe(true);
+    expect(c.phase).toBe('PREPARE');
+    expect(c.lineage.feats).toContainEqual({ id: 'three_branches', epoch: 1 });
   });
 });

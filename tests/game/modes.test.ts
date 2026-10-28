@@ -131,6 +131,11 @@ describe('run cards', () => {
     // It carries the lineage's legacy and the rules that scored it.
     expect(card.legacy).toBe(legacyOf(c)!.total);
     expect(card.rules).toBe(RULES_VERSION);
+    // A lineage begun under older rules (resumed from an old save or branch point) is marked as such, never ranked.
+    c.rules = '0.4.0';
+    const older = cardOf(c, undefined, new Date('2026-10-27T11:00:00Z'))!;
+    expect(older.rules).toBe('0.4.0');
+    expect(bestFor([older], { seed: 6001, scenario: 'greenvale', difficulty: 'normal' })).toBeNull();
   });
 
   it('persist newest first, bounded, and survive corrupt or disabled storage', () => {

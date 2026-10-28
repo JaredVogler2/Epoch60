@@ -3,6 +3,7 @@ import { hashValue } from '../core/hash';
 import type { Action, Campaign, Difficulty, LoggedAction } from '../core/types';
 import { advanceFixedTick, createCampaign, dispatchAction } from '../campaign';
 import { DIFFICULTY, SCENARIOS } from '../content/scenario';
+import { FEATS } from '../legacy/feats';
 
 export interface SaveFile {
   schema: number;
@@ -85,7 +86,14 @@ export function deserialize(text: string): Campaign {
   if (computeHash(c) !== file.hash) throw new SaveError('Save data failed its integrity check');
   c.prompts ??= []; // saves written before story decisions existed
   c.difficulty ??= 'normal'; // ... or before difficulty tiers
-  if (c.lineage) c.lineage.feats ??= []; // ... or before feats
+  if (c.lineage) {
+    c.lineage.feats ??= []; // ... or before feats
+    // A save or branch point from another build may name feats this one does not have: drop them, never crash on them.
+    if (Array.isArray(c.lineage.feats))
+      c.lineage.feats = c.lineage.feats.filter(
+        (f) => !!f && Object.prototype.hasOwnProperty.call(FEATS, f.id) && Number.isInteger(f.epoch),
+      );
+  }
   validateShape(c);
   if (c.phase === 'ACTIVE') c.paused = true;
   return c;

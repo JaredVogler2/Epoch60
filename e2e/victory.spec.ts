@@ -72,7 +72,9 @@ for (const [dir, route, legacy] of CASES) {
     const works = await page.getByTestId('chronicle-work').allInnerTexts();
     expect(works.length).toBeGreaterThan(0);
     for (const w of works)
-      expect(w).toMatch(/^The .+ at \(\d+,\d+\)\. .+ It (stands|lies buried|lies in ruins)\.$/);
+      expect(w).toMatch(
+        /^The .+ at \(\d+,\d+\)\. .+ (It stands|It lies buried|It lies in ruins|The work on it was unfinished when the end came)\.$/,
+      );
     await shot(page, info, `victory-${dir}-${route}`);
   });
 }
