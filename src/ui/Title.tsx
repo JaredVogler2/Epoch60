@@ -116,7 +116,7 @@ export function TitleScreen() {
             </div>
             <p className="diff-note" id="seed-note" data-testid="seed-note">
               {typed
-                ? `Valley ${typed}${shared.seed === typed ? ' (shared link)' : ''}${best ? ` · your best: ${best.outcome === 'victory' ? 'won' : 'lost'} with ${best.survivors} survivors` : ''}`
+                ? `Valley ${typed}${shared.seed === typed ? ' (shared link)' : ''}${best ? ` · your best: ${best.outcome === 'victory' ? 'won' : 'lost'} with ${best.survivors} survivors, legacy ${best.legacy ?? 0}` : ''}`
                 : 'A number or any words. Same seed, same valley and same disasters — share it.'}
             </p>
             <button
@@ -294,6 +294,7 @@ export function TitleScreen() {
               {r.outcome === 'victory' ? '✓' : '✗'} {SCENARIOS[r.scenario]?.name ?? r.scenario} ·{' '}
               {r.difficulty}
               {r.mode === 'assisted' ? ' · assisted' : ''} · seed {r.seed} · {r.survivors} survivors
+              {r.legacy !== undefined ? ` · legacy ${r.legacy}` : ''}
               {r.daily ? ` · daily ${r.daily}` : ''}
               {r.branch ? ` · branch from age ${ROMAN[r.branch]}` : ''}
             </li>

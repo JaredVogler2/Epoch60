@@ -152,7 +152,13 @@ function heritageOf(c: Campaign): Structure[] {
   return c.structures.filter((s) => BUILDINGS[s.kind].heritage && isStanding(s));
 }
 
-function scoreOf(c: Campaign, survivors: number, retained: TechId[], heritage: number): ScoreBreakdown {
+function scoreOf(
+  c: Campaign,
+  survivors: number,
+  retained: TechId[],
+  heritage: number,
+  standing: number,
+): ScoreBreakdown {
   const w = c.world;
   let f = 0;
   let fe = 0;
@@ -165,7 +171,7 @@ function scoreOf(c: Campaign, survivors: number, retained: TechId[], heritage: n
   }
   const s = c.civ.stats;
   const people = survivors * 100;
-  const livelihood = Math.round(s.foodMade / UNIT) * 2 + s.built * 10;
+  const livelihood = Math.round(s.foodMade / UNIT) * 2 + standing * 10;
   const knowledge = retained.length * 120 + s.researched * 30;
   const ecology = Math.round((f + fe) / Math.max(1, n) / 10);
   const heritageScore = heritage * 150;
@@ -242,6 +248,8 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   const kind = spec.hazard.kind;
   const result = resolveHazard(c, kind);
   const survivorsBefore = c.civ.pop;
+  // The works standing when the minute ends: the village's livelihood, which clearing and rebuilding cannot inflate.
+  const standingBefore = c.structures.filter(isStanding).length;
   const { deaths, lines } = computeDeaths(c, result.impacts, kind);
   // The larder as it stood before the winter: the report must explain the deaths, not the empty village after them.
   const larder = kind === 'ash' ? winterLarder(c) : null;
@@ -335,7 +343,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   });
 
   const heritage = heritageOf(c);
-  const score = scoreOf(c, survivors, retained, heritage.length);
+  const score = scoreOf(c, survivors, retained, heritage.length, standingBefore);
   const intact = c.structures.filter(
     (s) => s.status === 'active' && (s.provenance.at(-1) ?? '').includes('survived'),
   ).length;

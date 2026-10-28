@@ -1,5 +1,5 @@
 import { hashString } from '../engine/core/hash';
-import { DIFFICULTY, SCENARIOS } from '../engine';
+import { DIFFICULTY, RULES_VERSION, SCENARIOS, legacyOf } from '../engine';
 import type { Campaign, Difficulty, GameMode } from '../engine';
 
 /**
@@ -85,6 +85,9 @@ export interface RunCard extends RunSpec {
   mode?: GameMode;
   /** The age a branched lineage was last replayed from (absent = a straight lineage). Branches are never ranked. */
   branch?: number;
+  /** The lineage's legacy (what lasted) and the rules it was scored under; cards without them predate both. */
+  legacy?: number;
+  rules?: string;
 }
 
 const RUNS_KEY = 'epoch60.runs.v1';
@@ -125,7 +128,9 @@ function isCard(x: unknown): x is RunCard {
     (c.outcome === 'victory' || c.outcome === 'defeat') &&
     finite(c.survivors) &&
     (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted') &&
-    (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1))
+    (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1)) &&
+    (c.legacy === undefined || finite(c.legacy)) &&
+    (c.rules === undefined || typeof c.rules === 'string')
   );
 }
 
@@ -154,6 +159,8 @@ export function cardOf(
     hash: hashString(JSON.stringify([c.seed, c.scenario, c.difficulty, c.totalTicks, c.actionLog.length])),
     ...(c.mode === 'assisted' ? { mode: 'assisted' as const } : {}),
     ...(branch !== null ? { branch } : {}),
+    legacy: legacyOf(c)?.total ?? 0,
+    rules: RULES_VERSION,
   };
 }
 
@@ -169,8 +176,9 @@ export function saveRun(card: RunCard): RunCard[] {
 }
 
 /**
- * The best local result for a spec: victories beat defeats, then more survivors. Assisted runs rank only among
- * themselves; a branch (an age replayed from its start) is never ranked.
+ * The best local result for a spec: victories beat defeats, then the greater legacy, then more survivors. Only runs
+ * scored under these rules are compared; Assisted runs rank only among themselves; a branch (an age replayed from its
+ * start) is never ranked.
  */
 export function bestFor(
   runs: RunCard[],
@@ -183,10 +191,14 @@ export function bestFor(
       r.scenario === spec.scenario &&
       r.difficulty === spec.difficulty &&
       (r.mode ?? 'standard') === mode &&
-      r.branch === undefined,
+      r.branch === undefined &&
+      r.rules === RULES_VERSION,
   );
   mine.sort(
-    (a, b) => Number(b.outcome === 'victory') - Number(a.outcome === 'victory') || b.survivors - a.survivors,
+    (a, b) =>
+      Number(b.outcome === 'victory') - Number(a.outcome === 'victory') ||
+      (b.legacy ?? 0) - (a.legacy ?? 0) ||
+      b.survivors - a.survivors,
   );
   return mine[0] ?? null;
 }

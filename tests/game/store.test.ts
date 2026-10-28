@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { REINFORCE_BONUS, createCampaign, getForecast, runTicks } from '../../src/engine';
+import { REINFORCE_BONUS, RULES_VERSION, createCampaign, getForecast, runTicks } from '../../src/engine';
 import { findSpot } from '../../src/engine/ai/spots';
 import { createStructure } from '../../src/engine/economy/structures';
 import { loadCodex } from '../../src/game/codex';
@@ -86,6 +86,7 @@ describe('run cards', () => {
       techs: 0,
       epochs: 3,
       hash: '',
+      rules: RULES_VERSION,
       ...over,
     });
     const runs = [card({ outcome: 'victory', survivors: 12, mode: 'assisted' }), card({ survivors: 4 })];

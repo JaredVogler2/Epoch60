@@ -8,6 +8,7 @@ import {
   UNIT,
   currentSpec,
   getScenario,
+  legacyOf,
   ruinYield,
   unplan,
   victoryFor,
@@ -539,6 +540,7 @@ export function EndScreen() {
   const win = c.phase === 'VICTORY';
   const branchAges = s.branchAges();
   const v = c.report?.verdict;
+  const legacy = legacyOf(c);
   return (
     <div
       ref={ref}
@@ -560,6 +562,26 @@ export function EndScreen() {
               </li>
             ))}
           </ul>
+        )}
+        {legacy && (
+          <section className="legacy" data-testid="legacy" aria-label="Legacy">
+            <h3>
+              Legacy <b data-testid="legacy-total">{legacy.total}</b>
+            </h3>
+            <ul>
+              {legacy.parts.map((p) => (
+                <li key={p.key} data-testid={`legacy-${p.key}`}>
+                  <b>
+                    {p.label} {p.points}
+                  </b>{' '}
+                  · {p.basis}
+                </li>
+              ))}
+            </ul>
+            <p className="dim small">
+              Only what lasted counts: the people, knowledge, works and feats the lineage ends with.
+            </p>
+          </section>
         )}
         <h3>Atlas of Ages</h3>
         <AtlasOfAges c={c} />
@@ -583,8 +605,7 @@ export function EndScreen() {
           ))}
         </ul>
         <p className="score-total">
-          Lineage score <b>{c.lineage.score}</b> · seed {c.seed} · {getScenario(c.scenario).name} ·{' '}
-          {DIFFICULTY[c.difficulty].name}
+          Seed {c.seed} · {getScenario(c.scenario).name} · {DIFFICULTY[c.difficulty].name}
           {s.runDaily ? ` · Daily Ruins ${s.runDaily}` : ''}
           {s.branch !== null && (
             <span data-testid="branch-mark"> · a branch from Age {ROMAN[s.branch]}, not ranked</span>

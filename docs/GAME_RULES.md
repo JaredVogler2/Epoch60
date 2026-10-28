@@ -186,8 +186,26 @@ Starting resources = scenario base + tradition + excavated yield + 10 food from 
 
 ## 9. Scoring and endings
 
-Score (debrief): `people = 100 × survivors`, `livelihood = 2 × food made + 10 × buildings`, `knowledge = 120 × retained + 30 × researched`,
-`ecology = (meanForest + meanFertility)/10`, `heritage = 150 × heritage structures standing`.
+Score (debrief, one age): `people = 100 × survivors`, `livelihood = 2 × food made + 10 × buildings standing when the minute
+ends`, `knowledge = 120 × retained + 30 × researched`, `ecology = (meanForest + meanFertility)/10`,
+`heritage = 150 × heritage structures standing`. Since rules 0.4.1 livelihood counts the works standing as the catastrophe
+comes, not every completion: building and clearing the same works again and again no longer inflates it.
+
+**Legacy (the ending, the whole lineage)** counts only what lasted, read from the state after the last catastrophe
+(`src/engine/legacy/score.ts`):
+
+| Part      | Points                                                                                   |
+| --------- | ---------------------------------------------------------------------------------------- |
+| People    | 100 per person who came through the last catastrophe                                     |
+| Knowledge | 120 per technology still held                                                            |
+| Works     | 30 per building still standing, and 150 more per landmark from an earlier age among them |
+| Feats     | 100 per feat the lineage earned                                                          |
+
+Every part is a count of what is there at the end, never a running tally, so clearing and rebuilding, or waiting, adds
+nothing. There is no part for the land: between ages the valley regrows and is enriched on its own, so every recorded
+lineage that reached its last age ends far greener than it began whatever was built, and such a part would measure the centuries, not the people
+(K-023). A run card keeps its legacy and the rules version; "best for this valley" compares only runs scored under the same
+rules: a victory first, then the greater legacy, then more survivors.
 
 - **Defeat (any epoch):** fewer than 3 survivors — "no one is left to remember".
 - **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 **landmark** from an _earlier_ epoch still standing — a Hearth a later society kept (refounding on the same spot), a Seed Vault, a Dam or a Bridge — **and** ≥ 3 technologies carried through the final collapse (a surviving people keeps 1 by oral tradition and 1 more through the Hearth, so an Archive must stand to reach 3). Since rules 0.4.0 an **Archive is not a landmark**: it carries the knowledge, so no single building answers two conditions (before, one well-sited Archive won Greenvale/Normal on every seed; K-003). The planning card lists the three conditions with a live landmark count.

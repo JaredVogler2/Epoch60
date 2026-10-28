@@ -8,7 +8,8 @@ src/engine/      Plain TypeScript, no React/DOM, no Math.random/Date.now (lint-e
   economy/       placement, labor, production, population, research, structure helpers, site suggestions
   events/        story decisions (state-derived prompts with a free default at the deadline)
   legacy/        collapse (resolve once, casualties, retention, report, verdict), inheritance (time-skip, archaeology,
-                 sites and traditions, founding), feats (awarded at the moment they happen, kept in lineage.feats)
+                 sites and traditions, founding), feats (awarded at the moment they happen, kept in lineage.feats),
+                 score (the legacy: what lasted, read from the state, never stored)
   ai/            findSpot, priority-list bot framework, baseline policies and the scripted routes (Engineers, Archivists)
   save/          computeHash, serialize/deserialize (integrity hash + shape validation), transcript + replay
   campaign.ts    createCampaign, dispatchAction, advanceFixedTick, getCatalog, getForecast, repairBlocked
