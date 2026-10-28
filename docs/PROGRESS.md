@@ -573,4 +573,11 @@ hash (its founding records name the age; re-recorded, the same feats). Captured 
 buildings raised in age III and in age IV, side by side) and inspected (`docs/3D_QUALITY_REPORT.md`, review copy
 `docs/review/visual/v7-spires.jpg`): the copper and the spires tell the ages apart at play zoom; the pennants read only up
 close.
+**Verified (feats and spires):** typecheck, lint, **367 Vitest tests** (39 files; the long-chronicle feat run in
+`tests/engine/feats.test.ts` with its exact list, the legacy test counting fourteen recorded fixtures, the spec test
+naming the Age of Spires); two mutations (either new feat awarded at any later age) fail them. The full browser suite on
+the long-chronicle build (`19664d0`): **78 passed, 3 skipped, 1 failed** (44.9 min; the desktop then-and-now spec waiting
+in vain for a picture while a screenshot browser of mine ran beside it). On the final build: the then-and-now, Codex
+(now twenty feats) and chronicle specs on both profiles passed, except that desktop then-and-now timeout once more,
+alone; it then passed 14 times running (alone, and after the chronicle and Codex specs). Its cause is not found (K-011).
 
