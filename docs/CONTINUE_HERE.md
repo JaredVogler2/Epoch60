@@ -1,6 +1,6 @@
 # CONTINUE HERE
 
-**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (PRs #1–#5 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
+**Branch:** `claude/determined-wright-c0aptv` · **PR:** the open PR for this branch (#10, the long chronicle; PRs #1–#9 were merged, often within minutes of CI going green; each time the branch was brought up to `main` without rewriting pushed history, because force-pushes are refused here, and a new PR opened) · Last verified commit: see `git log -1`.
 
 ## State
 
@@ -28,7 +28,12 @@ challenge mutators: twelve in the engine (`src/engine/content/modifiers.ts`, `wo
 recorded hash moved), opened on the title by Codex feats (`src/game/challenges.ts`), carried by share links, run cards and branch
 points, ranked only against the same set, listed on the briefing and the ending; an expedition draws one to three of the open ones
 for a random valley; `scripts/challenges.ts` measures each with the bots (`docs/balance/challenges.md`). A finished lineage can be
-**watched again** from the ending: replayed through the clock at 1–4×, ending in exactly its recorded state hash. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+**watched again** from the ending: replayed through the clock at 1–4×, ending in exactly its recorded state hash. A victory
+can be **carried on** as **the long chronicle** (endless play after the capstone, bounded at twelve ages;
+`src/engine/legacy/endless.ts`, `epochSpec` in `content/scenario.ts`): each later age brings back one of the scenario's
+catastrophes, 10% fiercer per age in reach, harm and every building's resistance; later ages are not judged, the chronicle
+ends when fewer than three survive or after age XII, or is rested at a debrief, and gets its own unranked card. Over 20 seeds
+the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -46,11 +51,11 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 16 remainder (K-022):** endless play after the capstone; other variety unlocks (terrain packs, real-art building
-   skins); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
+4. **Phase 16 remainder (K-022):** other variety unlocks (terrain packs, real-art building skins); the long chronicle's
+   later ages reuse everything (K-024: an Age IV architecture or a catastrophe of their own would give them something new); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
-5. **Phase 13 / 14:** 8–12-epoch campaigns (expeditions' variable epoch target needs them), sandbox (K-004); a
-   recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
+5. **Phase 13 / 14:** authored 8–12-epoch scenarios (expeditions' variable epoch target needs them; the long chronicle
+   already lets a won lineage live twelve ages), sandbox (K-004); a recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
    story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.

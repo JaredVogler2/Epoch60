@@ -546,5 +546,14 @@ with four Atlas entries and an unranked card on the title. Captures of the offer
 fire and the ending inspected on both profiles. Before this work the full suite ran on the build PR #9 shipped
 (`c73e412`/`24f1536`): **76 passed, 3 skipped, 1 failed** (44.0 min): the desktop real-time journey timed out on the
 Skip button mid-catastrophe, and alone on the same build it passed (2 of 2, 1.8 min), the software-GL timing class
-of K-011. The measurement over many seeds comes next.
+of K-011.
+**Measured over 20 seeds** (`docs/balance/chronicle.md`, from `scripts/chronicle.ts`: both scenarios, Normal, the two
+route bots, every victory carried on toward the twelfth age and never rested early). The Archivists, who build out of
+every catastrophe's way, live all twelve ages on every seed of both scenarios (20/20 and 20/20), with 9.6–13.9 people
+left after each later catastrophe on average. The Engineers, who hold the line with walls and reinforcement, complete the
+chronicle on 8 of their 19 Greenvale victories and 14 of 20 on The Ashen Winter; the rest fall, mostly to the Fourth
+Great Fire at age X (10 Greenvale lineages and 4 Ashen ones end there; the Greenvale mean is 3.2 people after it), a few
+at age VII and one at age IV. The returning fires are the chronicle's killer: the floods and quakes (or ash winters)
+leave the bots' villages largely standing even at ×1.9. Bots replay their first plans, so this is how fiercer returns
+wear down a fixed plan, not how long a player who adapts can last.
 

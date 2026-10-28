@@ -526,4 +526,6 @@ already won stands and keeps its own run card.
   lineage's state hash moved). Each later age's founding is a branch point like any other.
 - **Bots.** The route policies meet a returning catastrophe with the plan they made for its first coming (`planAge` in
   `src/engine/ai/routes.ts`); `playCampaign(…, { ages })` carries a victory on and rests it after that many ages.
-  `scripts/chronicle.ts` measures how long each policy's lineages last (`docs/balance/chronicle.md`).
+  `scripts/chronicle.ts` measures how long each policy's lineages last (`docs/balance/chronicle.md`). Over seeds 1–20
+  of both scenarios (Normal), the Archivists live all twelve ages on every seed; the Engineers complete on 8 of their 19
+  Greenvale victories and 14 of 20 Ashen ones, the rest falling mostly to the Fourth Great Fire at age X.
