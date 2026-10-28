@@ -16,6 +16,7 @@ import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
 import { presentation } from '../render/presentation';
 import { AtlasOfAges, FeatChips, nextIdeas } from './Codex';
+import { HistoryLegend } from './HistoryLegend';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
@@ -37,6 +38,7 @@ export function PrepareCard() {
   const f = s.getForecastCached();
   const plans = c.queue.filter((q) => q.action.type === 'build' || q.action.type === 'research');
   const inherited = c.structures.filter((x) => x.originEpoch < c.epoch);
+  const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches;
   const ruins = inherited.filter((x) => x.status === 'rubble' || x.status === 'buried').length;
   const standing = inherited.filter((x) => x.status === 'active' || x.status === 'damaged').length;
   const win = victoryFor(scenario, c.difficulty);
@@ -68,9 +70,20 @@ export function PrepareCard() {
             <Icon name="layers" size={14} /> Inherited: {standing} standing work{standing === 1 ? '' : 's'},{' '}
             {ruins} ruin{ruins === 1 ? '' : 's'}, {c.civ.techs.length} technolog
             {c.civ.techs.length === 1 ? 'y' : 'ies'}
-            {c.civ.techs.length > 0 && ` (${c.civ.techs.map((t) => TECHS[t].name).join(', ')})`}.
+            {c.civ.techs.length > 0 && ` (${c.civ.techs.map((t) => TECHS[t].name).join(', ')})`}.{' '}
+            <button
+              type="button"
+              className="btn sm"
+              aria-pressed={s.showHistory}
+              data-testid="toggle-history"
+              onClick={() => s.toggleHistory()}
+            >
+              {s.showHistory ? 'Hide history' : 'Show history on the map'}
+              {!touch && <span className="kbd-hint"> (H)</span>}
+            </button>
           </p>
         )}
+        {c.epoch > 0 && s.showHistory && <HistoryLegend reveal />}
         {f && (
           <div className="forecast-box">
             <Icon name={hazardIcon(spec.hazard.kind)} size={20} />
@@ -422,6 +435,7 @@ export function InterregnumScreen() {
           <li key={i}>{l}</li>
         ))}
       </ul>
+      <HistoryLegend />
 
       <h3>
         Ruins{' '}

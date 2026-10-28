@@ -26,6 +26,7 @@ import { FrontFx } from './FrontFx';
 import { Interaction } from './Interaction';
 import {
   ForecastOverlay,
+  HistoryLens,
   HoverRing,
   PlacementGhost,
   PlannedMarkers,
@@ -312,6 +313,7 @@ export function GameCanvas() {
         <AshFall />
         <CollapseDirector />
         <ForecastOverlay />
+        <HistoryLens />
         <RiskMarkers />
         <PlannedMarkers />
         <SelectionRing />

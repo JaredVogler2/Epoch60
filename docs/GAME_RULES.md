@@ -312,7 +312,7 @@ Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers,
 ## 16. Accessibility and audio
 
 - **Keyboard:** Tab through every control; `1`–`9` choose a building; `N` jumps to the next suggested site (safe-from-forecast first, then nearest the village); arrow keys nudge the
-  ghost one cell (the camera keeps WASD); `R` rotates; `Enter` builds; `Esc` cancels; `Space` pauses. The whole first epoch can be played without a pointer (`e2e/a11y.spec.ts`).
+  ghost one cell (the camera keeps WASD); `R` rotates; `Enter` builds; `Esc` cancels; `Space` pauses; `H` shows or hides the history lens while planning an inherited age. The whole first epoch can be played without a pointer (`e2e/a11y.spec.ts`).
 - **Screen readers:** a polite live region announces each age, 30 s and 10 s left, each forecast warning, the collapse headline, the debrief and the verdict — never every tick;
   warnings are `role=alert`; the placement message states whether the site is valid and why not.
 - **Motion:** the OS "reduce motion" preference is the default for the in-game setting; with it, the catastrophe card appears at once with the facts and the camera does not shake.
@@ -363,3 +363,19 @@ catastrophe, people before and after, the most valuable technology it knew, the 
 ecology score and the first line of why it went as it did, plus that age's feats — then the lineage's feats, and two or
 three **ideas for the next lineage**: first what the lineage lacked when the end came (people, a landmark, knowledge),
 then feats this device has not seen that the scenario allows, then another valley or Hard.
+
+**The history lens** puts the same history on the map (`src/render/history.ts`). Between ages it is always on, since that
+is when the player chooses what to dig and where to found. While planning an inherited age it is a toggle: the briefing's
+"Show history on the map" button, or `H`.
+
+- Every building and ruin is outlined in the colour of the age that raised it: standing works with an outline, ruins
+  hatched.
+- Each past catastrophe's reach is drawn from its collapse report: exactly the cells it recorded. A fading field could not
+  show it: a flood's own erosion falls below any useful mark once the centuries pass.
+- Eroded ground is land with erosion ≥ 30 of 1000, river excluded. Quarries, felling and floods all erode; on the recorded
+  runs what crosses the mark is felled woodland the flood then washed over, and quarry pits.
+- A legend counts each age's standing works and ruins, the cells each catastrophe reached, and the eroded cells.
+
+It reads the record and the world as they are now. It is drawn over the canopy, because a regrown forest would otherwise
+hide the history it grew over, and the hazard forecast steps aside while it is shown. It changes nothing in play. The first
+age has no history, so a toggle left on by an earlier lineage does not apply there.

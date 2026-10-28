@@ -87,6 +87,8 @@ export class GameStore {
   placing: Placing | null = null;
   ghost: { ok: true; info: PlacementOk } | { ok: false; error: ActionError } | null = null;
   showForecast = true;
+  /** The history lens while planning an age (between ages it is always shown). */
+  showHistory = false;
   panel: Panel = null;
   toast: Toast | null = null;
   pauseReason: PauseReason | null = null;
@@ -458,6 +460,11 @@ export class GameStore {
 
   toggleForecast(): void {
     this.showForecast = !this.showForecast;
+    this.emit();
+  }
+
+  toggleHistory(): void {
+    this.showHistory = !this.showHistory;
     this.emit();
   }
 

@@ -10,9 +10,9 @@ import {
   techCost,
 } from '../engine';
 import type { HazardKind, LaborFocus, ResourceKey, Structure, TechId } from '../engine';
-import { currentSpec } from '../engine';
+import { currentSpec, getScenario } from '../engine';
 import { Icon, RESOURCE_ICON, hazardIcon } from './icons';
-import { units } from './format';
+import { ROMAN, units } from './format';
 import { ruinFacts } from './ruins';
 import { useStore } from './useStore';
 import { useDialog } from './useDialog';
@@ -135,6 +135,12 @@ export function Inspector() {
               <li>
                 <Icon name="knowledge" size={14} /> Carries{' '}
                 {d.retains + (c.civ.techs.includes('writing') ? 2 : 0)} technologies through a collapse
+              </li>
+            )}
+            {st.originEpoch < c.epoch && (
+              <li data-testid="insp-built">
+                <Icon name="layers" size={14} /> Built in the{' '}
+                {getScenario(c.scenario).epochs[st.originEpoch]?.ageName} (age {ROMAN[st.originEpoch]})
               </li>
             )}
             <li>

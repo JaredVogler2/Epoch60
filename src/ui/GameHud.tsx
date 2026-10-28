@@ -37,6 +37,11 @@ function useShortcuts(): void {
       }
       // Placement and building keys only mean something while the minute is being planned or played.
       if (c.phase !== 'PREPARE' && c.phase !== 'ACTIVE') return;
+      // H: the history lens while planning an inherited age (between ages it is always shown).
+      if (e.key.toLowerCase() === 'h' && c.phase === 'PREPARE' && c.epoch > 0 && !s.placing) {
+        s.toggleHistory();
+        return;
+      }
       if (e.key.toLowerCase() === 'r' && s.placing) {
         s.rotatePlacing();
         return;

@@ -12,6 +12,7 @@ import {
 import { BUILDINGS, GRID_H, GRID_W, footprint } from '../engine';
 import type { BuildingKind, HazardKind, Structure } from '../engine';
 import { store } from '../game/store';
+import { AGE_COLORS, ERODED_COLOR, REACH_COLORS, historyLayers, lensShown } from './history';
 import { buildingModel } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
@@ -257,11 +258,18 @@ function forecastGeometry(cells: { x: number; y: number; intensity: number }[]):
   return g;
 }
 
+/** The history lens takes the map's overlay layer: the forecast and risk markers step aside while it is shown. */
+const historyShown = () => lensShown(store.campaign, store.screen, store.showHistory);
+
 export function ForecastOverlay() {
   useRevs();
   const c = store.campaign;
   const show =
-    !!c && store.screen === 'game' && store.showForecast && (c.phase === 'PREPARE' || c.phase === 'ACTIVE');
+    !!c &&
+    store.screen === 'game' &&
+    store.showForecast &&
+    !historyShown() &&
+    (c.phase === 'PREPARE' || c.phase === 'ACTIVE');
   const f = show ? store.getForecastCached() : null;
   const geom = useMemo(() => (f ? forecastGeometry(f.predicted.cells) : null), [f]);
   useEffect(() => () => geom?.dispose(), [geom]);
@@ -466,7 +474,11 @@ export function RiskMarkers() {
   useRevs();
   const c = store.campaign;
   const show =
-    !!c && store.screen === 'game' && store.showForecast && (c.phase === 'PREPARE' || c.phase === 'ACTIVE');
+    !!c &&
+    store.screen === 'game' &&
+    store.showForecast &&
+    !historyShown() &&
+    (c.phase === 'PREPARE' || c.phase === 'ACTIVE');
   const f = show ? store.getForecastCached() : null;
   if (!f) return null;
   const at = f.predicted.impacts.filter(
@@ -491,6 +503,106 @@ export function RiskMarkers() {
           />
         );
       })}
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* History lens: what each age left, between ages and on request       */
+/* ------------------------------------------------------------------ */
+
+/** Many terrain-hugging rectangles as one geometry (one draw call per age and state). */
+function mergedRects(rects: { x: number; y: number; w: number; h: number }[], lift: number): BufferGeometry {
+  const parts = rects.map((r) => rectDecal(r.x, r.y, r.w, r.h, lift));
+  const pos: number[] = [];
+  const uv: number[] = [];
+  const val: number[] = [];
+  const idx: number[] = [];
+  for (const g of parts) {
+    const base = pos.length / 3;
+    pos.push(...(g.getAttribute('position').array as Float32Array));
+    uv.push(...(g.getAttribute('aUv').array as Float32Array));
+    val.push(...(g.getAttribute('aVal').array as Float32Array));
+    for (const i of g.getIndex()!.array) idx.push(base + i);
+    g.dispose();
+  }
+  const out = new BufferGeometry();
+  out.setIndex(idx);
+  out.setAttribute('position', new BufferAttribute(new Float32Array(pos), 3));
+  out.setAttribute('aUv', new BufferAttribute(new Float32Array(uv), 2));
+  out.setAttribute('aVal', new BufferAttribute(new Float32Array(val), 1));
+  out.setAttribute('aCover', new BufferAttribute(new Float32Array(val), 1));
+  return out;
+}
+
+interface LensPart {
+  key: string;
+  geom: BufferGeometry;
+  mat: ShaderMaterial;
+}
+
+export function HistoryLens() {
+  useRevs();
+  const c = store.campaign;
+  const show = historyShown();
+  const key = show && c ? `${store.structRev}:${store.worldRev}:${c.epoch}` : '';
+  const parts = useMemo((): LensPart[] => {
+    if (!key || !c) return [];
+    const layers = historyLayers(c);
+    const out: LensPart[] = [];
+    // The ground first, as soft fields with a contour: where each catastrophe reached (exactly the cells its report
+    // recorded), then the worn ground.
+    const fields = [
+      ...layers.reach.map((r) => ({
+        key: `reach-${r.epoch}`,
+        cells: r.cells,
+        color: REACH_COLORS[r.kind],
+        fill: 0.5,
+      })),
+      { key: 'eroded', cells: layers.eroded, color: ERODED_COLOR, fill: 0.45 },
+    ];
+    for (const f of fields) {
+      if (!f.cells.length) continue;
+      const mat = decalMaterial(f.color, 0, 0.75);
+      mat.uniforms.uFill!.value = f.fill;
+      // A map layer, read over the canopy: a regrown forest would otherwise hide the very history it grew over.
+      mat.depthTest = false;
+      out.push({ key: f.key, geom: forecastGeometry(f.cells), mat });
+    }
+    // Then every building and ruin, in the colour of the age that raised it: standing outlined, ruins hatched.
+    const groups = new Map<string, { x: number; y: number; w: number; h: number }[]>();
+    for (const site of layers.sites) {
+      const k = `${site.epoch}:${site.ruin ? 'ruin' : 'standing'}`;
+      const list = groups.get(k) ?? [];
+      list.push({ x: site.x - 0.05, y: site.y - 0.05, w: site.w + 0.1, h: site.h + 0.1 });
+      groups.set(k, list);
+    }
+    for (const [k, rects] of groups) {
+      const [epoch, state] = k.split(':');
+      const color = AGE_COLORS[Number(epoch) % AGE_COLORS.length]!;
+      const mat = decalMaterial(color, state === 'ruin' ? 2 : 1, state === 'ruin' ? 0.75 : 0.65);
+      mat.depthTest = false;
+      out.push({ key: k, geom: mergedRects(rects, 0.075), mat });
+    }
+    return out;
+    // Rebuilt only when the structures, the world or the age change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  useEffect(
+    () => () => {
+      for (const p of parts) {
+        p.geom.dispose();
+        p.mat.dispose();
+      }
+    },
+    [parts],
+  );
+  if (!parts.length) return null;
+  return (
+    <group name="history-lens">
+      {parts.map((p) => (
+        <mesh key={p.key} geometry={p.geom} material={p.mat} renderOrder={6} frustumCulled={false} />
+      ))}
     </group>
   );
 }

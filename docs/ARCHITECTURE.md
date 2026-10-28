@@ -19,11 +19,14 @@ src/render/      React Three Fiber scene — a READ-ONLY projection of engine st
                  Scene (canvas, lights, tone mapping, context-loss recovery), atmosphere (shared clock/wind/clouds injected
                  into materials), Sky, terrain + water, Foliage + Outskirts + models/, Structures, SmokeField, Birds,
                  Citizens, CollapseFx + FrontFx + presentation (the collapse cinematic, render-only), Overlays (forecast,
-                 placement), CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
-src/ui/          DOM HUD, tray, inspector and panels, debrief, interregnum, ending (Atlas of Ages, feats, ideas for the
-                 next lineage), title (incl. the Codex); useDialog (modal focus); Fallback (error boundary, no-WebGL screen)
+                 placement, the history lens drawn from history.ts: each age's works, each catastrophe's recorded reach,
+                 eroded ground), CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
+src/ui/          DOM HUD, tray, inspector and panels (ruins.ts: a ruin's story and worth), debrief, interregnum, ending
+                 (Atlas of Ages, feats, ideas for the next lineage), HistoryLegend, title (incl. the Codex); useDialog (modal
+                 focus); Fallback (error boundary, no-WebGL screen)
 tests/engine/    Vitest headless engine suites (incl. replayed route fixtures)
-tests/game/      Vitest suites for the browser-side state (clock, governor, modes, persistence, store)
+tests/game/      Vitest suites for the browser-side state (clock, governor, modes, persistence, store, codex, branches,
+                 ruins, history lens)
 e2e/             Playwright desktop 1366×768 + iPhone-13 touch profile journeys
 scripts/         vite-node / node tools: traces, tournament (sim.ts), visual and perf captures, maps, doc generation
 fixtures/        recorded transcripts of the scripted routes and of the feat runs (fixtures/feats/), replayed by tests

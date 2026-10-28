@@ -16,7 +16,8 @@ so. Session 6 began Phase 16: **18 feats** awarded by the engine at the moment t
 `lineage.feats`, so replays earn exactly the same ones), each earned by at least one recorded run (`fixtures/feats.md`); a device-local
 **Codex** on the title; and on the ending an **Atlas of Ages** (one entry per age) plus two or three **ideas for the next lineage** drawn
 from what the run lacked. Pressing a ruin tells its age, purpose, how it fell and what clearing or restoring does now; a lineage can replay an age
-from its founding as an unranked branch. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+from its founding as an unranked branch; a **history lens** on the map (always on between ages, `H` or a button while planning) shows each
+age's buildings and ruins, where each catastrophe reached (from its report) and the eroded ground. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -34,8 +35,9 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 16 remainder (K-022):** the Atlas as an interactive book (historical map layers, before/after), endless play, variety unlocks
-   with no power; K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
+4. **Phase 16 remainder (K-022):** the rest of an interactive Atlas (before/after snapshots, biographies; the map layers are the history
+   lens), endless play, variety unlocks with no power, a multi-epoch legacy score breakdown; K-020 (knowledge is almost never lost, so the
+   rediscovery and tablet rules sleep).
 5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
    then-vs-now slider, more story decisions.
 6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)

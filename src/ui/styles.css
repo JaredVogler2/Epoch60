@@ -1288,6 +1288,32 @@ h3 {
   width: 100%;
 }
 
+.history-legend {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.82rem;
+}
+.history-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.history-legend .swatch {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.history-legend .swatch.ground {
+  background: transparent;
+  border: 2px solid;
+  border-radius: 50%;
+}
+
 /* ---------- end ---------- */
 .atlas {
   list-style: none;
