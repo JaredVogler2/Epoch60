@@ -765,3 +765,21 @@ raises houses a storey (a stone ground floor under a jettied timber-framed floor
 stone house a second storey and the granary a loft door and hoist; the Age of Spires keeps its copper and spires on the
 taller forms (`docs/3D_QUALITY_REPORT.md`, `v7-ages-forms.jpg`). Inspected in close and village captures; the probe's
 showcase scene costs one more draw call and 2–3% more triangles (`docs/PERF.md`).
+
+**Science, ecology and monuments (prompt 19's question, answered by ablation).** The Engineers (monuments and
+engineering) and the Archivists (knowledge) each lose without their own mechanism (the route ablation tests). Ecology had
+no route: the steward, the one ecology-minded bot, wins 7 of 100 Greenvale seeds. A tuned **Ecologists** route (two or
+three fields an age off the hazard, Irrigation, Forestry, Crop Rotation and Writing, one Archive, a Seed Vault out of
+harm; no levee, dam, wall, firebreak, stone house or granary) wins 100 of 100 Greenvale seeds and 40 of 40 on The Ashen
+Winter. Taking its parts away shows what wins it. In The Ashen Winter it is the fields: the Ecologists seal no Granary,
+and with one field an age the same plan starves (2 of 40; seed 6001: 7 starved, 28 food put by against 50 needed). On
+Greenvale nothing ecological decides the verdict: one field an age wins 40 of 40 too, the ecology branch swapped for
+Masonry, Bronze Tools and Hydrology wins 39 of 40 with as many survivors, and an earlier version's Groves, planted where
+the forecast flood would run, changed no outcome (the route plants none). Probes of the economy say why (K-027): food
+never binds outside the ash winter (every route sits at its housing cap 83–98% of the minute, and the Ecologists end an
+age with a median 92 food unspent), a lumber camp cuts at full rate from about 31% cover and fells only ~2,300‰ of its
+woods an age (so Forestry's lighter felling never changes its output; at stricter thresholds the Ecologists still cut as much timber without Forestry and Groves, within 2%), and the
+flood follows the whole valley's forest, which no route moves by more than a few points. The Ecologists' two wins are
+recorded (`fixtures/{greenvale,ashen}/ecologists.json`, existing fixtures unchanged), replayed headless and in the browser,
+and the Greenvale result is pinned by a test so a rules change that makes the land matter has to face it. The balance
+reports were regenerated with the Ecologists under rules 0.4.2 (every earlier policy's figures unchanged).

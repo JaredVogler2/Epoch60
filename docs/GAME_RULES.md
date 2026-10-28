@@ -248,12 +248,16 @@ Every effect above is exercised by `tests/engine/ages.test.ts`; the hazard maths
 
 ## 11. Greenvale routes (executed)
 
-Two policies written in `src/engine/ai/routes.ts` win Greenvale on seed 6001 by different mechanisms, and their transcripts are replayed by
+Three policies written in `src/engine/ai/routes.ts` win both scenarios on seed 6001, and their transcripts are replayed by
 `tests/engine/routes.test.ts` (see `fixtures/greenvale-traces.md`):
 
 - **Engineers** refound above the flood line after the fire and keep that hearth through the quake — it is their landmark — keep their Archive on the
   north-east ridge inside the quake zone, and survive the Great Quake by Seismic Engineering, Retaining Walls and Stone Houses.
 - **Archivists** keep Archive and Seed Vault (their landmark) on ground no age's hazard reaches, found each later society on the High Ground, research for retention and dig up what was left.
+- **Ecologists** (session 7) live off two or three fields an age, learn the ecology branch (Irrigation, Forestry, Crop Rotation) and Writing, and keep one
+  Archive and a Seed Vault out of harm; they raise no levee, dam, wall, firebreak, stone house or granary. Their fields are their mechanism only in The
+  Ashen Winter (§13): they come through it on the harvest put by, and with one field an age they starve. On Greenvale they win as the Archivists do, and
+  the fields decide nothing the verdict counts (K-027).
 
 A do-nothing village loses to the first fire; twelve random policies never win; a thriving builder that never researches or plans a landmark loses; one
 well-sited Archive with nothing else that lasts loses (`minimalRecipe`, `scripts/recipes.ts`).
@@ -289,8 +293,9 @@ A regional hazard with its own physics, unlike the three spreading fronts:
   Each missing 3.6 food costs one life. The forecast shows it before the sky darkens, and the debrief states the larder it had.
 - **Legacy.** Ash raises pollution (it only halves per interregnum), lowers fertility by `depth/6` and thins forest; the terrain is tinted grey where it fell.
 - **Granary** (2×2, 10 timber + 6 stone, limit 2, any age) is the counterplay; so is food laid by earlier, farms, and trading timber for grain in the "grey sky" decision.
-- **The Ashen Winter** scenario (`ashen`): wildfire → great flood → ashfall winter on the same valley and victory conditions as Greenvale. Both tuned routes win it on seed 6001
-  (`fixtures/ashen/`); the Engineers lose it without a Granary (ablation test), a steward who ignores roofs and larders is buried.
+- **The Ashen Winter** scenario (`ashen`): wildfire → great flood → ashfall winter on the same valley and victory conditions as Greenvale. The three tuned routes win it on seed 6001
+  (`fixtures/ashen/`): the Engineers and the Archivists seal two Granaries each (the Engineers lose without them, ablation test); the Ecologists seal none and eat what their
+  fields put by (with one field an age they starve, ablation test); a steward who ignores roofs and larders is buried.
 
 Combination effects covered by tests: a Grove planted against floods burns hotter in the next fire; Forge smoke and ash stack on the same soil; deforestation raises both flood
 peak and fire reach; a neglected dam weakens before the flood.
@@ -307,12 +312,13 @@ Difficulty changes what the world does and what winning asks for — never the r
 
 Strength is applied once, through `hazardStrength` (the difficulty, then a lineage's challenges, §18), so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
 
-**Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): under rules 0.4.0 both tuned routes win
-Greenvale/Normal on 98–100 of 100 seeds and every Ashen/Normal seed sampled, and on Hard the Engineers win 39/40 on both scenarios and the Archivists 40/40 on
-Greenvale and 31/40 on The Ashen Winter. Hard asks for ten survivors and a fourth technology on top of fiercer hazards, which is why the Engineers there raise a
-second Archive (more knowledge), learn hydrology in the third age and take Open Hands after the flood. Baselines (no action, random, builder, maximizer) win
-nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal still forgives — a player who knows the two moves — is measured by
-`scripts/recipes.ts` (K-003).
+**Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans; regenerated under rules 0.4.2
+in session 7 with the Ecologists, every earlier figure unchanged): the three tuned routes win Greenvale/Normal on 98–100 of 100 seeds and every Ashen/Normal
+seed sampled. On Hard the Engineers win 39/40 on both scenarios, the Archivists 40/40 on Greenvale and 31/40 on The Ashen Winter, and the Ecologists 39/40 and
+35/40 (they carry exactly the four technologies Hard asks for, so a single one lost loses the game). Hard asks for ten survivors and a fourth technology on top
+of fiercer hazards, which is why the Engineers there raise a second Archive (more knowledge), learn hydrology in the third age and take Open Hands after the
+flood. Baselines (no action, random, builder, maximizer) win nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal still forgives — a
+player who knows the two moves — is measured by `scripts/recipes.ts` (K-003).
 
 ## 15. Ways to start a lineage
 

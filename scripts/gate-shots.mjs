@@ -1,8 +1,9 @@
 // The Phase 19 visual gate's canonical captures (prompts/19 and prompts/QUALITY_GATE_VISUAL_AND_FUN.md), repeatable:
 //   npm run build && npx vite preview --host 127.0.0.1 --port 4173 &
 //   node scripts/gate-shots.mjs <tag> [--scenes mid,crisis] [--viewports laptop-1366x768] [--quality high]
-// Every lineage scene is the Engineers' recorded win (fixtures/greenvale/engineers.json: seed 6001, Greenvale, Normal)
-// replayed through the browser's own store to a fixed age and tick, then paused (its card hidden) so the picture holds
+//     [--fixture ashen/ecologists]
+// Every lineage scene is a recorded win (by default the Engineers', fixtures/greenvale/engineers.json: seed 6001,
+// Greenvale, Normal) replayed through the browser's own store to a fixed age and tick, then paused (its card hidden) so the picture holds
 // still; the camera is placed on that age's hearth with the pose below. Writes PNGs to docs/screenshots/gate/<tag>/
 // (git-ignored) and prints console errors. Rendering is software GL (SwiftShader): stills, not frame rates.
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -28,7 +29,7 @@ const LAPTOP = ['laptop-1366x768'];
 const PHONES = ['iphone-390x844', 'small-320x568'];
 
 const lineage = JSON.parse(
-  readFileSync(new URL('../fixtures/greenvale/engineers.json', import.meta.url), 'utf8'),
+  readFileSync(new URL(`../fixtures/${opt('fixture', 'greenvale/engineers')}.json`, import.meta.url), 'utf8'),
 );
 const showcaseAges = readFileSync(new URL('./showcase-ages.js', import.meta.url), 'utf8');
 const showcaseSpires = readFileSync(new URL('./showcase-spires.js', import.meta.url), 'utf8');
@@ -159,6 +160,8 @@ const SCENES = {
   // The second and third ages at 35 s left: the same river, new architecture, the first age's ruins.
   age2: [LAPTOP, at({ epoch: 1, tick: 250 })],
   age3: [['desktop-1920x1080', 'laptop-1366x768', 'iphone-390x844'], at({ epoch: 2, tick: 250 })],
+  // The last age's last seconds with the interface hidden: what a route has built to meet its last catastrophe.
+  last: [LAPTOP, at({ epoch: 2, tick: 570 }, (page) => style(page, '.hud{display:none!important}'))],
   // The third age with the interface hidden: the diorama alone.
   diorama: [
     ['desktop-1920x1080'],
