@@ -3,6 +3,7 @@ import { BuildTray, PlacementBar, ResourceBar, TopBar } from './Hud';
 import { FocusPanel, HelpPanel, Inspector, PauseOverlay, ResearchPanel, Toast } from './Panels';
 import { CollapseOverlay, DebriefScreen, EndScreen, InterregnumScreen, PrepareCard } from './Screens';
 import { Announcer } from './Announcer';
+import { ReplayBar } from './ReplayBar';
 import { StoryChip } from './Story';
 import { useStore } from './useStore';
 
@@ -23,6 +24,14 @@ function useShortcuts(): void {
         }
         return;
       }
+      // While a lineage is being watched, only Space (pause) means anything.
+      if (s.replay) {
+        if (e.key === ' ' && tag !== 'BUTTON') {
+          e.preventDefault();
+          s.togglePause();
+        }
+        return;
+      }
       if (e.key === 'Escape') {
         if (s.placing) s.cancelPlacing();
         else if (s.panel) s.closePanel();
@@ -37,6 +46,11 @@ function useShortcuts(): void {
       }
       // Placement and building keys only mean something while the minute is being planned or played.
       if (c.phase !== 'PREPARE' && c.phase !== 'ACTIVE') return;
+      // H: the history lens while planning an inherited age (between ages it is always shown).
+      if (e.key.toLowerCase() === 'h' && c.phase === 'PREPARE' && c.epoch > 0 && !s.placing) {
+        s.toggleHistory();
+        return;
+      }
       if (e.key.toLowerCase() === 'r' && s.placing) {
         s.rotatePlacing();
         return;
@@ -71,9 +85,11 @@ export function GameHud() {
   useShortcuts();
   const c = s.campaign!;
   const timed = c.phase === 'PREPARE' || c.phase === 'ACTIVE';
-  const showTray = timed && !s.placing;
+  // A replay is watched, not played: no tray, and the HUD's controls are inert until it is over.
+  const watching = !!s.replay && s.replay.matched === null;
+  const showTray = timed && !s.placing && !s.replay;
   return (
-    <div className="hud" data-testid="hud" data-phase={c.phase}>
+    <div className={`hud ${watching ? 'replaying' : ''}`} data-testid="hud" data-phase={c.phase}>
       <Announcer />
       <TopBar />
       <ResourceBar />
@@ -94,6 +110,7 @@ export function GameHud() {
       <DebriefScreen />
       <InterregnumScreen />
       <EndScreen />
+      <ReplayBar />
       <PauseOverlay />
     </div>
   );

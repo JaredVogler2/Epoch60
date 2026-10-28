@@ -26,6 +26,7 @@ import { FrontFx } from './FrontFx';
 import { Interaction } from './Interaction';
 import {
   ForecastOverlay,
+  HistoryLens,
   HoverRing,
   PlacementGhost,
   PlannedMarkers,
@@ -47,6 +48,7 @@ import { worldModel } from './world';
 import { atmo, atmosphere } from './atmosphere';
 import { Sky } from './Sky';
 import { SmokeField } from './SmokeField';
+import { SnapshotCapture } from './Snapshot';
 
 /** Re-render only when terrain-affecting state actually changes. */
 function useRevs(): string {
@@ -312,6 +314,7 @@ export function GameCanvas() {
         <AshFall />
         <CollapseDirector />
         <ForecastOverlay />
+        <HistoryLens />
         <RiskMarkers />
         <PlannedMarkers />
         <SelectionRing />
@@ -320,6 +323,7 @@ export function GameCanvas() {
         <Interaction />
         <CameraRig enabled />
         <StillHook />
+        <SnapshotCapture />
         {quality.post && <Post />}
         <Governor
           maxDpr={quality.dpr}

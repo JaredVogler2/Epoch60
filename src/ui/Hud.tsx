@@ -284,10 +284,21 @@ export function PlacementBar() {
   const ok = !!g && g.ok;
   const sg = s.suggest && s.suggest.kind === p.kind && s.suggest.i >= 0 ? s.suggest : null;
   const where = sg ? ` (site ${sg.i + 1} of ${sg.spots.length})` : '';
+  // Building over a ruin clears it: say so, and warn when an archive not yet dug up (tablets unknown) would go with it.
+  const cleared = g?.ok
+    ? g.info.clears.flatMap((id) => s.campaign?.structures.find((x) => x.id === id) ?? [])
+    : [];
+  const clears = cleared
+    .map((r) =>
+      r.kind === 'archive' && !r.excavated
+        ? `clears a ruined Archive — any tablets inside would be lost`
+        : `clears a ruined ${BUILDINGS[r.kind].name}`,
+    )
+    .join(' · ');
   const msg = !g
     ? 'Tap the valley to choose a site, or press Next site.'
     : g.ok
-      ? `Ready — ${g.info.notes.join(' · ') || 'good ground'}${where}`
+      ? `Ready — ${[...g.info.notes, clears].filter(Boolean).join(' · ') || 'good ground'}${where}`
       : `${g.error.message}${where}`;
   const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches;
   return (

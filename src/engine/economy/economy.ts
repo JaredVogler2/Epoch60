@@ -1,9 +1,11 @@
 import { BUILDINGS } from '../content/buildings';
+import { BLIGHT_PM } from '../content/modifiers';
 import { TECHS } from '../content/techs';
 import { UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type { Campaign, ResourceKey, Structure } from '../core/types';
 import { RESOURCE_KEYS } from '../core/types';
+import { featsOnCompleted, featsOnResearched } from '../legacy/feats';
 import { footprintCells, idx, inBounds } from '../world/query';
 import { hasTech, housingCapacity, mods } from './modifiers';
 
@@ -100,6 +102,7 @@ export function stepConstruction(c: Campaign): void {
       s.status = 'active';
       s.integrity = 1000;
       c.civ.stats.built++;
+      featsOnCompleted(c, s);
       emit(c, {
         code: 'build.complete',
         msg: `${d.name} finished`,
@@ -272,7 +275,10 @@ export function stepProduction(c: Campaign): void {
       let tech = 1000 + m.foodRate;
       if (hasTech(c, 'irrigation')) tech += 250;
       tech += damIrrigationPm(c, s);
-      const out = Math.round((d.output * s.staffing * soil * tech * cond) / 1e12);
+      let out = Math.round((d.output * s.staffing * soil * tech * cond) / 1e12);
+      // Blight: sick soil yields less until the lineage learns to rest its fields.
+      if (c.modifiers?.includes('blight') && !hasTech(c, 'crop_rotation'))
+        out = Math.round((out * BLIGHT_PM) / 1000);
       res.food = Math.min(RES_CAP, res.food + out);
       stats.foodMade += out;
       s.acc += s.staffing;
@@ -417,5 +423,6 @@ export function stepResearch(c: Campaign): void {
     c.civ.research = null;
     c.civ.stats.researched++;
     emit(c, { code: 'research.done', msg: `${TECHS[job.tech].name} discovered`, important: true });
+    featsOnResearched(c);
   }
 }

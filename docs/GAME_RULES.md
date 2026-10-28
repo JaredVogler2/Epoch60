@@ -141,7 +141,7 @@ Intensity at a cell = `strength × 46 / (46 + d²)` (d from the epicentre), ×0.
 `damage = exposure × (1000 − resistance) / 1000` (fire: share of footprint burned; flood: `min(1000, 12 × depth_cm) × share`; quake: peak intensity × **1.6**,
 because ground motion does far more harm than the same "amount" of heat or water).
 Resistance = building + reinforce bonus + traditions + techs (Seismic Engineering +25 % quake) + a Retaining Wall within 5 cells (+25 % quake) − state (damaged −15 %), capped at 98 %.
-Outcome: `damage ≥ 600` → **rubble**, `≥ 250` → **damaged**, else intact. Statuses only ever worsen.
+Outcome: `damage ≥ 600` → **rubble**, `≥ 250` → **damaged**, else intact. Statuses and integrity only ever worsen: a building already damaged that a catastrophe touches without new harm is no worse for it (it is not counted as damaged by it, and its provenance says it came through still in disrepair), and a light blow never raises an older building's integrity, which decides how it weathers between ages.
 
 ### People in a collapse
 
@@ -169,6 +169,14 @@ scars ×0.45, pollution ×0.5, rested fields recover toward 700. A surviving **S
 Seed Vault → +12 food and reseeds radius ~4; Quarry +6 stone; Hearth +4 stone. Excavated stone/earth works can be **repaired** at 65 % of cost.
 You cannot excavate the same ruin twice or dig everything.
 
+**Pressing a ruin** (the inspector, `src/ui/ruins.ts`) says, from the engine's own records: when and by whom it was built
+and what it was for; how it fell — destroyed outright, abandoned, never finished, or broken by a catastrophe and finished
+by the centuries (that catastrophe is named unless it was repaired since); what clearing it gives now (its exact salvage,
+in whole units as the resource bar counts them, or "less than 1"); and what restoring it costs (rounded up, as every
+price in the UI) and does — builders finish the last 65 %, a landmark restored and standing at the end counts as one
+from an earlier age, an Archive carries technologies again — or why it cannot be restored yet (not excavated; thatch;
+an old hearth; the kind's limit). Tests check the stated salvage and price against what the actions really give and take.
+
 ### Founding the next society
 
 Choose one of up to three computed **sites** (ancestral hearth, fertile flats, high ground — each scored against the _next_ epoch's hazard) and one of three
@@ -178,8 +186,26 @@ Starting resources = scenario base + tradition + excavated yield + 10 food from 
 
 ## 9. Scoring and endings
 
-Score (debrief): `people = 100 × survivors`, `livelihood = 2 × food made + 10 × buildings`, `knowledge = 120 × retained + 30 × researched`,
-`ecology = (meanForest + meanFertility)/10`, `heritage = 150 × heritage structures standing`.
+Score (debrief, one age): `people = 100 × survivors`, `livelihood = 2 × food made + 10 × buildings standing when the minute
+ends`, `knowledge = 120 × retained + 30 × researched`, `ecology = (meanForest + meanFertility)/10`,
+`heritage = 150 × heritage structures standing`. Since rules 0.4.1 livelihood counts the works standing as the catastrophe
+comes, not every completion: building and clearing the same works again and again no longer inflates it.
+
+**Legacy (the ending, the whole lineage)** counts only what lasted, read from the state after the last catastrophe
+(`src/engine/legacy/score.ts`):
+
+| Part      | Points                                                                                   |
+| --------- | ---------------------------------------------------------------------------------------- |
+| People    | 100 per person who came through the last catastrophe                                     |
+| Knowledge | 120 per technology still held                                                            |
+| Works     | 30 per building still standing, and 150 more per landmark from an earlier age among them |
+| Feats     | 100 per feat the lineage earned                                                          |
+
+Every part is a count of what is there at the end, never a running tally, so clearing and rebuilding, or waiting, adds
+nothing. There is no part for the land: between ages the valley regrows and is enriched on its own, so every recorded
+lineage that reached its last age ends far greener than it began whatever was built, and such a part would measure the centuries, not the people
+(K-023). A run card keeps its legacy and the rules version; "best for this valley" compares only runs scored under the same
+rules: a victory first, then the greater legacy, then more survivors.
 
 - **Defeat (any epoch):** fewer than 3 survivors — "no one is left to remember".
 - **Greenvale victory (end of epoch 3):** survivors ≥ 8 **and** ≥ 1 **landmark** from an _earlier_ epoch still standing — a Hearth a later society kept (refounding on the same spot), a Seed Vault, a Dam or a Bridge — **and** ≥ 3 technologies carried through the final collapse (a surviving people keeps 1 by oral tradition and 1 more through the Hearth, so an Archive must stand to reach 3). Since rules 0.4.0 an **Archive is not a landmark**: it carries the knowledge, so no single building answers two conditions (before, one well-sited Archive won Greenvale/Normal on every seed; K-003). The planning card lists the three conditions with a live landmark count.
@@ -242,7 +268,7 @@ Answering is a normal timed action (`choose`), validated when sent and re-valida
 | A historian (≥ tick 120)                      | an Archive is standing and sound                 | Fund her (6 timber, 4 food): +8 knowledge · Decline                                                                                                             |
 | The dam is seeping (flood age, ≥ tick 200)    | a sound Dam or Levee exists                      | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much)                                                                              |
 
-The outcome line states the measured result ("the predicted burn shrank by 18 cells") and appears in the debrief's important events.
+The outcome line states the measured result ("the predicted burn shrank by 18 cells", or that it is unchanged when the cleared scrub lies off the fire's path) and appears in the debrief's important events.
 Impossible decisions are never offered (no dam leak without a dam, no refugees without beds). Covered by `tests/engine/story.test.ts` and `e2e/story.spec.ts`.
 
 ## 13. Ashfall winter (the fourth disaster) and the Ashen Winter scenario
@@ -274,7 +300,7 @@ Difficulty changes what the world does and what winning asks for — never the r
 | Normal | ×1.00           | 8         | 1                   | 3                     |
 | Hard   | ×1.15           | 10        | 1                   | 4                     |
 
-Strength is applied once, inside `resolveHazard`, so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
+Strength is applied once, through `hazardStrength` (the difficulty, then a lineage's challenges, §18), so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
 
 **Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): under rules 0.4.0 both tuned routes win
 Greenvale/Normal on 98–100 of 100 seeds and every Ashen/Normal seed sampled, and on Hard the Engineers win 39/40 on both scenarios and the Archivists 40/40 on
@@ -294,14 +320,170 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
 - **Assisted** — a setting, combinable with any tier (Gentle is the gentlest pairing): the same 60 simulated seconds at half speed. Assisted runs are marked on their run cards
   and ranked only against other Assisted runs ("best for this valley").
 
-Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers, a replay viewer.
+- **Replay an age** — the ending offers "Replay from Age II / III": the lineage as it stood when that age was founded (kept in
+  the browser for the current lineage only; a new lineage clears it, and a damaged or foreign point is ignored). Everything
+  after it is played again. The lineage is then a **branch**: the briefing and the ending say so, its run card is marked, its
+  feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages.
+
+- **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins, or
+  drawn for a random valley by an **expedition** (§18).
+
+Not built yet: 8–12-epoch campaigns. A finished lineage can be watched again from the ending (§19).
 
 ## 16. Accessibility and audio
 
 - **Keyboard:** Tab through every control; `1`–`9` choose a building; `N` jumps to the next suggested site (safe-from-forecast first, then nearest the village); arrow keys nudge the
-  ghost one cell (the camera keeps WASD); `R` rotates; `Enter` builds; `Esc` cancels; `Space` pauses. The whole first epoch can be played without a pointer (`e2e/a11y.spec.ts`).
+  ghost one cell (the camera keeps WASD); `R` rotates; `Enter` builds; `Esc` cancels; `Space` pauses; `H` shows or hides the history lens while planning an inherited age. The whole first epoch can be played without a pointer (`e2e/a11y.spec.ts`).
 - **Screen readers:** a polite live region announces each age, 30 s and 10 s left, each forecast warning, the collapse headline, the debrief and the verdict — never every tick;
   warnings are `role=alert`; the placement message states whether the site is valid and why not.
 - **Motion:** the OS "reduce motion" preference is the default for the in-game setting; with it, the catastrophe card appears at once with the facts and the camera does not shake.
 - **Audio:** procedural Web Audio (no sample files). Created only after a user gesture (one context per page), suspended while paused or hidden, with a master mute (HUD button and
   settings) and independent music/effects volumes. The graph, routing, mute and event→sound mapping are unit-tested with a recording fake; **how it sounds has not been judged by ear**.
+
+## 17. Feats, the Codex and the Atlas of Ages
+
+**Feats** are things a lineage did. The engine awards each one at the moment it happens — when a building is finished, a
+research job ends, a catastrophe's report is written, a ruin is dug up or an age is founded — from the state that event
+produced, and keeps it in `lineage.feats` (`src/engine/legacy/feats.ts`). They are part of the hashed, replayed and saved
+state, so a recorded run always earns exactly the same feats. They change nothing in play.
+
+| Group       | Feat                      | Rule                                                                                                                                                                          |
+| ----------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Knowledge   | Words Kept                | Finish an Archive.                                                                                                                                                            |
+| Knowledge   | Three Kinds of Knowing    | In one lineage, know a technology of industry, one of ecology and one of resilience (researched, or read from dug-up tablets).                                                |
+| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive your lineage built two ages before the people who find it, its tablets still legible.                                                         |
+| Heritage    | The Hearth Endures        | Found a new age in a hearth kept from the age before.                                                                                                                         |
+| Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                                                                                    |
+| Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                                                                                 |
+| Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                                                                                     |
+| Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                                                                                     |
+| Engineering | The River Held            | The Great Flood takes no lives, and your Levees or Dam spare a building harm the water would otherwise have done (the same flood is projected with no levee or dam standing). |
+| Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale).                                                          |
+| Engineering | Full Larders              | No one starves in the Ashen Winter, with at least six people to feed (The Ashen Winter).                                                                                      |
+| Engineering | Shored Up                 | A building you reinforced against the coming catastrophe is struck by it and still stands.                                                                                    |
+| Stewardship | Not One Field Lost        | Bring at least two farms whole through the Great Flood.                                                                                                                       |
+| Stewardship | The Forest Returns        | Plant a Grove on ground the fire burned (fire scar ≥ 100 of 1000 under it).                                                                                                   |
+| Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                                                                          |
+| Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                                                                                |
+| Endings     | Against the Odds          | Win a lineage on Hard.                                                                                                                                                        |
+| Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.                                                                 |
+
+"Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village
+entirely proves nothing about how it was built. "Reinforced" means the player's own Reinforce order for that hazard in
+that age (a story decision can set the same bonus; it does not count). Every feat is earned by at least one recorded run
+(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`).
+
+**The Codex** is the device-local list of every feat this browser has seen a lineage earn (`epoch60.codex.v1`). It only
+copies records from played lineages — the title screen's demo village never counts — so nothing appears in it that was
+not played; stored entries naming unknown feats, scenarios or difficulties are dropped on load. Feats earned in play or
+between ages are announced with a toast the first time; those a catastrophe brings are listed in the debrief and the
+ending, marked "new" when this device had never seen them. The Codex unlocks nothing: no power, no content behind it.
+
+**The ending** shows an **Atlas of Ages** — one entry per age from its collapse report: the society and its age, the
+catastrophe, people before and after, the most valuable technology it knew, the landmarks standing afterwards, the
+ecology score and the first line of why it went as it did, plus that age's feats — then the lineage's feats, and two or
+three **ideas for the next lineage**: first what the lineage lacked when the end came (people, a landmark, knowledge),
+then feats this device has not seen that the scenario allows, then another valley or Hard.
+
+**The history lens** puts the same history on the map (`src/render/history.ts`). Between ages it is always on, since that
+is when the player chooses what to dig and where to found. While planning an inherited age it is a toggle: the briefing's
+"Show history on the map" button, or `H`.
+
+- Every building and ruin is outlined in the colour of the age that raised it: standing works with an outline, ruins
+  hatched.
+- Each past catastrophe's reach is drawn from its collapse report: exactly the cells it recorded. A fading field could not
+  show it: a flood's own erosion falls below any useful mark once the centuries pass.
+- Eroded ground is land with erosion ≥ 30 of 1000, river excluded. Quarries, felling and floods all erode; on the recorded
+  runs what crosses the mark is felled woodland the flood then washed over, and quarry pits.
+- A legend counts each age's standing works and ruins, the cells each catastrophe reached, and the eroded cells.
+
+It reads the record and the world as they are now. It is drawn over the canopy, because a regrown forest would otherwise
+hide the history it grew over, and the hazard forecast steps aside while it is shown. It changes nothing in play. The first
+age has no history, so a toggle left on by an earlier lineage does not apply there.
+
+**Then and now.** The game photographs the valley from one fixed viewpoint, the default framing centred on the age's
+hearth (`src/render/Snapshot.tsx`). It takes one picture in the last three seconds of each minute, before the catastrophe
+resolves, and another afterwards: between ages, or at the ending for the last age. Overlays are left out of both. Between
+ages a slider lays the two over each other, "as the minute ended" against "N years later". The ending's Atlas shows each
+age's pair. The pictures live only in this session's memory: a game resumed from a save, or reloaded mid-age, has none
+for the ages it did not see.
+
+**The chronicle of works** on the ending tells the lives of the lineage's three most storied buildings (`src/ui/chronicle.ts`):
+those with the most recorded events, weighted towards landmarks and keepers of knowledge. Each story opens with who raised it
+and in which age, unless its own first record already says so ("The founders lit the first fire here."). Then comes one
+sentence per recorded event, oldest first: every catastrophe it met, how the centuries treated it, who dug it up or restored
+it. Ages are named, not numbered. It closes with the knowledge it keeps and how it stands now. Nothing is invented: apart from
+the opening, the knowledge and the closing, each sentence retells one of the building's provenance lines.
+
+## 18. Challenges (world modifiers)
+
+A lineage can begin with up to three of twelve **challenges** (`content/modifiers.ts`). Each changes the world, a catastrophe or the people
+for the whole lineage, never the clock or the rules of play, and lists exactly what it changes. They are part of the campaign:
+stored in canonical order, hashed, saved and replayed (a transcript carries them). A standard lineage has no challenge field at
+all, so it hashes exactly as before challenges existed. A save naming a challenge this build does not know, an empty list, an
+unknown order, a clash or a challenge that does not suit the scenario is refused, never trimmed (trimming would change the
+simulation).
+
+| Challenge          | What changes                                                                                                                        | Scenarios | Not with                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------- |
+| Fertile Floodplain | Fertility +250 (of 1000, at most 950) on land within 6 cells of the river's centre line; flood strength ×1.30.                      | all       | Dry Summers                     |
+| Storm Front        | Flood strength ×1.40; forest regrowth between ages ×1.5.                                                                            | all       | Dry Summers                     |
+| Dry Summers        | Fire strength ×1.30; flood strength ×0.80; food production −15%.                                                                    | all       | Fertile Floodplain, Storm Front |
+| Thin Woods         | Forest ×0.5 at the start; regrowth between ages ×0.5 (less fuel for the fire; less forest in the catchment, so higher floods).      | all       | Overgrown                       |
+| Overgrown          | Forest ×1.4 at the start, at most 950 (more fuel for the fire; more forest in the catchment, so lower floods).                      | all       | Thin Woods                      |
+| Blight             | Farm output ×0.75 until the lineage knows Crop Rotation.                                                                            | all       | —                               |
+| Soft Rock          | Every stone deposit ×1.5; quarry output +25%; quake strength ×1.20.                                                                 | Greenvale | —                               |
+| Rich Vein          | No rock within 9 cells of the first hearth; every other deposit ×2.                                                                 | all       | —                               |
+| Fractured Fault    | The quake's epicentre is 3 cells east and 3 north of the first hearth (instead of 8 and 8). Founding-site risk shows it.            | Greenvale | —                               |
+| Overcrowded Refuge | +4 people and −10 food when the lineage begins and at every founding (people at most 16 after a founding, as always).               | all       | —                               |
+| Elders' Lore       | The first founders know Masonry; research costs +20%.                                                                               | all       | —                               |
+| Buried Library     | An Archive older than the founders lies buried (depth 3) about seven cells west of the first hearth, holding Writing and Hydrology. | all       | —                               |
+
+Strength deltas add up and multiply the difficulty-scaled strength (Hard and Dry Summers: fire ×1.15 then ×1.30). Rate and
+start deltas add to the traditions' (`mods`); regrowth factors multiply. The quake challenges do not suit The Ashen Winter,
+where no quake comes. Thin Woods and Overgrown change nothing about the hazards' rules: the fire burns what fuel there is, and
+the flood's peak follows the catchment's forest, as always.
+
+The Buried Library is an ordinary ruin from the founders' first day: no catastrophe strikes it, it can be surveyed and dug up
+between ages (its tablets then reach the next age like any other dug-up tablets, with 6 knowledge), restored once excavated,
+cleared, or built over, which destroys it. Its people are older than the lineage: digging it up does not earn The
+Grandparents' Library, which asks for an Archive the lineage itself built.
+
+**Choosing them.** The title's Challenges list shows all twelve. Each opens once this device's Codex holds the feat that shows
+its kind of trouble has been met: Fertile Floodplain with Not One Field Lost, Storm Front with The River Held, Dry Summers with
+The Fire Stopped Here, Thin Woods with The Forest Returns, Overgrown with Light on the Land, Blight with Full Larders, Soft Rock
+with Unshaken, Rich Vein with On Old Foundations, Fractured Fault with Shored Up, Overcrowded Refuge with The Cycle Is Broken,
+Elders' Lore with Three Kinds of Knowing, and Buried Library with Words Kept.
+They open variety, never power: each has a cost, and a lineage begun with challenges is compared ("best for this valley") only
+with lineages begun with the same ones. A shared link may name challenges (`mods=`, validated like everything else in a
+link: one unknown, clashing or unsuited name and the link carries none), and is honoured even where this device has not
+opened them. The Daily Ruins never carry challenges: they are the same challenge for everyone. Run cards and branch points
+keep a lineage's challenges; the briefing lists them every age, the ending names them, Play again and New valley keep them,
+and Copy link includes them. Clearing or building over an Archive that was never dug up warns that any tablets inside are
+lost with it (what it holds stays unknown until it is surveyed).
+
+**Measured, not promised** (`docs/balance/challenges.md`: `scripts/challenges.ts`, seeds 1–40, Normal, each challenge alone,
+the route bots and the steward, which do not read challenges). Every challenge moves what it says: the second age's flood
+reaches 560–578 cells instead of 484–497 under Fertile Floodplain and Storm Front, and 429–446 in Dry Summers; the first fire
+171–232 cells in Thin Woods against 249–402, and 309–485 when Overgrown or in Dry Summers; the quake 595 cells on Soft Rock and
+747 on the Fractured Fault against 527. The tuned routes barely notice most of them: the Archivists win 39–40 of 40 under every
+challenge, and the Engineers drop furthest under Blight (34/40) and Dry Summers (36/40). The Buried Library is mostly a gift:
+it lifts the steward from 4 to 20 of 40 on Greenvale (the bots dig it on 17–29 of 40 seeds). Elders' Lore changes almost nothing
+for the bots, whose plans never use early Masonry. None of this measures a player who reads the challenge and plans for it.
+
+**Expeditions.** An expedition is a random valley (a random seed, drawn in the UI layer, shown and shareable like any other)
+with one to three challenges drawn from the open ones by that seed: the same seed always draws the same challenges, and only
+ones that suit the scenario and fit together. It is then an ordinary lineage with challenges: ranked against the same seed and
+set, kept on its run card, carried by its link. Nothing else about an expedition differs (Phase 13's variable 6–12-epoch target
+needs campaigns longer than three ages, which are not built).
+
+## 19. Watching a lineage again
+
+The ending offers **Watch this lineage**: the finished lineage replayed from its first day through the same engine (the same
+seed, scenario, difficulty, mode and challenges), each of its accepted actions applied at the tick it was logged, before that
+tick runs, exactly as a replayed transcript. The minute runs on the clock at 1×, 2× or 4×; outside it each action waits a moment
+of wall time (700 ms while planning, 4 s for the debrief and 1.5 s between ages, at 1×), and the collapse waits out its
+6.5 s cinematic at any speed. A replay is a viewing, not a game: the HUD's controls are inert, only Space (pause) works, nothing
+can be selected, and nothing is saved, carded, branched or added to the Codex. When it ends, the ending says whether it reached
+exactly the lineage's final state (the state hash): it always should, and a test replays recorded lineages through the clock at
+several speeds and frame rates to prove it. Stop, or Back to the ending, returns to the finished lineage as it was.

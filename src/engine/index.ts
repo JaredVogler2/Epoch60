@@ -4,6 +4,8 @@ export { BUILDINGS, BUILDING_KINDS, costOf, footprint, getDef } from './content/
 export type { BuildingDef } from './content/buildings';
 export { TECHS, TECH_IDS } from './content/techs';
 export { TRADITIONS, sumModifiers } from './content/traditions';
+export { MAX_MODIFIERS, MODIFIERS, checkModifiers, hazardStrength } from './content/modifiers';
+export type { ModifierCheck, ModifierDef } from './content/modifiers';
 export {
   ASHEN,
   DIFFICULTY,
@@ -36,6 +38,10 @@ export { housingCapacity, techCost, mods } from './economy/modifiers';
 export { buildSpeedPm, farmFertilityPm } from './economy/economy';
 export { ruinYield } from './legacy/inheritance';
 export { collapseEpoch, LANDMARK_HINT, LANDMARK_LABEL } from './legacy/collapse';
+export { FEATS, FEAT_GROUPS, FEAT_IDS } from './legacy/feats';
+export type { FeatDef, FeatGroup } from './legacy/feats';
+export { LEGACY_POINTS, legacyOf } from './legacy/score';
+export type { Legacy, LegacyKey, LegacyPart } from './legacy/score';
 export { generateWorld, validateWorld } from './world/generate';
 export { resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
 export {

@@ -1,4 +1,4 @@
-import { createCampaign, type Difficulty } from '../src/engine';
+import { createCampaign, type Difficulty, type ModifierId } from '../src/engine';
 import { playCampaign, type Policy } from '../src/engine/ai/bots';
 import { ROUTES } from '../src/engine/ai/routes';
 
@@ -11,7 +11,12 @@ if (!policy) throw new Error(`unknown policy ${name}`);
 const scenarioArg = process.argv.find((a) => a.startsWith('--scenario='))?.slice(11) ?? 'greenvale';
 const difficultyArg = (process.argv.find((a) => a.startsWith('--difficulty='))?.slice(13) ??
   'normal') as Difficulty;
-const c = createCampaign(seed, 'standard', scenarioArg, difficultyArg);
+const modifiersArg = (process.argv
+  .find((a) => a.startsWith('--modifiers='))
+  ?.slice(12)
+  .split(',')
+  .filter(Boolean) ?? []) as ModifierId[];
+const c = createCampaign(seed, 'standard', scenarioArg, difficultyArg, modifiersArg);
 const trace = process.argv.includes('--trace');
 const onlyEpoch = process.argv.find((a) => a.startsWith('--epoch='))?.slice(8);
 const run = playCampaign(c, policy, {

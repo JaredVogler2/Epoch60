@@ -19,6 +19,7 @@ import type {
 import { isStanding } from '../economy/modifiers';
 import { resolveHazard, winterLarder } from '../world/hazards';
 import { cellsOf, idx } from '../world/query';
+import { featsOnCollapse } from './feats';
 
 const SEVERITY: Record<StructureStatus, number> = {
   constructing: 0,
@@ -147,11 +148,22 @@ function salvageFor(s: Structure, kind: HazardKind): { timber: number; stone: nu
   };
 }
 
+/** Landmarks standing that an age before `epoch` raised: the victory's landmark rule, and the legacy's. */
+export function earlierLandmarks(c: Campaign, epoch: number): Structure[] {
+  return c.structures.filter((s) => BUILDINGS[s.kind].heritage && isStanding(s) && s.originEpoch < epoch);
+}
+
 function heritageOf(c: Campaign): Structure[] {
   return c.structures.filter((s) => BUILDINGS[s.kind].heritage && isStanding(s));
 }
 
-function scoreOf(c: Campaign, survivors: number, retained: TechId[], heritage: number): ScoreBreakdown {
+function scoreOf(
+  c: Campaign,
+  survivors: number,
+  retained: TechId[],
+  heritage: number,
+  standing: number,
+): ScoreBreakdown {
   const w = c.world;
   let f = 0;
   let fe = 0;
@@ -164,7 +176,7 @@ function scoreOf(c: Campaign, survivors: number, retained: TechId[], heritage: n
   }
   const s = c.civ.stats;
   const people = survivors * 100;
-  const livelihood = Math.round(s.foodMade / UNIT) * 2 + s.built * 10;
+  const livelihood = Math.round(s.foodMade / UNIT) * 2 + standing * 10;
   const knowledge = retained.length * 120 + s.researched * 30;
   const ecology = Math.round((f + fe) / Math.max(1, n) / 10);
   const heritageScore = heritage * 150;
@@ -199,9 +211,7 @@ export function evaluateVerdict(c: Campaign, survivors: number, retained: TechId
   }
   if (!final) return null;
   const v = victoryFor(scenario, c.difficulty);
-  const crossEra = c.structures.filter(
-    (s) => BUILDINGS[s.kind].heritage && isStanding(s) && s.originEpoch < c.epoch,
-  ).length;
+  const crossEra = earlierLandmarks(c, c.epoch).length;
   const conditions = [
     { label: 'Surviving people', have: survivors, need: v.minSurvivors, met: survivors >= v.minSurvivors },
     {
@@ -240,7 +250,17 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   const spec = getScenario(c.scenario).epochs[c.epoch]!;
   const kind = spec.hazard.kind;
   const result = resolveHazard(c, kind);
+  // The same flood with no levee or dam standing: what the defences kept the water from (a pure projection).
+  const undefended =
+    kind === 'flood'
+      ? resolveHazard(
+          { ...c, structures: c.structures.filter((s) => s.kind !== 'levee' && s.kind !== 'dam') },
+          kind,
+        )
+      : null;
   const survivorsBefore = c.civ.pop;
+  // The works standing when the minute ends: the village's livelihood, which clearing and rebuilding cannot inflate.
+  const standingBefore = c.structures.filter(isStanding).length;
   const { deaths, lines } = computeDeaths(c, result.impacts, kind);
   // The larder as it stood before the winter: the report must explain the deaths, not the empty village after them.
   const larder = kind === 'ash' ? winterLarder(c) : null;
@@ -280,11 +300,14 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
     let after = imp.after;
     if (s.status === 'constructing' && after === 'active') after = 'constructing';
     if (s.status === 'constructing' && after === 'damaged') after = 'rubble';
+    // A building already in disrepair that this hazard barely touched is no worse for it: not "damaged by" it.
+    const noWorse = s.status === 'damaged' && imp.after === 'active';
     if (SEVERITY[after] < SEVERITY[s.status] || (after === 'active' && s.status === 'damaged'))
       after = s.status;
     const wasStanding = isStanding(s) || s.status === 'constructing';
     s.status = after;
-    s.integrity = Math.max(0, 1000 - imp.damage);
+    // Integrity, like status, only gets worse: a light blow never mends an older wound.
+    s.integrity = Math.min(s.integrity, Math.max(0, 1000 - imp.damage));
     if (after === 'rubble') {
       s.cause = kind;
       s.salvage = salvageFor(s, kind);
@@ -301,6 +324,8 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
         y: s.y,
         important: true,
       });
+    } else if (noWorse) {
+      s.provenance.push(`${nameOf(s)} came through ${spec.hazard.headline}, still in disrepair.`);
     } else if (after === 'damaged') {
       s.cause = kind;
       damagedN++;
@@ -334,7 +359,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   });
 
   const heritage = heritageOf(c);
-  const score = scoreOf(c, survivors, retained, heritage.length);
+  const score = scoreOf(c, survivors, retained, heritage.length, standingBefore);
   const intact = c.structures.filter(
     (s) => s.status === 'active' && (s.provenance.at(-1) ?? '').includes('survived'),
   ).length;
@@ -411,6 +436,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   c.lineage.reports.push(report);
   c.lineage.score += score.total;
   c.lineage.history.push({ epoch: c.epoch, title: spec.hazard.headline, text: headline });
+  featsOnCollapse(c, report, larder, undefended);
   c.collapseResolved = true;
   c.phase = 'COLLAPSING';
   emit(c, { code: 'collapse', msg: headline, important: true });

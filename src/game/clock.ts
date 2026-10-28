@@ -36,20 +36,25 @@ export class EpochClock {
       this.acc = 0;
       return 0;
     }
+    if (!Number.isFinite(dtMs) || dtMs < 0) dtMs = 0;
+    // A replay moves through the screens outside the minute on wall time too.
+    const replay = this.store.replay;
+    if (replay && dtMs <= STALL_MS) this.store.replayFrame(dtMs);
     if (!c || c.phase !== 'ACTIVE' || c.paused) {
       this.acc = 0;
       return 0;
     }
-    if (!Number.isFinite(dtMs) || dtMs < 0) dtMs = 0;
     if (dtMs > STALL_MS) {
       this.acc = 0;
       this.store.pause('stalled');
       return 0;
     }
-    this.acc += dtMs * (c.mode === 'assisted' ? ASSISTED_SPEED : 1);
+    this.acc += dtMs * (c.mode === 'assisted' ? ASSISTED_SPEED : 1) * (replay ? replay.speed : 1);
     let n = 0;
     while (this.acc >= TICK_MS && n < MAX_TICKS_PER_FRAME) {
       this.acc -= TICK_MS;
+      // The actions a replayed lineage took at this tick, before the tick runs (as the replay of a transcript does).
+      if (replay) this.store.replayDue();
       if (!advanceFixedTick(c)) break;
       n++;
       if (c.phase !== 'ACTIVE') break;

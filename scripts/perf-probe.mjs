@@ -78,6 +78,12 @@ ${rows
   smooth-shaded trees and the valley beyond the board; the latter uses far-detail trees (56–160 triangles instead of 240–344).
 - Session 5 gave the villagers headwear and a tool by job (seven instanced meshes of at most 40 each in place of one): 5 more draw calls and about 6k
   more triangles than the session-4 record (81 / 84 draw calls). Hats and tools skip the shadow pass, where they would be invisible.
+- Session 6's history lens is not in this scene: it is drawn only between ages and, on request, while planning an inherited age. It costs
+  one draw call per catastrophe so far, one for eroded ground and one per age and state (standing or ruin) of the buildings, at most 8 in a
+  three-age lineage, and nothing while hidden. The probe does not measure it.
+- Session 6's then-and-now pictures are not in this scene either: twice per age the game draws one extra frame of the valley into a
+  480×270 corner of the canvas (from a fixed viewpoint, overlays hidden) and reads it back, then redraws the normal view. The probe does not
+  measure it.
 `;
   writeFileSync(reportPath, md);
   console.log('wrote', reportPath);

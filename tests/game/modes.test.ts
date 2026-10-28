@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createCampaign, dispatchAction, runTicks } from '../../src/engine';
+import { RULES_VERSION, createCampaign, dispatchAction, legacyOf, runTicks } from '../../src/engine';
 import {
   MAX_CARDS,
   MAX_SEED,
@@ -128,6 +128,14 @@ describe('run cards', () => {
     const card = cardOf(c, '2026-10-27', new Date('2026-10-27T10:00:00Z'))!;
     expect(card).toMatchObject({ seed: 6001, scenario: 'greenvale', outcome: 'defeat', daily: '2026-10-27' });
     expect(card.hash).toHaveLength(14);
+    // It carries the lineage's legacy and the rules that scored it.
+    expect(card.legacy).toBe(legacyOf(c)!.total);
+    expect(card.rules).toBe(RULES_VERSION);
+    // A lineage begun under older rules (resumed from an old save or branch point) is marked as such, never ranked.
+    c.rules = '0.4.0';
+    const older = cardOf(c, undefined, new Date('2026-10-27T11:00:00Z'))!;
+    expect(older.rules).toBe('0.4.0');
+    expect(bestFor([older], { seed: 6001, scenario: 'greenvale', difficulty: 'normal' })).toBeNull();
   });
 
   it('persist newest first, bounded, and survive corrupt or disabled storage', () => {
@@ -160,9 +168,9 @@ describe('run cards', () => {
     expect(() => saveRun(mk(5))).not.toThrow();
   });
 
-  it('pick the best local result: a victory beats a defeat, then more survivors', () => {
+  it('pick the best local result: a victory beats a defeat, then the greater legacy, then more survivors', () => {
     const base = { seed: 7, scenario: 'greenvale', difficulty: 'normal' as const };
-    const mk = (id: string, outcome: 'victory' | 'defeat', survivors: number): RunCard => ({
+    const mk = (id: string, outcome: 'victory' | 'defeat', survivors: number, legacy = 0): RunCard => ({
       ...base,
       id,
       at: '2026-10-27T00:00:00.000Z',
@@ -173,9 +181,33 @@ describe('run cards', () => {
       techs: 0,
       epochs: 3,
       hash: '',
+      legacy,
+      rules: RULES_VERSION,
     });
     const runs = [mk('a', 'defeat', 12), mk('b', 'victory', 8), mk('c', 'victory', 10)];
     expect(bestFor(runs, base)!.id).toBe('c');
     expect(bestFor(runs, { ...base, seed: 8 })).toBeNull();
+    // Between two victories the one that left more wins, even with fewer people.
+    expect(bestFor([mk('d', 'victory', 12, 2400), mk('e', 'victory', 9, 2900)], base)!.id).toBe('e');
+  });
+
+  it('compare only runs scored under the same rules', () => {
+    const base = { seed: 7, scenario: 'greenvale', difficulty: 'normal' as const };
+    const mk = (id: string, rules: string | undefined): RunCard => ({
+      ...base,
+      id,
+      at: '2026-10-27T00:00:00.000Z',
+      outcome: 'victory',
+      title: '',
+      survivors: 10,
+      heritage: 0,
+      techs: 0,
+      epochs: 3,
+      hash: '',
+      ...(rules ? { rules, legacy: 1000 } : {}),
+    });
+    // A card from before legacies were kept, or from other rules, is shown in the list but never ranked.
+    expect(bestFor([mk('old', undefined), mk('other', '0.3.0')], base)).toBeNull();
+    expect(bestFor([mk('old', undefined), mk('now', RULES_VERSION)], base)!.id).toBe('now');
   });
 });

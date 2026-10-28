@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hasSave } from '../game/persist';
+import {
+  CHALLENGE_IDS,
+  UNLOCKED_BY,
+  challengeBlocked,
+  expeditionFor,
+  unlockedChallenges,
+} from '../game/challenges';
 import { bestFor, dailyRun, parseShare, seedFromText, utcDate } from '../game/modes';
-import { DIFFICULTY, SCENARIOS, getScenario } from '../engine';
-import type { Difficulty } from '../engine';
+import { DIFFICULTY, FEATS, FEAT_IDS, MAX_MODIFIERS, MODIFIERS, SCENARIOS, getScenario } from '../engine';
+import type { Difficulty, ModifierId } from '../engine';
+import { CodexList } from './Codex';
+import { ROMAN } from './format';
 import { Icon } from './icons';
 import { useStore } from './useStore';
 
 export function TitleScreen() {
   const s = useStore();
-  const [view, setView] = useState<'main' | 'help' | 'settings'>('main');
+  const [view, setView] = useState<'main' | 'help' | 'settings' | 'codex'>('main');
+  // Each view starts at its top: the card keeps its scroll position otherwise (a long Codex opened mid-list).
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    cardRef.current?.scrollTo?.({ top: 0 });
+  }, [view]);
   const canContinue = hasSave();
   const [badSave, setBadSave] = useState(false);
   const [scenarioId, setScenarioId] = useState(() =>
@@ -20,16 +34,26 @@ export function TitleScreen() {
   // A shared link (?seed=…&scenario=…&difficulty=…) pre-selects exactly that valley.
   const [shared] = useState(() => (typeof location === 'undefined' ? {} : parseShare(location.search)));
   const [seedText, setSeedText] = useState(shared.seed ? String(shared.seed) : '');
+  const [chosen, setChosen] = useState<ModifierId[]>(() => shared.modifiers ?? []);
+  // Challenges open from the Codex; a shared link opens the ones it names.
+  const open = new Set([...unlockedChallenges(s.codex), ...(shared.modifiers ?? [])]);
+  const toggle = (id: ModifierId) =>
+    setChosen((now) => CHALLENGE_IDS.filter((x) => (x === id ? !now.includes(x) : now.includes(x))));
+  const pickScenario = (id: string) => {
+    setScenarioId(id);
+    // A challenge that does not suit the new scenario (no quake comes in the Ashen Winter) is dropped.
+    setChosen((now) => now.filter((m) => !MODIFIERS[m].scenarios || MODIFIERS[m].scenarios!.includes(id)));
+  };
   const daily = dailyRun(utcDate(new Date()));
   const typed = seedFromText(seedText);
   const mode = s.settings.assisted ? ('assisted' as const) : ('standard' as const);
-  const spec = { seed: typed ?? 6001, scenario: scenarioId, difficulty, mode };
+  const spec = { seed: typed ?? 6001, scenario: scenarioId, difficulty, mode, modifiers: chosen };
   const best = typed ? bestFor(s.runs, spec) : null;
   const scenario = getScenario(scenarioId);
   const dailyBest = bestFor(s.runs, { ...daily, mode });
   return (
     <div className="title-layer" data-testid="title">
-      <div className="title-card">
+      <div className="title-card" ref={cardRef}>
         <h1 className="logo">EPOCH</h1>
         <p className="tagline">The 60-Second Civilization</p>
         <p className="promise">{scenario.tagline}</p>
@@ -44,7 +68,7 @@ export function TitleScreen() {
                   aria-checked={sc.id === scenarioId}
                   className={`scenario ${sc.id === scenarioId ? 'on' : ''}`}
                   data-testid={`scenario-${sc.id}`}
-                  onClick={() => setScenarioId(sc.id)}
+                  onClick={() => pickScenario(sc.id)}
                 >
                   <b>{sc.name}</b>
                   <small>{sc.epochs.map((e) => e.hazard.name.toLowerCase()).join(' · ')}</small>
@@ -70,11 +94,85 @@ export function TitleScreen() {
             <p className="diff-note" data-testid="difficulty-note">
               {DIFFICULTY[difficulty].blurb}
             </p>
+            <details className="challenges" data-testid="challenges" open={chosen.length > 0 || undefined}>
+              <summary>
+                Challenges{' '}
+                <small data-testid="challenges-summary">
+                  {chosen.length
+                    ? chosen.map((m) => MODIFIERS[m].name).join(' · ')
+                    : `none · ${open.size} of ${CHALLENGE_IDS.length} open`}
+                </small>
+              </summary>
+              <div className="challenge-pick" role="group" aria-label={`Challenges, up to ${MAX_MODIFIERS}`}>
+                {CHALLENGE_IDS.map((id) => {
+                  const d = MODIFIERS[id];
+                  const on = chosen.includes(id);
+                  const why = challengeBlocked(id, chosen, scenarioId, open, MAX_MODIFIERS);
+                  const clash = chosen.find((c) => (d.excludes ?? []).includes(c));
+                  const note =
+                    why === 'locked'
+                      ? `Opens when you earn “${FEATS[UNLOCKED_BY[id]].name}”`
+                      : why === 'unsuited'
+                        ? `Not in ${scenario.name}`
+                        : why === 'clash' && clash
+                          ? `Not with ${MODIFIERS[clash].name}`
+                          : why === 'full'
+                            ? `At most ${MAX_MODIFIERS}`
+                            : d.summary;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="checkbox"
+                      aria-checked={on}
+                      aria-disabled={why ? true : undefined}
+                      className={`challenge ${on ? 'on' : ''} ${why === 'locked' ? 'locked' : ''}`}
+                      data-testid={`challenge-${id}`}
+                      title={d.effects.join(' ')}
+                      onClick={() => {
+                        if (!why) toggle(id);
+                      }}
+                    >
+                      <b>
+                        {why === 'locked' && <Icon name="lock" size={14} />} {d.name}
+                      </b>
+                      <small>{note}</small>
+                    </button>
+                  );
+                })}
+              </div>
+              {chosen.length > 0 && (
+                <ul className="challenge-effects" data-testid="challenge-effects">
+                  {chosen.flatMap((m) => MODIFIERS[m].effects.map((e) => <li key={`${m}:${e}`}>{e}</li>))}
+                </ul>
+              )}
+              <p className="dim small">
+                Each changes the valley, a catastrophe or your people for the whole lineage. A lineage with
+                challenges is compared only with lineages that had the same ones.
+              </p>
+              <button
+                type="button"
+                className="btn"
+                data-testid="expedition"
+                disabled={open.size === 0}
+                onClick={() => {
+                  const n = 1 + Math.floor(Math.random() * 999_999);
+                  const drawn = expeditionFor(n, scenarioId, open);
+                  setSeedText(String(n));
+                  setChosen(drawn);
+                  s.newGame(n, undefined, scenarioId, difficulty, undefined, drawn);
+                }}
+              >
+                Expedition: a random valley, challenges drawn from those open
+              </button>
+            </details>
             <button
               type="button"
               className="btn primary big"
               data-testid="new-game"
-              onClick={() => s.newGame(typed ?? undefined, undefined, scenarioId, difficulty)}
+              onClick={() =>
+                s.newGame(typed ?? undefined, undefined, scenarioId, difficulty, undefined, chosen)
+              }
             >
               <Icon name="play" size={22} /> New Lineage
             </button>
@@ -101,7 +199,7 @@ export function TitleScreen() {
                 onClick={() => {
                   const n = 1 + Math.floor(Math.random() * 999_999);
                   setSeedText(String(n));
-                  s.newGame(n, undefined, scenarioId, difficulty);
+                  s.newGame(n, undefined, scenarioId, difficulty, undefined, chosen);
                 }}
               >
                 Random valley
@@ -109,7 +207,7 @@ export function TitleScreen() {
             </div>
             <p className="diff-note" id="seed-note" data-testid="seed-note">
               {typed
-                ? `Valley ${typed}${shared.seed === typed ? ' (shared link)' : ''}${best ? ` · your best: ${best.outcome === 'victory' ? 'won' : 'lost'} with ${best.survivors} survivors` : ''}`
+                ? `Valley ${typed}${shared.seed === typed ? ' (shared link)' : ''}${best ? ` · your best: ${best.outcome === 'victory' ? 'won' : 'lost'} with ${best.survivors} survivors, legacy ${best.legacy ?? 0}` : ''}`
                 : 'A number or any words. Same seed, same valley and same disasters — share it.'}
             </p>
             <button
@@ -155,6 +253,22 @@ export function TitleScreen() {
               onClick={() => setView('settings')}
             >
               Settings
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              data-testid="open-codex"
+              onClick={() => setView('codex')}
+            >
+              <Icon name="star" size={18} /> Codex {s.codex.length}/{FEAT_IDS.length}
+            </button>
+          </div>
+        )}
+        {view === 'codex' && (
+          <div className="title-sub" data-testid="title-codex">
+            <CodexList codex={s.codex} />
+            <button type="button" className="btn" onClick={() => setView('main')}>
+              Back
             </button>
           </div>
         )}
@@ -271,7 +385,10 @@ export function TitleScreen() {
               {r.outcome === 'victory' ? '✓' : '✗'} {SCENARIOS[r.scenario]?.name ?? r.scenario} ·{' '}
               {r.difficulty}
               {r.mode === 'assisted' ? ' · assisted' : ''} · seed {r.seed} · {r.survivors} survivors
+              {r.legacy !== undefined ? ` · legacy ${r.legacy}` : ''}
               {r.daily ? ` · daily ${r.daily}` : ''}
+              {r.modifiers ? ` · ${r.modifiers.map((m) => MODIFIERS[m].name).join(', ')}` : ''}
+              {r.branch ? ` · branch from age ${ROMAN[r.branch]}` : ''}
             </li>
           ))}
         </ul>

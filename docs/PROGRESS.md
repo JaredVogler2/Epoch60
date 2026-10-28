@@ -3,20 +3,20 @@
 Status vocabulary: NOT STARTED · IN PROGRESS · IMPLEMENTED UNVERIFIED · VERIFIED · BLOCKED · REOPENED.
 Only claim VERIFIED with executed evidence recorded below.
 
-| Phase                          | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Evidence                                                                                    |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 01 Design bible / rules        | IMPLEMENTED (rules + content executable); route fixtures EXECUTED                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `docs/GAME_RULES.md`, `CONTENT_SPEC.md`, generated tables, `fixtures/greenvale-traces.md`   |
-| 02 Economy, actions, tech      | **VERIFIED**: 16 buildings and 9 techs enabled. Since session 4 every effect an independent review could neutralise unnoticed has a behavioural test, each checked by a one-line mutation (`tests/engine/effects.test.ts`)                                                                                                                                                                                                                                                                                                                                                                                            | `tests/engine/{economy,hazards,legacy,ages,effects}.test.ts`                                |
-| 03 Architecture / app scaffold | **VERIFIED (Chromium)**: runnable app, 3D valley, HUD, real build interaction, title→world→build E2E, no duplicate canvases, no console errors. _Not_ verified on WebKit.                                                                                                                                                                                                                                                                                                                                                                                                                                             | `e2e/journey.spec.ts`, `e2e/persistence.spec.ts`, CI green                                  |
-| 04 Time engine / epochs        | **VERIFIED**: 600-tick exactness, FPS-independent hash, hidden/pause/stall freeze, reload resumes paused at exact tick, save/load 1/300/599, replay hash; browser controller + E2E                                                                                                                                                                                                                                                                                                                                                                                                                                    | `tests/game/clock.test.ts`, `tests/engine/{time,replay}.test.ts`, `e2e/persistence.spec.ts` |
-| 05 Terrain / ecology / world   | PARTIAL: generator + validity + persistent fields + ruins/scars/regrowth exist and render; no per-seed screenshot set, no biome variety yet                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `tests/engine/world.test.ts`, `docs/review/`                                                |
-| 06 Premium 3D world            | **IMPLEMENTED (session 4), scored 4/5** on the seven criteria judged from stills after three capture → inspect → fix iterations — painterly diorama across three ages with citizens: shared atmosphere (clouds, wind, painted ground), sky and haze, smooth-shaded tree species with autumn accents, masonry and age roof palettes, the valley continuing past the board, birds, instanced smoke, high-tier tilt-shift and grade, collapse fronts as smooth draped fields. Animation and performance are not scored: captures are SwiftShader stills (no GPU/iPhone frame rates)                                      | `docs/3D_QUALITY_REPORT.md`, `docs/PERF.md`, `docs/review/visual/`                          |
-| 07 Desktop / iPhone UX         | PARTIAL+: mouse, keyboard and touch placement verified in E2E at 1366×768 and the iPhone-13 profile; `e2e/layout.spec.ts` covers 390×664, 320×568, 844×390 and 667×375 (Begin and the placement bar reachable, no horizontal overflow). Session 4: title, fresh valley, placement, village and collapse captured and inspected at 1920×1080, 1440×900, 1366×768, 390×844, 393×852, 844×390, 360×740 and 667×375; no control under 44×44 px measured at 390 and 360 px wide with a coarse pointer; a desktop hover highlight and pointer cursor (`e2e/interaction.spec.ts`). Real iPhone and WebKit not tested (K-001) | `e2e/*`, `docs/3D_QUALITY_REPORT.md`                                                        |
-| 08 Construction / city life    | PARTIAL: scaffolds + progress sweep + crops + dust; **citizens** (instanced, labor-driven, BFS paths, work/idle animation) and dirt roads; since session 5 they are told apart by job — straw hats on farmers, a red cap and an axe on lumberjacks, leather caps and picks on quarrymen, felt hats and mallets on builders, tablets for scholars — and dress by age (undyed linen, dyed cloth, dark wool). No personas/interiors, no hazard reactions beyond sprinting                                                                                                                                                | `docs/review/visual/v5-villagers.jpg`, `e2e/life.spec.ts`                                   |
-| 09 Collapse / inheritance      | PARTIAL+: engine complete; **cinematics** for fire (front + embers + char), flood (continuous rising surface), quake (shockwave + camera shake) replay the resolved outcome read-only and skippably; debrief + interregnum verified; "then vs now" slider not built                                                                                                                                                                                                                                                                                                                                                   | `docs/review/cinematic-*.jpg`, `e2e/campaign.spec.ts`                                       |
-| 10–11 Ages / disasters         | **PARTIAL+**: techs gate Stone House, Levee, Dam, Bridge, Retaining Wall, Forge, Grove with real effects; per-age roofs (thatch → tile → slate); **4 disaster types** (fire, flood, quake, ashfall winter with roof load, famine and lasting soil poison) + 7 state-derived story decisions with chip UI; a second scenario (The Ashen Winter) with its own executed traces; combination effects tested (deforestation ↔ flood/fire, neglected dam, grove ↔ flood ↔ fire, forge ↔ ash)                                                                                                                                | `tests/engine/{ages,story}.test.ts`, `e2e/story.spec.ts`, `docs/review/ages-*.jpg`          |
-| 12 Playable 3-epoch slice      | **VERIFIED (engine + Chromium)**: two winning routes that play differently and credible losses, executed on seed 6001 and replayed bit-for-bit headless and in the browser; on seed 6001 each route loses without its key mechanism (ablation tests). **Since session 5 (rules 0.4.0)** an Archive is not a landmark, so a win needs knowledge _and_ a separate landmark, and the routes get their landmark differently (Engineers: the hearth they refound above the flood and hold; Archivists: a Seed Vault). One well-sited Archive alone, which won Greenvale/Normal 40/40 before, now loses (K-003)             | `fixtures/greenvale-traces.md`, `tests/engine/routes.test.ts`, `e2e/victory.spec.ts`        |
-| 13–19                          | 15 PARTIAL (headless tournament + invariants + fuzz + exploit probes: `scripts/sim.ts`, `docs/BALANCE_REPORT.md`); others NOT STARTED                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `tests/engine/fuzz.test.ts`                                                                 |
+| Phase                          | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Evidence                                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 01 Design bible / rules        | IMPLEMENTED (rules + content executable); route fixtures EXECUTED                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `docs/GAME_RULES.md`, `CONTENT_SPEC.md`, generated tables, `fixtures/greenvale-traces.md`   |
+| 02 Economy, actions, tech      | **VERIFIED**: 16 buildings and 9 techs enabled. Since session 4 every effect an independent review could neutralise unnoticed has a behavioural test, each checked by a one-line mutation (`tests/engine/effects.test.ts`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `tests/engine/{economy,hazards,legacy,ages,effects}.test.ts`                                |
+| 03 Architecture / app scaffold | **VERIFIED (Chromium)**: runnable app, 3D valley, HUD, real build interaction, title→world→build E2E, no duplicate canvases, no console errors. _Not_ verified on WebKit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `e2e/journey.spec.ts`, `e2e/persistence.spec.ts`, CI green                                  |
+| 04 Time engine / epochs        | **VERIFIED**: 600-tick exactness, FPS-independent hash, hidden/pause/stall freeze, reload resumes paused at exact tick, save/load 1/300/599, replay hash; browser controller + E2E                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `tests/game/clock.test.ts`, `tests/engine/{time,replay}.test.ts`, `e2e/persistence.spec.ts` |
+| 05 Terrain / ecology / world   | PARTIAL: generator + validity + persistent fields + ruins/scars/regrowth exist and render; no per-seed screenshot set, no biome variety yet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `tests/engine/world.test.ts`, `docs/review/`                                                |
+| 06 Premium 3D world            | **IMPLEMENTED (session 4), scored 4/5** on the seven criteria judged from stills after three capture → inspect → fix iterations — painterly diorama across three ages with citizens: shared atmosphere (clouds, wind, painted ground), sky and haze, smooth-shaded tree species with autumn accents, masonry and age roof palettes, the valley continuing past the board, birds, instanced smoke, high-tier tilt-shift and grade, collapse fronts as smooth draped fields. Animation and performance are not scored: captures are SwiftShader stills (no GPU/iPhone frame rates)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `docs/3D_QUALITY_REPORT.md`, `docs/PERF.md`, `docs/review/visual/`                          |
+| 07 Desktop / iPhone UX         | PARTIAL+: mouse, keyboard and touch placement verified in E2E at 1366×768 and the iPhone-13 profile; `e2e/layout.spec.ts` covers 390×664, 320×568, 844×390 and 667×375 (Begin and the placement bar reachable, no horizontal overflow). Session 4: title, fresh valley, placement, village and collapse captured and inspected at 1920×1080, 1440×900, 1366×768, 390×844, 393×852, 844×390, 360×740 and 667×375; no control under 44×44 px measured at 390 and 360 px wide with a coarse pointer; a desktop hover highlight and pointer cursor (`e2e/interaction.spec.ts`). Real iPhone and WebKit not tested (K-001)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `e2e/*`, `docs/3D_QUALITY_REPORT.md`                                                        |
+| 08 Construction / city life    | PARTIAL: scaffolds + progress sweep + crops + dust; **citizens** (instanced, labor-driven, BFS paths, work/idle animation) and dirt roads; since session 5 they are told apart by job — straw hats on farmers, a red cap and an axe on lumberjacks, leather caps and picks on quarrymen, felt hats and mallets on builders, tablets for scholars — and dress by age (undyed linen, dyed cloth, dark wool). No personas/interiors, no hazard reactions beyond sprinting                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `docs/review/visual/v5-villagers.jpg`, `e2e/life.spec.ts`                                   |
+| 09 Collapse / inheritance      | PARTIAL+: engine complete; **cinematics** for fire (front + embers + char), flood (continuous rising surface), quake (shockwave + camera shake) replay the resolved outcome read-only and skippably; debrief + interregnum verified; since session 6 a "then and now" slider between ages (pictures from one viewpoint, session memory only)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `docs/review/cinematic-*.jpg`, `e2e/campaign.spec.ts`                                       |
+| 10–11 Ages / disasters         | **PARTIAL+**: techs gate Stone House, Levee, Dam, Bridge, Retaining Wall, Forge, Grove with real effects; per-age roofs (thatch → tile → slate); **4 disaster types** (fire, flood, quake, ashfall winter with roof load, famine and lasting soil poison) + 7 state-derived story decisions with chip UI; a second scenario (The Ashen Winter) with its own executed traces; combination effects tested (deforestation ↔ flood/fire, neglected dam, grove ↔ flood ↔ fire, forge ↔ ash)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `tests/engine/{ages,story}.test.ts`, `e2e/story.spec.ts`, `docs/review/ages-*.jpg`          |
+| 12 Playable 3-epoch slice      | **VERIFIED (engine + Chromium)**: two winning routes that play differently and credible losses, executed on seed 6001 and replayed bit-for-bit headless and in the browser; on seed 6001 each route loses without its key mechanism (ablation tests). **Since session 5 (rules 0.4.0)** an Archive is not a landmark, so a win needs knowledge _and_ a separate landmark, and the routes get their landmark differently (Engineers: the hearth they refound above the flood and hold; Archivists: a Seed Vault). One well-sited Archive alone, which won Greenvale/Normal 40/40 before, now loses (K-003)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `fixtures/greenvale-traces.md`, `tests/engine/routes.test.ts`, `e2e/victory.spec.ts`        |
+| 13–19                          | 13 PARTIAL: seed links, Daily Ruins, local run cards, Assisted ranked apart, twelve challenge modifiers, expeditions and a replay viewer (session 7); no 8–12-epoch campaigns or sandbox (K-004) · 14 PARTIAL: procedural audio (never heard, K-015), villagers by job and age; no personas or interiors · 15 PARTIAL: headless tournament + invariants + fuzz + exploit probes, difficulty tiers (`scripts/sim.ts`, `docs/BALANCE_REPORT.md`) · **16 PARTIAL (session 6): 18 feats awarded from real state, each earned by a recorded run (`fixtures/feats.md`); a device-local Codex; an Atlas of Ages and ideas for the next lineage on the ending; a ruin inspector; replaying an age as an unranked branch; a history lens on the map; a legacy score that counts only what lasted; then-and-now pictures (session only); a chronicle of the most storied works; twelve challenge mutators opened by Codex feats (session 7)** — no endless play or other unlocks (K-022), no land part in the legacy (K-023) · 17 PARTIAL: keyboard-only play, live announcer, reduced motion, phone layouts; no real screen reader or device (K-016, K-001, K-009) · 18 NOT STARTED (deployment needs the owner's confirmation, K-018) · 19 PARTIAL: two independent review passes fixed in session 4; no final adversarial review |
 
 ## Log
 
@@ -217,3 +217,287 @@ camera: the jobs read clearly up close and as coloured hats at play zoom; at the
 Scene cost +5 draw calls (hats and tools skip the shadow pass; `docs/PERF.md`). A browser test checks that each job shows as many villagers
 as the engine puts to work (it fails when farms are drawn as builders).
 **Not verified:** a human playtest of the new demand, WebKit, a real iPhone, real-GPU frame rates.
+
+### Session 6 — Feats, the Codex and the Atlas of Ages (first slice of phase 16)
+
+**Built.** Eighteen feats in five groups (knowledge, heritage, engineering, stewardship, endings), awarded by the engine at
+the moment each happens — a building finished, a research job done, a collapse report written, a ruin dug up, an age founded —
+from the state that event produced (`src/engine/legacy/feats.ts`), and kept in `lineage.feats`. Being hashed, saved and replayed,
+a recorded run always earns exactly the same feats; they change nothing in play. A device-local **Codex** (`src/game/codex.ts`,
+`epoch60.codex.v1`) copies them from played lineages only — never the title screen's demo village — and drops stored entries this
+build cannot vouch for; the title has a Codex view, feats earned in play or between ages are announced once by a toast, and the
+debrief and the ending list them ("new" when the device had not seen them). The ending's lineage list became an **Atlas of Ages**
+(per age: society, catastrophe, people before and after, the best technology known, the landmarks standing afterwards, the ecology
+score, the first causal line and that age's feats) followed by two or three **ideas for the next lineage**: what the run lacked when
+the end came, then feats this device has not seen that the scenario allows, then another valley or Hard.
+**Measured first.** Tallying feats over 96 bot campaigns (6 seeds × 8 policies × 2 scenarios) found that no technology was ever lost
+at a collapse (K-020): feats for rediscovering lost knowledge and recovering forgotten tablets would only have rewarded sabotage, so
+they were replaced by _Shored Up_ (a building you reinforced is struck by that catastrophe and stands) and _Works of the River_ (a
+Bridge or a Dam). Two first drafts were too easy — a quake or catastrophe that never reached the village counted as "unshaken" and
+"without loss" (the losing builder earned both) — so both now require the hazard to reach at least one building.
+**Every feat is attainable, by a recorded run.** The eight route fixtures earn ten feats; five new runs in `fixtures/feats/` —
+variants of the route policies recorded by `scripts/record-feats.ts` (minimal recipe with a Seed Vault, Archivists on Hard, an
+Archive raised in the fire's path, levees and a grove in the river age, a Dam) — earn the other eight. `fixtures/feats.md` lists who
+earns what, in which age.
+**Also fixed:** the title card returns to its top when switching views (the Codex opened mid-list on a 320 px phone). The
+clear-the-brush story reported "the predicted burn shrank by 0 cells" when the cleared scrub lay off the fire's path (it does on
+seed 6001: the Engineers pay 4 timber for nothing there); it now says the burn is unchanged. Its unit test had asserted only "≤" and
+the word "cells", so it passed on a scenario where nothing shrank: it is now two tests — a scrub-choked hearth whose burn really shrinks
+by the number reported, and one off the fire's path that must say "unchanged" — and the browser test checks the toast against the
+measured outcome.
+**Verified:** typecheck, lint, **291 Vitest tests** (28 files; new: 27 feat tests replaying all thirteen recorded runs plus rule-edge
+tests, 6 Codex storage tests, 5 next-lineage-idea tests, 1 store test), build. Twelve one-line mutations of the feat rules (dropping
+"reaches the village", counting a withdrawn quarry plan, counting a story decision's brace as reinforcement, a one-age-old library, any
+grove, a restoration without excavation, flood deaths ignored, one farm enough, a later-age landmark, any difficulty for Hard, two tech
+branches, no firebreak) each fail at least one test; so does letting the demo village into the Codex. Browser: `e2e/codex.spec.ts` on
+both profiles (a fresh device shows 0 of 18; the Engineers' recorded win, played through the browser's store, lists exactly its feats
+in the debrief and the ending, fills the Codex with them, and the Codex survives a reload). Captures of the title Codex at 1366×768,
+390×664, 320×568 and 844×390 (no horizontal overflow; the Codex button is 44 px tall) and of the debrief and ending on both profiles
+were inspected; the phone's Atlas header wrapped badly and the 320 px Codex opened mid-list, both fixed and re-captured (review copy:
+`docs/review/visual/v6-codex.jpg`). The **full Playwright suite** on the feats build (`c1eb079`): **61 passed, 3 skipped**
+(desktop-only), 0 failed, 18.6 min. After the story wording fix: the story, Codex and victory specs on both profiles, 14 passed (the
+fixture hashes did not move: an age's story prompts are cleared when the next age is founded). The old story wording fails the new
+story test.
+**Ruin inspector.** Pressing a ruin now says when and by whom it was built and what it was for, how it fell (destroyed outright,
+or broken by a catastrophe and finished by the centuries), what clearing it gives and what restoring it costs and does — or why it
+cannot be restored yet — all read from the engine's records and rules (`src/ui/ruins.ts`). Writing it found three things: salvage
+under one unit read "gives 0 timber" (now "less than 1"); the text floored a price the Restore button rounds up (7 against 8 — prices
+now round up everywhere); and the longer inspector pushed its buttons below the fold of the phone sheet (the action row is now pinned
+to the bottom of every inspector). An excavated ruin no longer repeats what its dig already took. Tests compare the stated salvage
+and price with what the actions really give and take, follow a restored Bridge from the first age into the victory's landmark count,
+and the browser test reads a fire-taken lumber camp and the dug-up quarry in the Archivists' second age and orders the restoration
+through the inspector's own button (both profiles; the phone needs the sheet closed before Begin, as before).
+**Verified (ruin inspector):** typecheck, lint, **297 Vitest tests** (29 files; +6 ruin tests); two mutations of the ruin text (a
+landmark sentence for any kind; floored scraps) fail them; `e2e/ruins.spec.ts` 2 passed; captures of the ruin and a standing building's
+inspector on both profiles inspected.
+**Replay an age.** The ending offers "Replay from Age II / III": the lineage as it stood when that age was founded, kept in
+the browser for the current lineage only (`src/game/branches.ts`). The resumed lineage is a branch — the briefing and the ending say
+so, its run card is marked, its feats count, and "best for this valley" ignores it, the Daily Ruins included. Replaying drops the
+later points of the timeline it leaves; damaged or foreign points are never loaded. Capturing the ending for this found that the
+new Atlas, feats and ideas had pushed Play again 2.5 screens down on a phone, against Phase 16's "one-tap Retry/New World": the
+ending's choices are now pinned to the bottom of the card (one swipeable row on phones). A first pinned bar was squeezed to 27 px —
+the card is a flex column and the bar's own scrolling let it shrink — so it no longer shrinks.
+**Verified (branches):** typecheck, lint, **303 Vitest tests** (30 files; +6 branch tests driving the store through recorded
+lineages — points saved at each founding and cleared by a new lineage, the exact state restored (hash), later points dropped and
+re-made, the card marked and unranked, the mark kept across a reload only for its seed, damaged or foreign points refused); three
+mutations (branches ranked, no pruning, no mark kept) each fail them. Browser: `e2e/branch.spec.ts` on both profiles (the
+builder's recorded defeat replayed from Age III starts from exactly the hash of that founding, and its second ending and the
+title's recent runs say it is a branch), and with it the Codex, campaign and victory specs, 18 passed. The ending captured at
+1366×768 and 390×664, top and bottom, and inspected.
+**History lens.** The map now shows what each age left (`src/render/history.ts`). It is always on between ages, and on
+request while planning an inherited age (the briefing's button, or H). Every building and ruin is outlined in the colour of its
+age, ruins hatched; each past catastrophe's reach is drawn from its collapse report; eroded ground is marked; a legend counts it
+all, and the hazard forecast steps aside while the lens is shown. An inherited standing building's inspector also names the age
+that built it. Building it found four things:
+
+- The regrown forest hid the lens: it is now drawn over the canopy as a map layer.
+- The first draft thresholded fading world fields: burnt ground (scar), scoured ground (erosion) and poisoned soil (pollution).
+  Probing every recorded run between ages showed three problems. Pollution is always 0 there: only an ash collapse writes it,
+  and ash falls only in the Ashen Winter's last age, which no interregnum follows. The "smoke" in the poisoned label was false:
+  the Forge writes no pollution. And the flood's own erosion (+30, 21 after the centuries) fell below the scoured mark, so the
+  second age's flood, 455–495 cells on the recorded runs, was invisible. The lens now draws each catastrophe's reach from the
+  record, keeps only eroded ground as a field (felled woodland the flood washed over, and quarry pits) and drops poisoned soil.
+- A toggle left on by an earlier lineage would have hidden the first age's forecast, with no button or key to turn it off there.
+  The first age has no history, and the lens now ignores the toggle there.
+- The legend opened below the fold of the briefing card's scroll area, entirely hidden on the phone. It now scrolls itself into
+  view.
+
+**Verified (history lens):** typecheck, lint, **307 Vitest tests** (31 files; +4 history tests: every site carries its age;
+each catastrophe's reach equals its report's cells, the flood's included, though most of its erosion has faded; eroded ground is
+exactly the worn land, never the river; the lens is on between ages, on request while planning, never over the first age).
+Three mutations each fail them: dropping the first-age guard, dropping the flood's reach, and letting the river count as eroded.
+Browser: `e2e/history.spec.ts` on both profiles, 2 passed. Between ages the legend counts the Archivists' first age (2 standing,
+6 ruins) and the fire's 372 cells. After founding, the button and H toggle the lens, and the legend is inside the card's visible
+area: a build without the reveal fails that on both profiles. After the flood the legend reads 493 cells reached and 18 eroded.
+With the campaign, ruins and branch specs (run before the reach change): 12 passed. Captures between ages, while planning and
+after the flood, on both profiles, inspected; review copy `docs/review/visual/v6-history.jpg`.
+**Legacy score.** The ending's single "Lineage score" (the sum of every debrief's total) gave way to a **legacy** that counts
+only what lasted (`src/engine/legacy/score.ts`): People (100 per person who came through the last catastrophe), Knowledge
+(120 per technology still held), Works (30 per building standing, 150 more per landmark from an earlier age) and Feats (100
+per feat), each with the count it rests on. Measured first:
+
+- The debrief's livelihood added 10 for every completed building, so building and clearing the same Firebreak six times
+  added 60 for nothing. Since rules 0.4.1 it counts the works standing when the minute ends.
+- A land part was drafted, comparing the valley's end with how the first people found it, and dropped: between ages the
+  valley regrows and is enriched on its own, so every recorded lineage that reached its last age ends far greener than it
+  began (forest 369 → 491–627, fertility 493 → 687–765) whatever was built. It would have scored the centuries (K-023).
+  Run cards keep the legacy and the rules version; "best for this valley" compares only runs scored under the same rules
+  (a victory first, then the greater legacy, then more survivors), and the title shows the legacy beside each recent run.
+
+**Verified (legacy):** typecheck, lint, **312 Vitest tests** (32 files; +4 legacy tests: nothing before the first catastrophe;
+each part read from the state all thirteen recorded lineages end in, the landmarks matching the verdict's; the eight route
+lineages' totals pinned, every victory above every defeat; building and clearing a Firebreak six times leaves the age's
+livelihood and the legacy no higher; +1 run-card test, and the best-run test now also ranks by legacy). Mutations each fail
+them: the old completion-counting livelihood (60 against 0), dropping the same-rules filter, dropping the legacy tie-break.
+`scripts/record-traces.ts` and `scripts/record-feats.ts` re-run: only hashes and the rules version moved; every outcome,
+survivor count, condition and feat is unchanged. Browser: the four victory replays now also read the ending's legacy (2420,
+3030, 2650, 2530, the numbers the unit tests pin), and with the campaign, branch, modes and Codex specs, **26 passed** on
+both profiles. The ending captured at 1366×768 and on the phone profile, inspected (review copy `docs/review/visual/v6-legacy.jpg`).
+**Then and now.** The render layer photographs the valley from one fixed viewpoint, the default framing centred on the age's
+hearth (`src/render/Snapshot.tsx`): once in the last three seconds of each minute, before the catastrophe resolves, and once
+afterwards (between ages, or at the ending for the last age). Overlays are hidden for the shot, the sky dome and haze are set for
+the snapshot camera and restored, and the frame is drawn into a corner of the canvas and read back. Between ages a slider lays
+the two pictures over each other ("as the minute ended" against "420 years later"); the ending's Atlas pairs each age's two.
+They live only in this session's memory. Writing the browser test found that the stall guard pauses the game when a software
+frame takes over 2.5 s, so the test pauses the game itself while a picture is taken (the shot needs frames, not ticks).
+
+**Verified (then and now):** typecheck, lint, **315 Vitest tests** (33 files; +3: "then" is asked for once in the last seconds
+and "after" once the catastrophe has passed, from the same viewpoint; a recorded age pairs its minute with the valley between
+ages; nothing behind the title, no "after" without a "then", and a new lineage forgets every picture). Two mutations (no title
+guard, "after" without "then") fail them. Browser: `e2e/then-now.spec.ts` on both profiles plays the Archivists' recorded
+lineage, stopping where a real minute gives frames: between the first two ages both pictures are real 16:9 frames of the same
+size and differ, the slider moves the seam from end to end, and the ending's Atlas shows all three pairs. Both pictures saved at
+full size and inspected: the Age I village as the minute ended, and the same view 420 years later with the forest back over it,
+the hearth a ruin and the Seed Vault standing. The interregnum and the ending captured on both profiles and inspected.
+Review copy: `docs/review/visual/v6-then-now.jpg`. The full suite on that build: 68 passed, 3 skipped, 1 failed. The failure was
+the desktop real-time journey: the stall guard paused it ("the device stalled") while a full Vitest run with about 30 workers
+competed for the CPU, against the hand-off's rule (`docs/CONTINUE_HERE.md`) of no heavy jobs beside the suite. Run alone, the journey spec passed three
+times on desktop and twice on the phone.
+**Chronicle of works.** The ending now tells the lives of the lineage's three most storied buildings (`src/ui/chronicle.ts`),
+under the Atlas. The buildings chosen are those with the most recorded events, weighted towards landmarks and keepers of
+knowledge. Each story retells the building's own provenance lines: ages named instead of numbered ("Restored by the people of the
+Age of Iron"), the address dropped. It opens with who raised it (unless its first record already says so) and closes with the
+knowledge it keeps and how it stands. In the Archivists' win, the Archive survived the fire, weathered into disrepair, was
+restored by the people of the Age of Iron and keeps four technologies. The Quarry was dug up and restored twice.
+
+**Verified (chronicle):** **318 Vitest tests** (34 files; +3: the most storied works are chosen, keeper of knowledge first; every
+provenance line is retold, with no epoch number or address left and every sentence capitalised; the Archive's story exactly; a
+hearth tells its own founding and a ruin how it lies). Two mutations (keeping the address, naming the wrong age) fail them. The
+four browser victories also check every chronicle entry's form (title, story, how it stands), and with the campaign specs **14
+passed** on both profiles. The chronicle captured on desktop and phone and inspected.
+**Review fixes.** A code review of this session's work returned ten findings. Each was checked against the code first, and
+nine were real:
+
+- Run cards were stamped with the current rules version, not the lineage's own. A lineage resumed from an older save or branch
+  point would have been ranked against runs scored under today's rules. Cards now carry the campaign's `rules`.
+- _The River Held_ was earned by any flood that killed nobody while a levee or dam stood, even one that never reached the
+  village. The engine now also projects the same flood with no levee or dam standing (`collapseEpoch`, a pure projection), and the
+  feat needs the defences to have kept the water off a building, or hit it less hard. The levees-and-grove run still earns it.
+- A building already in disrepair that a catastrophe touched without new harm was counted as "damaged by" it, which alone
+  refused _An Age Without Loss_. Its integrity was also reset to what the light blow left, mending an older wound. It now
+  "came through" the catastrophe "still in disrepair", is not counted as damaged, and integrity, like status, only worsens.
+- _Three Kinds of Knowing_ was checked only when research finished, so a third branch read from dug-up tablets never counted.
+  Founding an age checks it now.
+- A save or branch point naming a feat this build does not know would have crashed the debrief and the ending. Loading drops
+  unknown feats.
+- The chronicle called a building still under construction or restoration a ruin. It now says the work was unfinished when
+  the end came, and a repair is told as begun ("set about restoring it"), since the record is written when it is ordered.
+- Three cleanups: the victory and the legacy share one landmark rule (`earlierLandmarks`); the four guarded storage helpers
+  are one (`safeStorage`); the history legend rebuilds its layers only when buildings, the world or the age change.
+
+The tenth finding was that _Fire Contained_ and _The River Held_ would accept a firebreak, levee or dam left by an earlier age.
+In both scenarios the fire comes in the first age and the flood in the second, the age levees and dams can first be built, so
+no inherited defence can stand at either. Nothing was changed; a comment at the check says what a scenario moving those hazards
+later must add. The two feats' rule texts now say what is checked.
+
+**Verified (review fixes):** typecheck, lint, **323 Vitest tests** (34 files; +5: an unknown feat dropped on load; the
+levees-and-grove flood held against the same flood undefended, and for a building it reached less hard, and refused for
+defences that changed nothing, a flood that reached no one, or no projection; a third branch from the dig counted at founding; an Archive in disrepair lightly hit is no
+worse, keeps its integrity, and the report's damaged count matches the provenance; a building under construction is not called
+a ruin; the run-card test also checks a card from older rules is never ranked). One mutation per fix fails the tests: the
+current rules on cards, the flood without `held`, only buildings the water missed counted as spared, no check at founding, integrity reset, every touched building "damaged", no
+filter of unknown feats, and the old chronicle ending. `scripts/record-traces.ts` and `scripts/record-feats.ts` re-run: only
+hashes moved, on the five lineages where a catastrophe lightly strikes a building already worn by the centuries; every outcome,
+survivor count, condition, action and feat is unchanged. Browser: the full suite on the fixed build gave 68 passed, 3 skipped,
+1 failed (28.7 min). The failure was the desktop story spec: the stall guard paused the game right after a 176-tick fast-forward,
+and the pause overlay took the click (K-011). The test-only hook ignored only the frame that straddles a jump, but the redraw a
+jump causes can itself pass 2.5 s under software GL, so it now forgives the next three frames too. The full suite on that
+build: **69 passed, 3 skipped, 0 failed** (27.2 min).
+
+**Not verified:** a human playtest of whether the feats invite another lineage; WebKit; a real iPhone.
+
+### Session 7 — Challenges: Phase 13's world modifiers as Phase 16's challenge mutators
+
+**Engine (first milestone).** A lineage can begin with up to three **challenges** (`src/engine/content/modifiers.ts`), each
+changing the world, a catastrophe or the people for the whole lineage, never the clock or the rules of play: Fertile Floodplain
+(richer soil within six cells of the river, floods ×1.30), Dry Summers (fire ×1.30, floods ×0.80, food −15%), Soft Rock
+(deposits ×1.5, quarries +25%, quake ×1.20), Fractured Fault (the quake's epicentre beside the first hearth), Overcrowded
+Refuge (+4 people and −10 food at the start of every age) and Buried Library (an Archive older than the founders, buried west of
+the first hearth, holding Writing and Hydrology). They are stored on the campaign in canonical order, hashed, saved and carried
+by transcripts. A standard lineage has no challenge field at all, so every recorded hash and save is unchanged. Strength now has
+one scaling function (`hazardStrength`: difficulty, then challenges); mapping the code first found that founding-site risk
+scaled the quake by hand in a second place, which now calls it too. Starting people were never taken from the modifier bundle at
+creation; they are now (no change for a standard lineage). The Grandparents' Library now asks for an Archive the lineage built,
+so the Buried Library's older people do not hand it out.
+**Measured on seed 6001** (both route bots, each challenge alone): every challenge changes what it says (the flood reaches 575
+cells instead of 495 on the Fertile Floodplain, the fire 421 instead of 372 for the Archivists in Dry Summers, the quake 752
+cells instead of 536 on the Fractured Fault, though both bots found their third age away from it), both routes still win every
+one on both scenarios, and every run replays to its recorded hash. Overcrowded Refuge starves: 14 people on 20 food come through
+the first fire as 7 or 8, not 9 or 10. Both bots dig the Buried Library up in the first interregnum; the Engineers spend their
+one excavation on it and come through the flood worse (2 deaths and 4 buildings lost, against none and 2).
+**Verified (engine):** typecheck, lint, **337 Vitest tests** (35 files; +14 in `tests/engine/modifiers.test.ts`: allowed sets
+and canonical order; no field and an unchanged hash for a standard lineage; each challenge's exact effect on the world, the
+strengths and the rates; the refugees at the start and at a founding; the library's site, its tablets reaching the next age and
+no Grandparents' Library; room for the library on seeds 1–120; the forecast, the resolution and the founding sites using the
+challenged strength; transcripts and saves keeping challenges, and forged sets refused). Ten mutations, one per hook, each fail
+them: strength ignoring challenges, founding-site risk unscaled, rates ignoring challenges, foundings ignoring their extras, the
+refugees not added at the start, the world not modified, a library without tablets, the library counted as grandparents, saves
+not checked, transcripts dropping challenges. `scripts/record-feats.ts` re-run: only the Grandparents' Library rule text moved.
+**Choosing them (second milestone).** The title has a Challenges list (`src/ui/Title.tsx`, `src/game/challenges.ts`): all six
+are shown, and each opens once the device's Codex holds the feat that shows its kind of trouble has been met (Words Kept opens
+the Buried Library, The Cycle Is Broken the Overcrowded Refuge, Not One Field Lost the Fertile Floodplain, The Fire Stopped Here
+Dry Summers, Unshaken Soft Rock, Shored Up the Fractured Fault). A locked one says which feat opens it; one that does not suit the
+scenario, clashes or would be a fourth says why. Chosen ones list their exact effects. Share links carry them (`mods=`, validated:
+one bad name and the link carries none) and are honoured even where the device has not opened them; the Daily Ruins never carry
+them. Run cards and branch points keep them, and "best for this valley" compares only lineages with the same challenges. The
+briefing lists them every age, the ending names them, Play again, New valley and Copy link keep them, and the title's recent runs
+show them. Everything that named a building's age now handles the library's people, older than the founders: the ruin
+inspector ("Built before the founders came, by a people no record names."), the interregnum's ruin list, a restored building's
+inspector, the chronicle (its own first record says who raised it) and the history lens (its own colour and a "Before the
+founders" legend line). Building over a ruin now says so on the placement bar, and clearing or building over an Archive never dug
+up warns that any tablets inside are lost (without saying what an unsurveyed ruin holds).
+**Found by inspecting the captures:** on desktop the picker fell to one column, pushing New Lineage far down the card (now two
+columns), and on the phone the effect bullets inherited the card's centred text (now left-aligned). The ruin inspector offered
+"Clear ruin" for the library saying only "gives 3 stone": it now says the tablets would be lost too.
+**Verified (choosing):** typecheck, lint, **345 Vitest tests** (36 files; +8 in `tests/game/challenges.test.ts`: unlocks from
+the Codex and the reasons a challenge cannot be added; links carrying them in canonical order and dropping bad sets; a run card
+keeping them and the ranking comparing only the same set; stored cards with sets this build cannot run dropped; the store
+starting a lineage with them but never a Daily Ruins; the library's story in the inspector and the chronicle, and the clearing
+warning). Eight mutations each fail them: ranking ignoring challenges, links trusting any set, stored cards unchecked, the Daily
+Ruins taking challenges, locked challenges choosable, the library's age unnamed, the chronicle repeating its opener, and the
+clearing warning dropped. Browser: the new `e2e/challenges.spec.ts` on both profiles (a fresh device sees 0 of 6 open and a
+locked one does not toggle; with two feats in the Codex two open, the lineage begins with them, fourteen people and a buried
+library, the briefing lists them and the library's inspector tells its story; a shared link brings Soft Rock to a device that
+never opened it, and a clashing set brings none), with the modes, Codex, ruins, branch and campaign specs: **24 passed**. Title,
+briefing and library captures inspected on desktop and phone (review copy `docs/review/visual/v7-challenges.jpg`).
+**Twelve, and expeditions (third milestone).** Six more challenges bring Phase 13's count to the twelve it asks for, each through
+a system the game already has: Storm Front (floods ×1.40, woods regrow half as fast again), Thin Woods (half the forest, half the
+regrowth), Overgrown (forest ×1.4), Blight (farms ×0.75 until Crop Rotation), Rich Vein (no stone within 9 cells of the hearth,
+every other deposit doubled) and Elders' Lore (the first founders know Masonry; research +20%). Thin Woods and Overgrown change
+no hazard rule: the fire burns what fuel there is and the flood's peak follows the catchment's forest, so on seed 6001 Thin Woods
+shrinks the fire from 337–372 cells to 144–228 and raises the flood to 549, Overgrown lowers the flood to 477, and Rich Vein's bare
+knoll lets the fire spread a little further. Both route bots still win with each, and every run replays to its hash; Elders'
+Lore leaves the bots' outcomes unchanged (their plans never use early Masonry). An **expedition** (a button in the Challenges box)
+is a random valley with one to three challenges drawn from the open ones by its seed, so a seed always brings the same draw.
+**Verified (twelve):** **351 Vitest tests** (36 files; +5 modifier tests: the forest at the start, regrowth compared on the same
+world crossing the same centuries, the blight against the same farm with and without Crop Rotation, Elders' Lore's knowledge and
+costs, the Rich Vein's map; +1 expedition test over 300 seeds of both scenarios: always a set the engine accepts as written, sizes
+1–3 and all twelve drawn, only open ones). Six mutations each fail them (regrowth ignoring challenges, no blight, blight ignoring
+Crop Rotation, founders knowing nothing, forest not thinned, the knoll left). Browser: `e2e/challenges.spec.ts` (now also an
+expedition drawing only open challenges) **6 passed**, the modes and Codex specs **10 passed**, both profiles. The title with
+twelve challenges captured on desktop and phone and inspected.
+**Measured over 40 seeds** (`docs/balance/challenges.md`, from `scripts/challenges.ts`: each challenge alone, both scenarios,
+the two route bots and the steward). Every challenge moves the catastrophes it names: the flood reaches 560–578 cells instead of
+484–497 under Fertile Floodplain and Storm Front, 429–446 in Dry Summers; the first fire 171–232 cells in Thin Woods against
+249–402, up to 485 when Overgrown or in Dry Summers; the quake 595 cells on Soft Rock and 747 on the Fractured Fault against 527.
+The tuned routes barely notice most of them (Archivists 39–40/40 everywhere; Engineers lowest under Blight, 34/40, and Dry
+Summers, 36/40). The Buried Library is mostly a gift: it lifts the steward from 4 to 20 of 40 on Greenvale. Elders' Lore changes
+almost nothing for the bots. Bots do not read challenges, so this is what a challenge does to a fixed plan, not how hard it is.
+**Watching a lineage again (Phase 13's replay viewer).** The ending offers "Watch this lineage": the finished lineage
+replayed from its first day through the same engine (`GameStore.watchLineage`, driven by the clock): each accepted action is
+applied at the tick it was logged, before that tick runs, exactly as `replayCampaign` does, while the minute runs at 1×, 2×
+or 4× and the screens outside it wait a moment of wall time (the collapse waits out its cinematic). It is a viewing: the HUD's
+controls are inert, only Space pauses, nothing can be selected, and nothing is saved, carded, branched or recorded in the
+Codex. At the end the ending says whether the replay reached exactly the lineage's final state hash. On the phone the first
+replay bar sat on the resource row, wrapped its title into a column and pushed Stop off-screen; it now takes the build tray's
+place at the bottom (there is no tray while watching), on one row on desktop and two on phones.
+**Verified (replay):** **356 Vitest tests** (37 files; +5 in `tests/game/replay.test.ts`: three recorded lineages, a
+defeat among them, watched again through the real clock end in exactly their recorded hash; so does a lineage begun with a
+challenge, at 60 fps and at 4× with 250 ms frames; nothing reaches the save, the run cards, the branch points or the Codex,
+input is refused, and Stop restores the finished lineage; a wrong final hash is reported; only a finished lineage can be
+watched, once at a time). Seven mutations each fail them: actions applied after their tick, actions one tick late, a match
+always reported, the save overwritten, a run card written, a branch point saved, input not blocked. Browser: the new
+`e2e/replay.spec.ts` on both profiles (the Archivists' recorded win watched again at 4×: no tray, the replay passes through
+the second age, ends with "Replayed exactly" and the same title, and Back returns to the finished lineage's ending), 1 passed
+each (4.8–5.5 min on desktop and 3.1–3.2 min on the phone, while the challenge measurement ran beside them). Captures of the
+replay mid-way and of its result inspected on both profiles (review copy `docs/review/visual/v7-replay.jpg`).

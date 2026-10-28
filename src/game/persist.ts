@@ -35,7 +35,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showTutorial: true,
 };
 
-function storage(): Storage | null {
+/** The browser's localStorage, or null where it is missing or refused (private modes, tests, server render). */
+export function safeStorage(): Storage | null {
   try {
     return typeof localStorage === 'undefined' ? null : localStorage;
   } catch {
@@ -44,7 +45,7 @@ function storage(): Storage | null {
 }
 
 export function saveCampaign(c: Campaign): boolean {
-  const s = storage();
+  const s = safeStorage();
   if (!s) return false;
   try {
     s.setItem(SAVE_KEY, serialize(c));
@@ -55,7 +56,7 @@ export function saveCampaign(c: Campaign): boolean {
 }
 
 export function hasSave(): boolean {
-  const s = storage();
+  const s = safeStorage();
   try {
     return !!s && s.getItem(SAVE_KEY) !== null;
   } catch {
@@ -65,7 +66,7 @@ export function hasSave(): boolean {
 
 /** Returns null when there is no usable save (missing, corrupt or from another schema). */
 export function loadCampaign(): Campaign | null {
-  const s = storage();
+  const s = safeStorage();
   if (!s) return null;
   try {
     const text = s.getItem(SAVE_KEY);
@@ -77,8 +78,8 @@ export function loadCampaign(): Campaign | null {
 
 export function clearSave(): void {
   try {
-    storage()?.removeItem(SAVE_KEY);
-    storage()?.removeItem(DAILY_KEY);
+    safeStorage()?.removeItem(SAVE_KEY);
+    safeStorage()?.removeItem(DAILY_KEY);
   } catch {
     /* ignore */
   }
@@ -87,7 +88,7 @@ export function clearSave(): void {
 /** Remember (or forget, with null) that the saved run is the Daily Ruins of `day`. */
 export function saveDailyTag(seed: number, day: string | null): void {
   try {
-    const s = storage();
+    const s = safeStorage();
     if (!s) return;
     if (day) s.setItem(DAILY_KEY, JSON.stringify({ seed, day }));
     else s.removeItem(DAILY_KEY);
@@ -102,7 +103,7 @@ export function saveDailyTag(seed: number, day: string | null): void {
  */
 export function loadDailyTag(seed: number, dailySeed: (day: string) => number): string | null {
   try {
-    const raw = storage()?.getItem(DAILY_KEY);
+    const raw = safeStorage()?.getItem(DAILY_KEY);
     if (!raw) return null;
     const v = JSON.parse(raw) as { seed?: unknown; day?: unknown };
     if (v.seed !== seed || typeof v.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.day)) return null;
@@ -134,7 +135,7 @@ export function sanitizeSettings(raw: unknown, base: Settings = DEFAULT_SETTINGS
 }
 
 export function loadSettings(): Settings {
-  const s = storage();
+  const s = safeStorage();
   const base = { ...DEFAULT_SETTINGS, reducedMotion: osReducedMotion() };
   try {
     const raw = s?.getItem(SETTINGS_KEY);
@@ -147,7 +148,7 @@ export function loadSettings(): Settings {
 
 export function saveSettings(settings: Settings): void {
   try {
-    storage()?.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    safeStorage()?.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch {
     /* ignore */
   }

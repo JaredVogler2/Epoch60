@@ -424,6 +424,32 @@ export interface HistoryEntry {
   text: string;
 }
 
+export type FeatId =
+  | 'archive_built'
+  | 'three_branches'
+  | 'grandparents_library'
+  | 'hearth_kept'
+  | 'old_foundations'
+  | 'living_heritage'
+  | 'river_works'
+  | 'fire_contained'
+  | 'flood_held'
+  | 'quake_unshaken'
+  | 'winter_fed'
+  | 'reinforced_stood'
+  | 'every_field'
+  | 'forest_returns'
+  | 'light_footprint'
+  | 'cycle_broken'
+  | 'hard_won'
+  | 'perfect_age';
+
+/** A feat the lineage earned, recorded by the engine at the moment it happened (see `legacy/feats.ts`). */
+export interface FeatRecord {
+  id: FeatId;
+  epoch: number;
+}
+
 export interface Lineage {
   history: HistoryEntry[];
   /** Techs ever discovered, retained or not. */
@@ -437,6 +463,8 @@ export interface Lineage {
   /** Pre-resolved interregnum choices for the current gap. */
   interregnum: Interregnum | null;
   score: number;
+  /** Feats earned so far, in the order earned. Each is awarded once, from the state at the moment it happens. */
+  feats: FeatRecord[];
 }
 
 export interface FoundingSite {
@@ -483,6 +511,21 @@ export type GameMode = 'standard' | 'assisted';
 /** Scales every hazard's strength and the victory thresholds (see `content/scenario.ts`). */
 export type Difficulty = 'gentle' | 'normal' | 'hard';
 
+/** Challenges a lineage can begin with (see `content/modifiers.ts`). */
+export type ModifierId =
+  | 'fertile_floodplain'
+  | 'dry_summers'
+  | 'soft_rock'
+  | 'fractured_fault'
+  | 'overcrowded_refuge'
+  | 'buried_library'
+  | 'thin_woods'
+  | 'overgrown'
+  | 'storm_front'
+  | 'blight'
+  | 'elders_lore'
+  | 'rich_vein';
+
 export interface Campaign {
   schema: number;
   rules: string;
@@ -491,6 +534,11 @@ export interface Campaign {
   scenario: string;
   mode: GameMode;
   difficulty: Difficulty;
+  /**
+   * The challenges the lineage began with, in canonical order. Absent for a standard lineage (never an empty list),
+   * so standard campaigns hash exactly as they did before challenges existed.
+   */
+  modifiers?: ModifierId[];
   phase: Phase;
   /** Paused is orthogonal to phase. A saved ACTIVE game always reloads paused. */
   paused: boolean;

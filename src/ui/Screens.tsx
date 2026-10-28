@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BUILDINGS,
   DIFFICULTY,
+  FEAT_IDS,
+  MODIFIERS,
   TECHS,
   TRADITIONS,
   UNIT,
   currentSpec,
   getScenario,
+  legacyOf,
   ruinYield,
   unplan,
   victoryFor,
@@ -14,6 +17,10 @@ import {
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
 import { presentation } from '../render/presentation';
+import { AtlasOfAges, FeatChips, nextIdeas } from './Codex';
+import { HistoryLegend } from './HistoryLegend';
+import { ThenNow } from './ThenNow';
+import { chronicleOf } from './chronicle';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
@@ -35,6 +42,7 @@ export function PrepareCard() {
   const f = s.getForecastCached();
   const plans = c.queue.filter((q) => q.action.type === 'build' || q.action.type === 'research');
   const inherited = c.structures.filter((x) => x.originEpoch < c.epoch);
+  const touch = typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches;
   const ruins = inherited.filter((x) => x.status === 'rubble' || x.status === 'buried').length;
   const standing = inherited.filter((x) => x.status === 'active' || x.status === 'damaged').length;
   const win = victoryFor(scenario, c.difficulty);
@@ -61,14 +69,37 @@ export function PrepareCard() {
           <Icon name="star" size={14} /> {spec.goal}
         </p>
         <p className="scarcity">{spec.scarcityNote}</p>
+        {c.modifiers && (
+          <div className="challenge-brief" data-testid="challenge-brief">
+            <b>This lineage’s challenges</b>
+            <ul>
+              {c.modifiers.map((m) => (
+                <li key={m}>
+                  <b>{MODIFIERS[m].name}.</b> {MODIFIERS[m].effects.join(' ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {c.epoch > 0 && (
           <p className="inherit" data-testid="inherit-summary">
             <Icon name="layers" size={14} /> Inherited: {standing} standing work{standing === 1 ? '' : 's'},{' '}
             {ruins} ruin{ruins === 1 ? '' : 's'}, {c.civ.techs.length} technolog
             {c.civ.techs.length === 1 ? 'y' : 'ies'}
-            {c.civ.techs.length > 0 && ` (${c.civ.techs.map((t) => TECHS[t].name).join(', ')})`}.
+            {c.civ.techs.length > 0 && ` (${c.civ.techs.map((t) => TECHS[t].name).join(', ')})`}.{' '}
+            <button
+              type="button"
+              className="btn sm"
+              aria-pressed={s.showHistory}
+              data-testid="toggle-history"
+              onClick={() => s.toggleHistory()}
+            >
+              {s.showHistory ? 'Hide history' : 'Show history on the map'}
+              {!touch && <span className="kbd-hint"> (H)</span>}
+            </button>
           </p>
         )}
+        {c.epoch > 0 && s.showHistory && <HistoryLegend reveal />}
         {f && (
           <div className="forecast-box">
             <Icon name={hazardIcon(spec.hazard.kind)} size={20} />
@@ -130,6 +161,12 @@ export function PrepareCard() {
         </div>
         <p className="dim small">
           {scenario.name} · epoch {c.epoch + 1} of {scenario.epochs.length} · preparing takes no time.
+          {s.branch !== null && (
+            <span data-testid="branch-mark">
+              {' '}
+              A branch replayed from Age {ROMAN[s.branch]}: its feats count, but it is never ranked.
+            </span>
+          )}
         </p>
       </div>
       <button
@@ -263,6 +300,11 @@ export function DebriefScreen() {
             )}
           </p>
         )}
+        <FeatChips
+          ids={c.lineage.feats.filter((f) => f.epoch === r.epoch).map((f) => f.id)}
+          fresh={s.newFeats}
+          testId="debrief-feats"
+        />
         <div className="score" data-testid="score">
           <span>People {r.score.people}</span>
           <span>Livelihood {r.score.livelihood}</span>
@@ -329,7 +371,8 @@ function RuinRow({ st }: { st: Structure }) {
         <span>
           <b>{d.name}</b>
           <small>
-            ({st.x},{st.y}) · {st.status === 'buried' ? 'deeply buried' : 'ruin'} · {st.cause ?? 'time'}
+            ({st.x},{st.y}) · {st.originEpoch < 0 ? 'before the founders' : `age ${ROMAN[st.originEpoch]}`} ·{' '}
+            {st.status === 'buried' ? 'deeply buried' : 'ruin'} · {st.cause ?? 'time'}
           </small>
         </span>
       </button>
@@ -397,17 +440,27 @@ export function InterregnumScreen() {
   );
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
   const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
+  const pics = s.snapshots[c.epoch];
   return (
     <aside ref={interRef} className="interregnum" data-testid="interregnum" aria-label="Between ages">
       <header>
         <p className="eyebrow">{inter.years} years pass</p>
         <h2>The valley sleeps</h2>
       </header>
+      {pics?.then && pics.after && (
+        <ThenNow
+          then={pics.then}
+          after={pics.after}
+          thenLabel="As the minute ended"
+          afterLabel={`${inter.years} years later`}
+        />
+      )}
       <ul className="inter-log">
         {inter.summary.map((l, i) => (
           <li key={i}>{l}</li>
         ))}
       </ul>
+      <HistoryLegend />
 
       <h3>
         Ruins{' '}
@@ -509,7 +562,10 @@ export function EndScreen() {
   useDialog(ref, undefined, true, c.phase === 'VICTORY' || c.phase === 'DEFEAT');
   if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return null;
   const win = c.phase === 'VICTORY';
+  const branchAges = s.branchAges();
   const v = c.report?.verdict;
+  const legacy = legacyOf(c);
+  const chronicle = chronicleOf(c);
   return (
     <div
       ref={ref}
@@ -520,6 +576,17 @@ export function EndScreen() {
       aria-label="Ending"
     >
       <div className="card-modal wide">
+        {s.replay && (
+          <p
+            className={`replay-result ${s.replay.matched ? 'good' : 'bad'}`}
+            data-testid="replay-result"
+            data-matched={String(s.replay.matched)}
+          >
+            {s.replay.matched
+              ? 'Replayed exactly: the same actions at the same moments led to the same valley, stone for stone.'
+              : 'This replay did not end where the lineage did.'}
+          </p>
+        )}
         <p className="eyebrow">{win ? 'Victory' : 'Defeat'}</p>
         <h1 data-testid="end-title">{v?.title ?? (win ? 'The cycle is broken' : 'The valley is silent')}</h1>
         <p className="headline">{v?.reason}</p>
@@ -532,71 +599,172 @@ export function EndScreen() {
             ))}
           </ul>
         )}
-        <h3>Lineage</h3>
-        <ol className="history">
-          {c.lineage.history.map((h, i) => (
-            <li key={i}>
-              <b>{h.title}.</b> {h.text}
+        {legacy && (
+          <section className="legacy" data-testid="legacy" aria-label="Legacy">
+            <h3>
+              Legacy <b data-testid="legacy-total">{legacy.total}</b>
+            </h3>
+            <ul>
+              {legacy.parts.map((p) => (
+                <li key={p.key} data-testid={`legacy-${p.key}`}>
+                  <b>
+                    {p.label} {p.points}
+                  </b>{' '}
+                  · {p.basis}
+                </li>
+              ))}
+            </ul>
+            <p className="dim small">
+              Only what lasted counts: the people, knowledge, works and feats the lineage ends with.
+            </p>
+          </section>
+        )}
+        <h3>Atlas of Ages</h3>
+        <AtlasOfAges c={c} pics={s.snapshots} />
+        {chronicle.length > 0 && (
+          <>
+            <h3>Chronicle of works</h3>
+            <ul className="chronicle" data-testid="chronicle">
+              {chronicle.map((b) => (
+                <li key={b.id} data-testid="chronicle-work">
+                  <b>{b.title}.</b> {b.story.join(' ')}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <h3>
+          Feats of this lineage{' '}
+          <small className="dim" data-testid="end-codex-count">
+            · Codex {s.codex.length}/{FEAT_IDS.length}
+          </small>
+        </h3>
+        {c.lineage.feats.length ? (
+          <FeatChips ids={c.lineage.feats.map((f) => f.id)} fresh={s.newFeats} testId="end-feats" />
+        ) : (
+          <p className="dim">None this time.</p>
+        )}
+        <h3>Ideas for the next lineage</h3>
+        <ul className="ideas" data-testid="next-ideas">
+          {nextIdeas(c, s.codex).map((x) => (
+            <li key={x.head}>
+              <b>{x.head}.</b> {x.body}
             </li>
           ))}
-        </ol>
+        </ul>
         <p className="score-total">
-          Lineage score <b>{c.lineage.score}</b> · seed {c.seed} · {getScenario(c.scenario).name} ·{' '}
-          {DIFFICULTY[c.difficulty].name}
+          Seed {c.seed} · {getScenario(c.scenario).name} · {DIFFICULTY[c.difficulty].name}
           {s.runDaily ? ` · Daily Ruins ${s.runDaily}` : ''}
+          {c.modifiers && (
+            <span data-testid="end-challenges">
+              {' '}
+              · {c.modifiers.map((m) => MODIFIERS[m].name).join(', ')}
+            </span>
+          )}
+          {s.branch !== null && (
+            <span data-testid="branch-mark"> · a branch from Age {ROMAN[s.branch]}, not ranked</span>
+          )}
         </p>
+        {branchAges.length > 0 && (
+          <p className="dim small" data-testid="replay-note">
+            Replaying an age starts a branch from its founding: everything after it is played again. Its feats
+            count; it is never ranked against straight lineages.
+          </p>
+        )}
         <div className="end-actions">
-          <button
-            type="button"
-            className="btn primary big"
-            data-testid="play-again"
-            data-autofocus
-            onClick={() => {
-              clearSave();
-              s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined);
-            }}
-          >
-            Play again
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              clearSave();
-              s.newGame(
-                ((c.seed * 1103515245 + 12345) >>> 0) % 99999 || 1,
-                undefined,
-                c.scenario,
-                c.difficulty,
-              );
-            }}
-          >
-            New valley
-          </button>
-          <button
-            type="button"
-            className="btn"
-            data-testid="copy-link"
-            onClick={() => {
-              const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined })}`;
-              void navigator.clipboard?.writeText(url).then(
-                () => s.showToast('Link to this valley copied.', 'good'),
-                () => s.showToast(url, 'info'),
-              );
-            }}
-          >
-            Copy link to this valley
-          </button>
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => {
-              clearSave();
-              s.quitToTitle();
-            }}
-          >
-            Title
-          </button>
+          {s.replay ? (
+            <button
+              type="button"
+              className="btn primary big"
+              data-testid="replay-back"
+              data-autofocus
+              onClick={() => s.stopReplay()}
+            >
+              Back to the ending
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn primary big"
+                data-testid="play-again"
+                data-autofocus
+                onClick={() => {
+                  clearSave();
+                  s.newGame(
+                    c.seed,
+                    undefined,
+                    c.scenario,
+                    c.difficulty,
+                    s.runDaily ?? undefined,
+                    c.modifiers,
+                  );
+                }}
+              >
+                Play again
+              </button>
+              <button
+                type="button"
+                className="btn"
+                data-testid="watch-lineage"
+                onClick={() => s.watchLineage()}
+              >
+                Watch this lineage
+              </button>
+              {branchAges.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  className="btn"
+                  data-testid={`replay-age-${e}`}
+                  onClick={() => s.branchFrom(e)}
+                >
+                  Replay from Age {ROMAN[e]}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  clearSave();
+                  s.newGame(
+                    ((c.seed * 1103515245 + 12345) >>> 0) % 99999 || 1,
+                    undefined,
+                    c.scenario,
+                    c.difficulty,
+                    undefined,
+                    c.modifiers,
+                  );
+                }}
+              >
+                New valley
+              </button>
+              <button
+                type="button"
+                className="btn"
+                data-testid="copy-link"
+                onClick={() => {
+                  const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined, modifiers: c.modifiers })}`;
+                  void navigator.clipboard?.writeText(url).then(
+                    () => s.showToast('Link to this valley copied.', 'good'),
+                    () => s.showToast(url, 'info'),
+                  );
+                }}
+              >
+                Copy link to this valley
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => {
+                  clearSave();
+                  s.quitToTitle();
+                }}
+              >
+                Title
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

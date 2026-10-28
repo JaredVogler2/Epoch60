@@ -1,5 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario, scaledStrength } from '../content/scenario';
+import { addMods, hazardStrength, modifierMods, regrowthPm } from '../content/modifiers';
+import { getScenario } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { TRADITIONS, sumModifiers } from '../content/traditions';
 import { UNIT } from '../core/constants';
@@ -23,6 +24,7 @@ import { isStanding } from '../economy/modifiers';
 import { createStructure, levelPad, removeStructure } from '../economy/structures';
 import { quakeIntensityAt, resolveHazard } from '../world/hazards';
 import { cellsOf, clamp, footprintCells, idx, inBounds, reachableSet, slopeSpread } from '../world/query';
+import { featsOnExcavated, featsOnFounded } from './feats';
 
 export const SURVEYS_PER_INTERREGNUM = 2;
 export const EXCAVATIONS_PER_INTERREGNUM = 1;
@@ -107,6 +109,8 @@ function decayStructures(c: Campaign, centuries: number, log: string[]): void {
 
 function regrowWorld(c: Campaign, centuries: number, log: string[]): void {
   const w = c.world;
+  // Some challenges speed or slow the woods' return (1000 = as usual).
+  const regrowth = regrowthPm(c);
   let burntCells = 0;
   let siltedCells = 0;
   for (let i = 0; i < w.height.length; i++) {
@@ -127,7 +131,8 @@ function regrowWorld(c: Campaign, centuries: number, log: string[]): void {
     const slope = Math.max(0, w.height[i]! - 300);
     const potential = clamp(Math.round(w.fertility[i]! * 0.9 + 100 - slope * 0.5), 100, 950);
     if (!built) {
-      const rate = Math.round(90 * centuries * (w.scar[i]! > 400 ? 0.6 : 1) * (s ? 0.4 : 1));
+      let rate = Math.round(90 * centuries * (w.scar[i]! > 400 ? 0.6 : 1) * (s ? 0.4 : 1));
+      if (regrowth !== 1000) rate = Math.round((rate * regrowth) / 1000);
       if (w.forest[i]! < potential) w.forest[i] = Math.min(potential, w.forest[i]! + rate);
     }
     w.scar[i] = Math.round(w.scar[i]! * 0.45);
@@ -206,7 +211,8 @@ function lastHearth(c: Campaign): { x: number; y: number; standing: boolean } {
   return { x: c.world.anchors.hearth.x, y: c.world.anchors.hearth.y, standing: false };
 }
 
-function findSites(c: Campaign): FoundingSite[] {
+/** The places the next age could be founded, each with its exposure to the next catastrophe. */
+export function findSites(c: Campaign): FoundingSite[] {
   const scenario = getScenario(c.scenario);
   const next = scenario.epochs[c.epoch + 1];
   if (!next) return [];
@@ -220,7 +226,7 @@ function findSites(c: Campaign): FoundingSite[] {
     for (let dy = 0; dy < 2; dy++)
       for (let dx = 0; dx < 2; dx++) r = Math.max(r, riskAt.get(idx(x + dx, y + dy, c.world.w)) ?? 0);
     if (riskKind === 'quake')
-      r = Math.max(r, quakeIntensityAt(c, x, y, scaledStrength(c.difficulty, next.hazard.strength)));
+      r = Math.max(r, quakeIntensityAt(c, x, y, hazardStrength(probe, riskKind, next.hazard.strength)));
     return r;
   };
 
@@ -456,6 +462,7 @@ export function excavateRuin(c: Campaign, id: number): ActionResult {
   if (inter.excavationsLeft <= 0) return { ok: false, code: 'no_slots', message: 'No excavation slots left' };
   inter.excavationsLeft--;
   const y = ruinYield(s);
+  featsOnExcavated(c, s, y.techs);
   s.excavated = true;
   s.surveyed = true;
   s.burial = 0;
@@ -540,7 +547,7 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   // Cultural inheritance.
   c.lineage.traditions.push(tradition);
   const traditions = [...c.lineage.traditions];
-  const m = sumModifiers(traditions);
+  const m = addMods(sumModifiers(traditions), modifierMods(c));
 
   // Knowledge inheritance: only what a valid carrier preserved or the dig recovered.
   const techs: TechId[] = [...report.retainedTechs];
@@ -602,5 +609,6 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   });
   c.lineage.interregnum = null;
   emit(c, { code: 'epoch.founded', msg: `${spec.name} begins`, important: true });
+  featsOnFounded(c, !!onOld);
   return { ok: true };
 }

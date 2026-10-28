@@ -178,3 +178,57 @@ export async function shot(page: Page, info: TestInfo, name: string): Promise<vo
 export async function fastForward(page: Page, ticks: number): Promise<void> {
   await page.evaluate((n) => (window as unknown as EpochWindow).__epoch.fastForward(n), ticks);
 }
+
+export type TranscriptEntry = { tick: number; seq: number; epoch: number; action: Record<string, unknown> };
+export type RecordedTranscript = {
+  seed: number;
+  scenario: string;
+  difficulty?: string;
+  actions: TranscriptEntry[];
+  totalTicks: number;
+  finalHash: string;
+};
+
+/**
+ * Play a recorded transcript through the browser's own store (the same dispatch the buttons use), starting a new
+ * game with its seed when `from` is 0. Stops early, returning the next entry's index, when `stop(phase)` holds before an
+ * entry is applied; returns the transcript length when it ran to the end. One synchronous evaluate per call, so the
+ * real-time clock cannot interleave extra ticks.
+ */
+export async function replayTranscript(
+  page: Page,
+  t: RecordedTranscript,
+  from = 0,
+  stopAtPhase: string | null = null,
+): Promise<number> {
+  return page.evaluate(
+    ([seed, scenario, difficulty, actions, start, stopAt]) => {
+      const e = (
+        window as unknown as {
+          __epoch: {
+            store: {
+              newGame: (seed: number, mode: undefined, scenario: string, difficulty: string) => void;
+              campaign: { phase: string; tick: number };
+              dispatch: (a: unknown, o: { quiet: boolean }) => { ok: boolean; message?: string };
+            };
+            fastForward: (n: number) => number;
+          };
+        }
+      ).__epoch;
+      if (start === 0) e.store.newGame(seed, undefined, scenario, difficulty);
+      const c = () => e.store.campaign;
+      const list = actions as TranscriptEntry[];
+      for (let i = start; i < list.length; i++) {
+        const entry = list[i]!;
+        while (c().phase === 'ACTIVE' && c().tick < entry.tick) {
+          if (!e.fastForward(Math.min(25, entry.tick - c().tick))) break;
+        }
+        if (stopAt && c().phase === stopAt) return i;
+        const r = e.store.dispatch(entry.action, { quiet: true });
+        if (!r.ok) throw new Error(`replay refused ${JSON.stringify(entry.action)}: ${r.message}`);
+      }
+      return list.length;
+    },
+    [t.seed, t.scenario, t.difficulty ?? 'normal', t.actions, from, stopAtPhase] as const,
+  );
+}
