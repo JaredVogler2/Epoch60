@@ -89,6 +89,12 @@ export function historyLayers(c: Campaign): HistoryLayers {
 
 /** One colour per age, oldest first (the overlay and the legend share them). */
 export const AGE_COLORS = ['#f2b33d', '#3fc7c2', '#b48cff', '#ff8a5c', '#7fd28a', '#ff6a9a'];
+/** Works older than the lineage (the Buried Library's people) have their own colour, apart from every age's. */
+export const ELDER_COLOR = '#8fa3b8';
+/** The colour of the age that raised a work. */
+export function ageColor(epoch: number): string {
+  return epoch < 0 ? ELDER_COLOR : AGE_COLORS[epoch % AGE_COLORS.length]!;
+}
 /** A past catastrophe's reach, kept apart from the age colours (the fire's red is not the first age's amber). */
 export const REACH_COLORS: Record<HazardKind, string> = {
   fire: '#ff3d2e',

@@ -12,7 +12,7 @@ import {
 import { BUILDINGS, GRID_H, GRID_W, footprint } from '../engine';
 import type { BuildingKind, HazardKind, Structure } from '../engine';
 import { store } from '../game/store';
-import { AGE_COLORS, ERODED_COLOR, REACH_COLORS, historyLayers, lensShown } from './history';
+import { ERODED_COLOR, REACH_COLORS, ageColor, historyLayers, lensShown } from './history';
 import { buildingModel } from './models/buildings';
 import type { BuildingModel } from './models/buildings';
 import { groundY } from './world';
@@ -593,7 +593,7 @@ export function HistoryLens() {
     }
     for (const [k, rects] of groups) {
       const [epoch, state] = k.split(':');
-      const color = AGE_COLORS[Number(epoch) % AGE_COLORS.length]!;
+      const color = ageColor(Number(epoch));
       const mat = decalMaterial(color, state === 'ruin' ? 2 : 1, state === 'ruin' ? 0.75 : 0.65);
       mat.depthTest = false;
       out.push({ key: k, geom: mergedRects(rects, 0.075), mat });

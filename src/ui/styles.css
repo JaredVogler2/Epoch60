@@ -498,6 +498,81 @@ h3 {
   text-align: center;
 }
 
+/* ---------- challenges (optional modifiers) ---------- */
+.challenges {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0 10px;
+}
+.challenges > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  list-style-position: inside;
+}
+.challenges > summary small {
+  color: var(--dim);
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.challenge-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+.challenge {
+  min-height: 52px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--parchment);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.challenge b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.84rem;
+}
+.challenge small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+.challenge.on {
+  border-color: var(--gold);
+  background: rgba(232, 184, 74, 0.14);
+}
+.challenge[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+.challenge.locked b {
+  color: var(--dim);
+}
+.challenge-effects {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+.challenges > p {
+  margin: 0 0 8px;
+}
+
 /* ---------- story decisions ---------- */
 .story {
   width: min(100%, 560px);
@@ -794,6 +869,20 @@ h3 {
 .victory-goals li svg {
   flex: none;
   align-self: center;
+}
+.challenge-brief {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(150, 120, 255, 0.08);
+  border: 1px solid rgba(170, 150, 255, 0.3);
+  font-size: 0.9em;
+}
+.challenge-brief ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
 }
 .forecast-box {
   display: flex;

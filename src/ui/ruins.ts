@@ -37,9 +37,11 @@ export function ruinFacts(c: Campaign, s: Structure): RuinFacts {
   const d = BUILDINGS[s.kind];
   const spec = getScenario(c.scenario).epochs[s.originEpoch];
   const built =
-    s.originEpoch === c.epoch
-      ? `Built in this age.`
-      : `Built in the ${spec?.ageName ?? `age ${s.originEpoch + 1}`} by ${spec?.name ?? 'an earlier people'} (age ${ROMAN[s.originEpoch] ?? s.originEpoch + 1}).`;
+    s.originEpoch < 0
+      ? 'Built before the founders came, by a people no record names.'
+      : s.originEpoch === c.epoch
+        ? `Built in this age.`
+        : `Built in the ${spec?.ageName ?? `age ${s.originEpoch + 1}`} by ${spec?.name ?? 'an earlier people'} (age ${ROMAN[s.originEpoch] ?? s.originEpoch + 1}).`;
   // How it came down. A building that crumbled with time is introduced by the catastrophe that broke it (unless it
   // was repaired since); one destroyed outright, abandoned or never finished needs no prelude.
   let at = s.provenance.length - 1;
@@ -58,14 +60,17 @@ export function ruinFacts(c: Campaign, s: Structure): RuinFacts {
         : s.provenance[at]!;
 
   const salvage = s.salvage.timber + s.salvage.stone > 0;
-  const clear = salvage
-    ? `Clearing it gives ${[
-        s.salvage.timber > 0 ? amount(s.salvage.timber, 'timber') : '',
-        s.salvage.stone > 0 ? amount(s.salvage.stone, 'stone') : '',
-      ]
-        .filter(Boolean)
-        .join(' and ')} and frees the ground.`
-    : 'Clearing it frees the ground; nothing worth salvaging is left.';
+  // An archive not yet dug up may still hold tablets (unknown until surveyed): clearing it destroys them unread.
+  const tablets = s.kind === 'archive' && !s.excavated ? ' Any tablets still inside are lost with it.' : '';
+  const clear =
+    (salvage
+      ? `Clearing it gives ${[
+          s.salvage.timber > 0 ? amount(s.salvage.timber, 'timber') : '',
+          s.salvage.stone > 0 ? amount(s.salvage.stone, 'stone') : '',
+        ]
+          .filter(Boolean)
+          .join(' and ')} and frees the ground.`
+      : 'Clearing it frees the ground; nothing worth salvaging is left.') + tablets;
 
   let restore: string;
   const why = repairBlocked(c, s);

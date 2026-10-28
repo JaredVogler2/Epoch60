@@ -56,8 +56,9 @@ export function chronicleOf(c: Campaign, max = 3): Biography[] {
     .slice(0, max)
     .map((s) => {
       const lines = s.provenance.map((p) => retell(c, s, p));
-      // A hearth's own first line already says who lit it ("The founders lit the first fire here.").
-      const founded = /^(The founders lit|Founded in)/.test(s.provenance[0] ?? '');
+      // A hearth's own first line already says who lit it ("The founders lit the first fire here."), and a work older
+      // than the lineage says who raised it.
+      const founded = /^(The founders lit|Founded in|Raised by)/.test(s.provenance[0] ?? '');
       const society = scenario.epochs[s.originEpoch]?.name ?? 'an earlier people';
       const story = founded ? lines : [`Raised by ${society} in the ${ageName(c, s.originEpoch)}.`, ...lines];
       if (s.storedTechs.length)

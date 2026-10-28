@@ -1,6 +1,6 @@
 import { hashString } from '../engine/core/hash';
-import { DIFFICULTY, RULES_VERSION, SCENARIOS, legacyOf } from '../engine';
-import type { Campaign, Difficulty, GameMode } from '../engine';
+import { DIFFICULTY, RULES_VERSION, SCENARIOS, checkModifiers, legacyOf } from '../engine';
+import type { Campaign, Difficulty, GameMode, ModifierId } from '../engine';
 import { safeStorage } from './persist';
 
 /**
@@ -14,6 +14,8 @@ export interface RunSpec {
   difficulty: Difficulty;
   /** UTC date (YYYY-MM-DD) when this is the daily challenge. */
   daily?: string;
+  /** The challenges it begins with, in canonical order (absent: none). */
+  modifiers?: ModifierId[];
 }
 
 export const MAX_SEED = 0xffffffff;
@@ -57,6 +59,12 @@ export function parseShare(search: string): Partial<RunSpec> {
   if (d && Object.prototype.hasOwnProperty.call(DIFFICULTY, d)) out.difficulty = d as Difficulty;
   const day = q.get('daily');
   if (day && DATE_RE.test(day)) out.daily = day;
+  // Challenges must all be known and fit together and the scenario, or the link carries none.
+  const mods = q.get('mods');
+  if (mods) {
+    const chk = checkModifiers(mods.split(','), out.scenario ?? 'greenvale');
+    if (chk.ok && chk.ids.length) out.modifiers = chk.ids;
+  }
   return out;
 }
 
@@ -66,6 +74,7 @@ export function shareQuery(r: RunSpec): string {
   q.set('scenario', r.scenario);
   q.set('difficulty', r.difficulty);
   if (r.daily) q.set('daily', r.daily);
+  if (r.modifiers?.length) q.set('mods', r.modifiers.join(','));
   return `?${q.toString()}`;
 }
 
@@ -106,6 +115,13 @@ export function loadRuns(): RunCard[] {
   }
 }
 
+/** Stored challenges: a non-empty list this build can run as written, in canonical order. */
+function storedModifiersOk(m: unknown, scenario: string): boolean {
+  if (!Array.isArray(m) || m.length === 0 || !m.every((id) => typeof id === 'string')) return false;
+  const chk = checkModifiers(m as string[], scenario);
+  return chk.ok && chk.ids.join() === m.join();
+}
+
 function isCard(x: unknown): x is RunCard {
   if (!x || typeof x !== 'object') return false;
   const c = x as Record<string, unknown>;
@@ -123,7 +139,8 @@ function isCard(x: unknown): x is RunCard {
     (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted') &&
     (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1)) &&
     (c.legacy === undefined || finite(c.legacy)) &&
-    (c.rules === undefined || typeof c.rules === 'string')
+    (c.rules === undefined || typeof c.rules === 'string') &&
+    (c.modifiers === undefined || storedModifiersOk(c.modifiers, c.scenario))
   );
 }
 
@@ -139,6 +156,7 @@ export function cardOf(
   const by = (i: number) => v.conditions[i]?.have ?? 0;
   const spec: RunSpec = { seed: c.seed, scenario: c.scenario, difficulty: c.difficulty };
   if (daily) spec.daily = daily;
+  if (c.modifiers) spec.modifiers = [...c.modifiers];
   return {
     ...spec,
     id: `${c.seed}-${c.scenario}-${c.difficulty}-${at.getTime()}`,
@@ -149,7 +167,16 @@ export function cardOf(
     heritage: by(1),
     techs: by(2),
     epochs: c.lineage.reports.length,
-    hash: hashString(JSON.stringify([c.seed, c.scenario, c.difficulty, c.totalTicks, c.actionLog.length])),
+    hash: hashString(
+      JSON.stringify([
+        c.seed,
+        c.scenario,
+        c.difficulty,
+        c.totalTicks,
+        c.actionLog.length,
+        ...(c.modifiers ?? []),
+      ]),
+    ),
     ...(c.mode === 'assisted' ? { mode: 'assisted' as const } : {}),
     ...(branch !== null ? { branch } : {}),
     legacy: legacyOf(c)?.total ?? 0,
@@ -169,14 +196,18 @@ export function saveRun(card: RunCard): RunCard[] {
   return all;
 }
 
+/** The same challenges (none and none included). */
+export const sameModifiers = (a?: readonly ModifierId[], b?: readonly ModifierId[]) =>
+  (a ?? []).join() === (b ?? []).join();
+
 /**
  * The best local result for a spec: victories beat defeats, then the greater legacy, then more survivors. Only runs
- * scored under these rules are compared; Assisted runs rank only among themselves; a branch (an age replayed from its
- * start) is never ranked.
+ * scored under these rules and begun with the same challenges are compared; Assisted runs rank only among themselves;
+ * a branch (an age replayed from its start) is never ranked.
  */
 export function bestFor(
   runs: RunCard[],
-  spec: Pick<RunSpec, 'seed' | 'scenario' | 'difficulty'> & { mode?: GameMode },
+  spec: Pick<RunSpec, 'seed' | 'scenario' | 'difficulty' | 'modifiers'> & { mode?: GameMode },
 ): RunCard | null {
   const mode = spec.mode ?? 'standard';
   const mine = runs.filter(
@@ -184,6 +215,7 @@ export function bestFor(
       r.seed === spec.seed &&
       r.scenario === spec.scenario &&
       r.difficulty === spec.difficulty &&
+      sameModifiers(r.modifiers, spec.modifiers) &&
       (r.mode ?? 'standard') === mode &&
       r.branch === undefined &&
       r.rules === RULES_VERSION,

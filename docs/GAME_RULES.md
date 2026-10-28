@@ -439,3 +439,14 @@ The Buried Library is an ordinary ruin from the founders' first day: no catastro
 between ages (its tablets then reach the next age like any other dug-up tablets, with 6 knowledge), restored once excavated,
 cleared, or built over, which destroys it. Its people are older than the lineage: digging it up does not earn The
 Grandparents' Library, which asks for an Archive the lineage itself built.
+
+**Choosing them.** The title's Challenges list shows all six. Each opens once this device's Codex holds the feat that shows
+its kind of trouble has been met: Fertile Floodplain with Not One Field Lost, Dry Summers with The Fire Stopped Here, Soft Rock
+with Unshaken, Fractured Fault with Shored Up, Overcrowded Refuge with The Cycle Is Broken, and Buried Library with Words Kept.
+They open variety, never power: each has a cost, and a lineage begun with challenges is compared ("best for this valley") only
+with lineages begun with the same ones. A shared link may name challenges (`mods=`, validated like everything else in a
+link: one unknown, clashing or unsuited name and the link carries none), and is honoured even where this device has not
+opened them. The Daily Ruins never carry challenges: they are the same challenge for everyone. Run cards and branch points
+keep a lineage's challenges; the briefing lists them every age, the ending names them, Play again and New valley keep them,
+and Copy link includes them. Clearing or building over an Archive that was never dug up warns that any tablets inside are
+lost with it (what it holds stays unknown until it is surveyed).

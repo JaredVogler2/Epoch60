@@ -26,6 +26,7 @@ import type {
   FeatId,
   Forecast,
   GameMode,
+  ModifierId,
   PlacementOk,
   ActionError,
 } from '../engine';
@@ -185,10 +186,12 @@ export class GameStore {
     scenarioId = 'greenvale',
     difficulty: Difficulty = 'normal',
     daily?: string,
+    modifiers: readonly ModifierId[] = [],
   ): void {
     this.runDaily = daily ?? null;
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
-    this.campaign = createCampaign(seed, m, scenarioId, difficulty);
+    // The Daily Ruins are the same challenge for everyone: never with challenges of one's own.
+    this.campaign = createCampaign(seed, m, scenarioId, difficulty, daily ? [] : modifiers);
     saveDailyTag(seed, this.runDaily);
     // A new lineage: the old one's branch points and branch mark go with it.
     this.branch = null;

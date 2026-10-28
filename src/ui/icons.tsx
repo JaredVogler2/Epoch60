@@ -174,6 +174,12 @@ export const ICONS: Record<string, (p: { size?: number }) => ReactNode> = {
       <path d="M12 3 5 6v6c0 4.500 3 7.500 7 9 4-1.500 7-4.500 7-9V6z" />
     </Svg>
   ),
+  lock: ({ size }) => (
+    <Svg size={size}>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </Svg>
+  ),
   star: ({ size }) => (
     <Svg size={size}>
       <path

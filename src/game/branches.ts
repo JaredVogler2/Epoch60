@@ -15,6 +15,8 @@ interface BranchPoint {
   scenario: string;
   difficulty: string;
   mode: string;
+  /** The lineage's challenges (absent: none). */
+  modifiers?: string[];
   epoch: number;
   save: string;
 }
@@ -24,7 +26,11 @@ const BRANCHES_KEY = 'epoch60.branches.v1';
 const BRANCH_TAG_KEY = 'epoch60.save-branch.v1';
 
 const sameLineage = (p: BranchPoint, c: Campaign) =>
-  p.seed === c.seed && p.scenario === c.scenario && p.difficulty === c.difficulty && p.mode === c.mode;
+  p.seed === c.seed &&
+  p.scenario === c.scenario &&
+  p.difficulty === c.difficulty &&
+  p.mode === c.mode &&
+  (p.modifiers ?? []).join() === (c.modifiers ?? []).join();
 
 function load(): BranchPoint[] {
   try {
@@ -40,7 +46,8 @@ function load(): BranchPoint[] {
         typeof (p as BranchPoint).difficulty === 'string' &&
         typeof (p as BranchPoint).mode === 'string' &&
         Number.isInteger((p as BranchPoint).epoch) &&
-        typeof (p as BranchPoint).save === 'string',
+        typeof (p as BranchPoint).save === 'string' &&
+        ((p as BranchPoint).modifiers === undefined || Array.isArray((p as BranchPoint).modifiers)),
     );
   } catch {
     return [];
@@ -66,6 +73,7 @@ export function saveBranchPoint(c: Campaign): void {
       scenario: c.scenario,
       difficulty: c.difficulty,
       mode: c.mode,
+      ...(c.modifiers ? { modifiers: [...c.modifiers] } : {}),
       epoch: c.epoch,
       save: serialize(c),
     },

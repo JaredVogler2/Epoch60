@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { ROMAN } from './format';
-import { AGE_COLORS, ERODED_COLOR, REACH_COLORS, historyLayers } from '../render/history';
+import { ELDER_COLOR, ERODED_COLOR, REACH_COLORS, ageColor, historyLayers } from '../render/history';
 import { useStore } from './useStore';
 
 /**
@@ -21,18 +21,23 @@ export function HistoryLegend({ reveal = false }: { reveal?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [c, s.structRev, s.worldRev, c.epoch],
   );
+  const elders = h.sites.filter((x) => x.epoch < 0);
+  const elderRuins = elders.filter((x) => x.ruin).length;
   return (
     <ul ref={ref} className="history-legend" data-testid="history-legend" aria-label="History on the map">
+      {elders.length > 0 && (
+        <li data-testid="history-age-elder">
+          <i className="swatch" style={{ background: ELDER_COLOR }} aria-hidden="true" />
+          Before the founders: {elders.length - elderRuins} standing, {elderRuins}{' '}
+          {elderRuins === 1 ? 'ruin' : 'ruins'}
+        </li>
+      )}
       {h.ages.map((name, e) => {
         const mine = h.sites.filter((x) => x.epoch === e);
         const ruins = mine.filter((x) => x.ruin).length;
         return (
           <li key={e} data-testid={`history-age-${e}`}>
-            <i
-              className="swatch"
-              style={{ background: AGE_COLORS[e % AGE_COLORS.length] }}
-              aria-hidden="true"
-            />
+            <i className="swatch" style={{ background: ageColor(e) }} aria-hidden="true" />
             <b>{ROMAN[e]}</b> {name}: {mine.length - ruins} standing, {ruins} {ruins === 1 ? 'ruin' : 'ruins'}
           </li>
         );

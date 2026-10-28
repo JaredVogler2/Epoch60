@@ -3,6 +3,7 @@ import {
   BUILDINGS,
   DIFFICULTY,
   FEAT_IDS,
+  MODIFIERS,
   TECHS,
   TRADITIONS,
   UNIT,
@@ -68,6 +69,18 @@ export function PrepareCard() {
           <Icon name="star" size={14} /> {spec.goal}
         </p>
         <p className="scarcity">{spec.scarcityNote}</p>
+        {c.modifiers && (
+          <div className="challenge-brief" data-testid="challenge-brief">
+            <b>This lineage’s challenges</b>
+            <ul>
+              {c.modifiers.map((m) => (
+                <li key={m}>
+                  <b>{MODIFIERS[m].name}.</b> {MODIFIERS[m].effects.join(' ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {c.epoch > 0 && (
           <p className="inherit" data-testid="inherit-summary">
             <Icon name="layers" size={14} /> Inherited: {standing} standing work{standing === 1 ? '' : 's'},{' '}
@@ -358,7 +371,7 @@ function RuinRow({ st }: { st: Structure }) {
         <span>
           <b>{d.name}</b>
           <small>
-            ({st.x},{st.y}) · age {ROMAN[st.originEpoch]} ·{' '}
+            ({st.x},{st.y}) · {st.originEpoch < 0 ? 'before the founders' : `age ${ROMAN[st.originEpoch]}`} ·{' '}
             {st.status === 'buried' ? 'deeply buried' : 'ruin'} · {st.cause ?? 'time'}
           </small>
         </span>
@@ -631,6 +644,12 @@ export function EndScreen() {
         <p className="score-total">
           Seed {c.seed} · {getScenario(c.scenario).name} · {DIFFICULTY[c.difficulty].name}
           {s.runDaily ? ` · Daily Ruins ${s.runDaily}` : ''}
+          {c.modifiers && (
+            <span data-testid="end-challenges">
+              {' '}
+              · {c.modifiers.map((m) => MODIFIERS[m].name).join(', ')}
+            </span>
+          )}
           {s.branch !== null && (
             <span data-testid="branch-mark"> · a branch from Age {ROMAN[s.branch]}, not ranked</span>
           )}
@@ -649,7 +668,7 @@ export function EndScreen() {
             data-autofocus
             onClick={() => {
               clearSave();
-              s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined);
+              s.newGame(c.seed, undefined, c.scenario, c.difficulty, s.runDaily ?? undefined, c.modifiers);
             }}
           >
             Play again
@@ -675,6 +694,8 @@ export function EndScreen() {
                 undefined,
                 c.scenario,
                 c.difficulty,
+                undefined,
+                c.modifiers,
               );
             }}
           >
@@ -685,7 +706,7 @@ export function EndScreen() {
             className="btn"
             data-testid="copy-link"
             onClick={() => {
-              const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined })}`;
+              const url = `${location.origin}${location.pathname}${shareQuery({ seed: c.seed, scenario: c.scenario, difficulty: c.difficulty, daily: s.runDaily ?? undefined, modifiers: c.modifiers })}`;
               void navigator.clipboard?.writeText(url).then(
                 () => s.showToast('Link to this valley copied.', 'good'),
                 () => s.showToast(url, 'info'),

@@ -139,8 +139,10 @@ export function Inspector() {
             )}
             {st.originEpoch < c.epoch && (
               <li data-testid="insp-built">
-                <Icon name="layers" size={14} /> Built in the{' '}
-                {getScenario(c.scenario).epochs[st.originEpoch]?.ageName} (age {ROMAN[st.originEpoch]})
+                <Icon name="layers" size={14} />{' '}
+                {st.originEpoch < 0
+                  ? 'Built before the founders came'
+                  : `Built in the ${getScenario(c.scenario).epochs[st.originEpoch]?.ageName} (age ${ROMAN[st.originEpoch]})`}
               </li>
             )}
             <li>
