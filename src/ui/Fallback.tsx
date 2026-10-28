@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { downloadBackup } from '../game/backup';
 import { clearSave } from '../game/persist';
 
 /** True when this browser can create a WebGL context at all (checked once, before the 3D scene mounts). */
@@ -31,6 +32,8 @@ export function NoWebGL() {
 
 interface State {
   error: Error | null;
+  /** "Start fresh" was pressed once: the next press erases the saved lineage. */
+  erase: boolean;
 }
 
 /**
@@ -38,9 +41,9 @@ interface State {
  * player asks to start fresh.
  */
 export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
-  override state: State = { error: null };
+  override state: State = { error: null, erase: false };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { error };
   }
 
@@ -55,22 +58,38 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
       <div className="fatal" role="alert" data-testid="fatal">
         <h1>The valley could not be drawn</h1>
         <p>
-          Something went wrong while showing the game. Your saved civilization is kept unless you start fresh.
+          Something went wrong while showing the game. Your saved civilization is kept unless you start fresh;
+          a backup keeps a copy of it, your Codex and your run cards whatever happens.
         </p>
         <div className="title-row">
           <button type="button" className="btn primary" onClick={() => location.reload()}>
             Reload
           </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              clearSave();
-              location.reload();
-            }}
-          >
-            Start fresh
+          <button type="button" className="btn" data-testid="fatal-export" onClick={() => downloadBackup()}>
+            Export a backup
           </button>
+          {this.state.erase ? (
+            <button
+              type="button"
+              className="btn"
+              data-testid="fatal-erase"
+              onClick={() => {
+                clearSave();
+                location.reload();
+              }}
+            >
+              Erase the saved lineage and start fresh
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn"
+              data-testid="fatal-fresh"
+              onClick={() => this.setState({ erase: true })}
+            >
+              Start fresh…
+            </button>
+          )}
         </div>
         <p className="dim small">{String(e.message).slice(0, 200)}</p>
       </div>

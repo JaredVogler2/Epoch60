@@ -119,6 +119,9 @@ h3 {
   max-width: 34rem;
   margin: 0;
 }
+.fatal .title-row {
+  flex-wrap: wrap;
+}
 /* A soft lens vignette on every tier (free: compositor, not GPU passes). */
 .vignette {
   position: absolute;
@@ -1790,6 +1793,73 @@ h3 {
 .title-more {
   flex-wrap: wrap;
 }
+/* Asked before a new lineage replaces a saved one; and Settings, Your data. */
+.confirm-start {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.confirm-start h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+.confirm-start p {
+  margin: 0;
+  line-height: 1.45;
+}
+.confirm-start .title-row {
+  flex-wrap: wrap;
+}
+.your-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.your-data h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.your-data p {
+  margin: 0;
+}
+.your-data .title-row {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.import-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+.import-preview:focus {
+  outline: none;
+}
+.import-preview:focus-visible {
+  outline: 2px solid var(--gold);
+}
+.import-preview ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.data-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--good);
+}
+.data-note.bad {
+  color: var(--warn);
+}
 .codex {
   display: flex;
   flex-direction: column;
@@ -2028,11 +2098,24 @@ h3 {
     display: none;
   }
 }
-/* Icon buttons keep a 44 px touch target down to 341 px wide; only the narrowest phones (320 px) trade 4 px for room. */
+/* The narrowest phones (320 px): the four top-bar buttons keep their 44 px touch targets; the gaps, the side margins and
+   the timer give up the room instead. */
 @media (max-width: 340px) {
-  .btn-icon {
-    width: 40px;
-    height: 40px;
+  .hud {
+    padding-left: calc(var(--safe-l) + 8px);
+    padding-right: calc(var(--safe-r) + 8px);
+  }
+  .topbar,
+  .top-left,
+  .top-right {
+    gap: 4px;
+  }
+  .timer {
+    min-width: 0;
+    padding: 4px 8px 6px;
+  }
+  .timer-digits {
+    font-size: 1.75rem;
   }
 }
 /* Placing a building on a phone (portrait or sideways): the bar is one short info row over one row of equal buttons, and

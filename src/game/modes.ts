@@ -119,12 +119,30 @@ export const MAX_CARDS = 40;
 export function loadRuns(): RunCard[] {
   try {
     const raw = safeStorage()?.getItem(RUNS_KEY);
-    if (!raw) return [];
-    const v = JSON.parse(raw) as unknown;
-    if (!Array.isArray(v)) return [];
-    return v.filter(isCard).slice(0, MAX_CARDS);
+    return raw ? sanitizeRuns(JSON.parse(raw)) : [];
   } catch {
     return [];
+  }
+}
+
+/** Stored or imported cards: only well-formed ones this build can show and rank, in their order, bounded. */
+export function sanitizeRuns(raw: unknown): RunCard[] {
+  return Array.isArray(raw) ? raw.filter(isCard).slice(0, MAX_CARDS) : [];
+}
+
+/** Two sets of cards as one (a backup brought in): each card once, newest first, bounded. */
+export function mergeRuns(a: RunCard[], b: RunCard[]): RunCard[] {
+  const byId = new Map<string, RunCard>();
+  for (const r of [...a, ...b]) if (!byId.has(r.id)) byId.set(r.id, r);
+  return [...byId.values()].sort((x, y) => Date.parse(y.at) - Date.parse(x.at)).slice(0, MAX_CARDS);
+}
+
+/** Replace the stored cards (failures are silent: a card is a convenience). */
+export function saveRuns(all: RunCard[]): void {
+  try {
+    safeStorage()?.setItem(RUNS_KEY, JSON.stringify(all));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -142,6 +160,14 @@ function isCard(x: unknown): x is RunCard {
   // A card from a newer or older build (unknown scenario/difficulty) is skipped, never allowed to break the title.
   return (
     typeof c.id === 'string' &&
+    typeof c.at === 'string' &&
+    !Number.isNaN(Date.parse(c.at)) &&
+    typeof c.title === 'string' &&
+    finite(c.heritage) &&
+    finite(c.techs) &&
+    finite(c.epochs) &&
+    typeof c.hash === 'string' &&
+    (c.daily === undefined || (typeof c.daily === 'string' && DATE_RE.test(c.daily))) &&
     finite(c.seed) &&
     typeof c.scenario === 'string' &&
     Object.prototype.hasOwnProperty.call(SCENARIOS, c.scenario) &&
@@ -207,11 +233,7 @@ export function cardOf(
 /** Persist a card (newest first, bounded). Failures (disabled storage, quota) are silent: a card is a convenience. */
 export function saveRun(card: RunCard): RunCard[] {
   const all = [card, ...loadRuns().filter((r) => r.id !== card.id)].slice(0, MAX_CARDS);
-  try {
-    safeStorage()?.setItem(RUNS_KEY, JSON.stringify(all));
-  } catch {
-    /* ignore */
-  }
+  saveRuns(all);
   return all;
 }
 

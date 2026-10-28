@@ -16,6 +16,8 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # The build as Vercel would serve it: whole, within its size budget, under the production headers.
+      - run: npm run verify:release
   # Browser end-to-end on Chromium (software GL). Slow (~15 min), so it does not block the fast gate above; it is
   # informational until it has proven stable on GitHub's runners (then drop `continue-on-error`).
   e2e:

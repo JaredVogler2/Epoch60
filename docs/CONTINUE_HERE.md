@@ -33,11 +33,11 @@ can be **carried on** as **the long chronicle** (endless play after the capstone
 `src/engine/legacy/endless.ts`, `epochSpec` in `content/scenario.ts`): each later age brings back one of the scenario's
 catastrophes, 10% fiercer per age in reach, harm and every building's resistance; later ages are not judged, the chronicle
 ends when fewer than three survive or after age XII, or is rested at a debrief, and gets its own unranked card. Over 20 seeds
-the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. **Phase 18** began in session 7: the build is deploy-ready and checked (`docs/RELEASE_CHECKLIST.md`): `vercel.json` sends a strict content security policy and other headers, `vite preview` sends the same ones so every browser test runs under them, and `npm run verify:release` checks the built `dist` in CI (whole, within its size budget, headers in place); Settings, Your data exports the saved lineage, Codex and run cards as one file and imports one back after checking it like stored data; a new lineage over a saved one with progress asks first. Nothing is deployed (K-018). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
-`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 21 min for 70+ cases; do not run heavy jobs beside it). After any rules/content/bot/feat change:
+`npm run typecheck && npm run lint && npm test && npm run build && npm run verify:release` — then `npx playwright test` for UI changes (≈ 21 min for 70+ cases; do not run heavy jobs beside it). After any rules/content/bot/feat change:
 `npx vite-node scripts/record-traces.ts` and **read the diff of `fixtures/greenvale-traces.md`** (a route that stopped winning must be understood, not silently re-recorded),
 then `npx vite-node scripts/record-feats.ts` (it fails if a feat run stops earning its feat) and update the expected lists in `tests/engine/feats.test.ts`
 from `fixtures/feats.md` — any state change moves every recorded hash, so both scripts must run.
@@ -50,14 +50,16 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
    `scripts/sim.ts`, `scripts/recipes.ts` and the traces.
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
-3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
+3. **Phase 17 remainder:** a manual screen-reader pass (K-016).
 4. **Phase 16 remainder (K-022):** other variety unlocks (terrain packs, real-art building skins); the long chronicle's
    later ages have their own architecture (the Age of Spires) but reuse the catastrophes and buildings (K-024); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
 5. **Phase 13 / 14:** authored 8–12-epoch scenarios (expeditions' variable epoch target needs them; the long chronicle
    already lets a won lineage live twelve ages), sandbox (K-004); a recurring fire season challenge would also answer K-019; villager personas and interiors, Age III skyline, more
    story decisions.
-6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
+6. **Phase 18 remainder:** deployment only with the owner's explicit confirmation (nothing is deployed; K-018; the steps and smoke checks are in
+   `docs/RELEASE_CHECKLIST.md`); Firefox and WebKit runs where a build of them exists; font scale and safe areas, the no-WebGL fallback in a browser
+   test, memory over ten new worlds (the checklist's flow table says what is partial). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.
 
 The session-4 visual process (standard, plan, quality report with per-iteration scores) is in `docs/3D_*.md`; `scripts/visual-shots.mjs <tag> --set full` repeats

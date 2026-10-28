@@ -139,7 +139,12 @@ describe('challenges in links, run cards and rankings', () => {
       scenario: 'greenvale',
       difficulty: 'normal',
       outcome: 'victory',
+      title: 'The cycle is broken',
       survivors: 9,
+      heritage: 1,
+      techs: 2,
+      epochs: 3,
+      hash: 'h',
       at: '2026-10-28T00:00:00.000Z',
     };
     localStorage.setItem(
