@@ -18,7 +18,13 @@ const card = (over: Record<string, unknown>) => ({
   scenario: 'greenvale',
   difficulty: 'normal',
   outcome: 'victory',
+  title: 'The cycle is broken',
   survivors: 9,
+  heritage: 1,
+  techs: 2,
+  epochs: 3,
+  hash: 'h',
+  at: '2026-10-28T00:00:00.000Z',
   ...over,
 });
 
@@ -34,6 +40,24 @@ describe('run cards', () => {
         card({ id: 'ctor', difficulty: 'constructor' }),
         card({ id: 'nan', survivors: null }),
         card({ id: 'inf', seed: 'Infinity' }),
+      ]),
+    );
+    expect(loadRuns().map((r) => r.id)).toEqual(['ok']);
+  });
+
+  it('drops cards whose shown fields are malformed (a chronicle card with a number for a title broke the title)', () => {
+    vi.stubGlobal('localStorage', memoryStorage());
+    localStorage.setItem(
+      'epoch60.runs.v1',
+      JSON.stringify([
+        card({ id: 'ok' }),
+        card({ id: 'title', title: 5, endless: true }),
+        card({ id: 'when', at: 'yesterday' }),
+        card({ id: 'ages', epochs: '3' }),
+        card({ id: 'kept', heritage: null }),
+        card({ id: 'known', techs: undefined }),
+        card({ id: 'hash', hash: 7 }),
+        card({ id: 'daily', daily: '28/10/2026' }),
       ]),
     );
     expect(loadRuns().map((r) => r.id)).toEqual(['ok']);

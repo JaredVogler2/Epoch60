@@ -41,6 +41,8 @@ import {
   saveBranchTag,
   takeBranch,
 } from './branches';
+import { applyBackup } from './backup';
+import type { BackupPlan, BackupResult } from './backup';
 import { loadCodex, recordFeats } from './codex';
 import type { CodexEntry } from './codex';
 import { createDemoCampaign } from './demo';
@@ -417,6 +419,15 @@ export class GameStore {
   abandonSave(): void {
     clearSave();
     this.emit();
+  }
+
+  /** Bring in a checked backup (`applyBackup`): its lineage is then the one Continue resumes. */
+  importBackup(plan: BackupPlan): BackupResult {
+    const r = applyBackup(plan, { codex: this.codex, runs: this.runs });
+    this.codex = r.codex;
+    this.runs = r.runs;
+    this.emit();
+    return r;
   }
 
   private afterReplace(): void {

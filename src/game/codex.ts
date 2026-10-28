@@ -54,6 +54,25 @@ export function sanitizeCodex(raw: unknown): CodexEntry[] {
   return out;
 }
 
+/** Two Codexes as one (a backup brought in): every feat either holds, with its first earning, in the order earned. */
+export function mergeCodex(a: CodexEntry[], b: CodexEntry[]): CodexEntry[] {
+  const first = new Map<FeatId, CodexEntry>();
+  for (const e of [...a, ...b]) {
+    const have = first.get(e.id);
+    if (!have || Date.parse(e.at) < Date.parse(have.at)) first.set(e.id, e);
+  }
+  return [...first.values()].sort((x, y) => Date.parse(x.at) - Date.parse(y.at));
+}
+
+/** Replace the stored Codex (a failed write is silent: the feats stay in their lineages). */
+export function saveCodex(entries: CodexEntry[]): void {
+  try {
+    safeStorage()?.setItem(CODEX_KEY, JSON.stringify(entries));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function loadCodex(): CodexEntry[] {
   try {
     const raw = safeStorage()?.getItem(CODEX_KEY);
@@ -91,12 +110,6 @@ export function recordFeats(
       ...(daily ? { daily } : {}),
     });
   }
-  if (added.length) {
-    try {
-      safeStorage()?.setItem(CODEX_KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-  }
+  if (added.length) saveCodex(next);
   return { codex: next, added };
 }

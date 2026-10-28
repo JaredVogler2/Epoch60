@@ -45,10 +45,24 @@ export function safeStorage(): Storage | null {
 }
 
 export function saveCampaign(c: Campaign): boolean {
+  return writeSaveText(serialize(c));
+}
+
+/** The saved lineage exactly as stored, or null (none, or storage refused). Not checked: see `loadCampaign`. */
+export function loadSaveText(): string | null {
+  try {
+    return safeStorage()?.getItem(SAVE_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Store a save as it is (one already read back by `deserialize`, such as an imported backup's lineage). */
+export function writeSaveText(text: string): boolean {
   const s = safeStorage();
   if (!s) return false;
   try {
-    s.setItem(SAVE_KEY, serialize(c));
+    s.setItem(SAVE_KEY, text);
     return true;
   } catch {
     return false;
@@ -74,6 +88,13 @@ export function loadCampaign(): Campaign | null {
   } catch {
     return null;
   }
+}
+
+/** The saved lineage when starting another would throw progress away: begun, and not yet ended (else null). */
+export function unfinishedSave(): Campaign | null {
+  const c = loadCampaign();
+  if (!c || c.phase === 'VICTORY' || c.phase === 'DEFEAT') return null;
+  return c.epoch > 0 || c.actionLog.length > 0 ? c : null;
 }
 
 export function clearSave(): void {

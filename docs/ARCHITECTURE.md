@@ -21,7 +21,8 @@ src/game/        Browser-side state around the engine: store (one mutable campai
                  applies a finished lineage's logged actions at their ticks), clock (frames → ticks, stall/visibility
                  pauses, the replay's speed), persist (save, settings, Daily tag), modes (seeds, share links, run cards),
                  challenges (which are open from the Codex; expedition draws),
-                 codex (device-local copy of earned feats), branches (points to replay an age from), audio
+                 codex (device-local copy of earned feats), branches (points to replay an age from), backup (the saved
+                 lineage, Codex and run cards as one file to export, checked like stored data before import), audio
 src/render/      React Three Fiber scene — a READ-ONLY projection of engine state:
                  Scene (canvas, lights, tone mapping, context-loss recovery), atmosphere (shared clock/wind/clouds injected
                  into materials), Sky, terrain + water, Foliage + Outskirts + models/, Structures, SmokeField, Birds,
@@ -31,13 +32,17 @@ src/render/      React Three Fiber scene — a READ-ONLY projection of engine st
                  CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
 src/ui/          DOM HUD, tray, inspector and panels (ruins.ts: a ruin's story and worth), debrief, interregnum (ThenNow),
                  ending (legacy, Atlas of Ages, chronicle.ts: the most storied works' lives, feats, ideas for the next
-                 lineage), HistoryLegend, ReplayBar, title (incl. the Codex and the challenges); useDialog (modal focus); Fallback (error boundary, no-WebGL
-                 screen)
+                 lineage), HistoryLegend, ReplayBar, title (incl. the Codex, the challenges, Settings' Your data and
+                 the confirmation before a new lineage replaces a saved one); useDialog (modal focus); Fallback (error
+                 boundary, no-WebGL screen)
 tests/engine/    Vitest headless engine suites (incl. replayed route fixtures)
 tests/game/      Vitest suites for the browser-side state (clock, governor, modes, persistence, store, codex, branches,
-                 ruins, history lens, snapshots, chronicle)
-e2e/             Playwright desktop 1366×768 + iPhone-13 touch profile journeys
-scripts/         vite-node / node tools: traces, tournament (sim.ts), visual and perf captures, maps, doc generation
+                 ruins, history lens, snapshots, chronicle, backups)
+tests/release/   the release check, run against small synthetic builds
+e2e/             Playwright desktop 1366×768 + iPhone-13 touch profile journeys, all served with the production headers
+                 (vite.config.ts gives `vite preview` the ones in vercel.json)
+scripts/         vite-node / node tools: traces, tournament (sim.ts), visual and perf captures, maps, doc generation;
+                 verify-release.ts (plain Node, run in CI after the build: dist whole, within budget, headers in place)
 fixtures/        recorded transcripts of the scripted routes and of the feat runs (fixtures/feats/), replayed by tests
                  (headless and in the browser)
 ```
