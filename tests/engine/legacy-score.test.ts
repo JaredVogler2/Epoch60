@@ -28,8 +28,8 @@ describe('the legacy counts only what lasted', () => {
 
   it('reads every part from the state each recorded lineage ends in', () => {
     const P = LEGACY_POINTS;
-    // The eight route fixtures and six feat runs, the last carried on to the twelfth age (the long chronicle).
-    expect(FIXTURES).toHaveLength(14);
+    // The ten route fixtures and six feat runs, the last carried on to the twelfth age (the long chronicle).
+    expect(FIXTURES).toHaveLength(16);
     for (const name of FIXTURES) {
       const c = replay(name);
       const l = legacyOf(c)!;
@@ -52,10 +52,12 @@ describe('the legacy counts only what lasted', () => {
     const EXPECTED: Record<string, number> = {
       'greenvale/archivists': 3030,
       'greenvale/engineers': 2420,
+      'greenvale/ecologists': 2830,
       'greenvale/builder': 1840,
       'greenvale/noop': 230,
       'ashen/archivists': 2530,
       'ashen/engineers': 2650,
+      'ashen/ecologists': 2500,
       'ashen/builder': 840,
       'ashen/steward': 590,
     };

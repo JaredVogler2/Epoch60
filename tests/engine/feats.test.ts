@@ -44,6 +44,13 @@ const EXPECTED: Record<string, string[]> = {
     'cycle_broken@2',
   ],
   'greenvale/noop': [],
+  'greenvale/ecologists': [
+    'archive_built@0',
+    'old_foundations@1',
+    'every_field@1',
+    'living_heritage@2',
+    'cycle_broken@2',
+  ],
   'ashen/archivists': [
     'archive_built@0',
     'old_foundations@2',
@@ -61,6 +68,13 @@ const EXPECTED: Record<string, string[]> = {
     'cycle_broken@2',
   ],
   'ashen/steward': ['archive_built@2', 'living_heritage@2'],
+  'ashen/ecologists': [
+    'archive_built@0',
+    'old_foundations@1',
+    'winter_fed@2',
+    'living_heritage@2',
+    'cycle_broken@2',
+  ],
   'feats/archivists-hard': [
     'archive_built@0',
     'old_foundations@1',

@@ -301,7 +301,96 @@ export const steward: Policy = {
   excavate: bestExcavation,
 };
 
-export const ROUTES: Record<string, Policy> = { engineers, archivists, builder, maximizer, steward };
+/**
+ * Route C — Ecologists: live off good fields. Two or three farms an age off the hazard's ground, the ecology branch's
+ * three technologies (Irrigation, Forestry, Crop Rotation) with Writing, a Seed Vault on ground no age touches as the
+ * landmark and one Archive as the memory. No levee, dam, wall, firebreak, stone house or granary: in The Ashen Winter
+ * the harvest they have put by is what feeds them through the winter. On Greenvale their ecology decides nothing the
+ * verdict counts (K-027).
+ */
+export const ecologists: Policy = {
+  name: 'ecologists',
+  focus: (c) =>
+    planAge(c) === 2 && hazardOf(c) === 'ash'
+      ? 'food'
+      : scholarly((x) =>
+          planAge(x) === 0
+            ? ['irrigation', 'writing']
+            : planAge(x) === 1
+              ? ['forestry', 'crop_rotation']
+              : [],
+        )(c),
+  wants: (c): Want[] => {
+    const e = planAge(c);
+    if (e === 0)
+      return wantsOnly([
+        {
+          id: 'archive',
+          kind: 'archive',
+          count: 1,
+          save: true,
+          spot: { avoidEpochs: [1, 2], maxDist: 26, high: true },
+        },
+        { id: 'farm', kind: 'farm', count: 2, spot: { avoidHazard: true } },
+        { id: 'lumber', kind: 'lumber_camp', count: 1 },
+        { id: 'quarry', kind: 'quarry', count: 1 },
+        { id: 'r-irrigation', research: 'irrigation' },
+        {
+          id: 'vault',
+          kind: 'seed_vault',
+          count: 1,
+          save: true,
+          spot: { avoidEpochs: [0, 1, 2], maxDist: 26, high: true },
+        },
+        { id: 'r-writing', research: 'writing' },
+        { id: 'cottage', kind: 'cottage', count: 2, spot: { avoidHazard: true } },
+        { id: 'repair', repair: true },
+      ]);
+    if (e === 1)
+      return wantsOnly([
+        // The landmark first if the first age could not afford it: it must still stand after two more catastrophes.
+        {
+          id: 'vault',
+          kind: 'seed_vault',
+          count: 1,
+          save: true,
+          spot: { avoidEpochs: [1, 2], maxDist: 26, high: true },
+        },
+        { id: 'r-forestry', research: 'forestry' },
+        { id: 'lumber', kind: 'lumber_camp', count: 2 },
+        { id: 'farm', kind: 'farm', count: 2, spot: { avoidHazard: true } },
+        { id: 'cottage', kind: 'cottage', count: 3, spot: { avoidHazard: true } },
+        { id: 'r-rotation', research: 'crop_rotation' },
+        { id: 'repair', repair: true },
+      ]);
+    return wantsOnly([
+      { id: 'farm', kind: 'farm', count: 3, spot: { avoidHazard: true } },
+      { id: 'lumber', kind: 'lumber_camp', count: 1 },
+      { id: 'cottage', kind: 'cottage', count: 3, spot: { avoidHazard: true } },
+      { id: 'repair', repair: true },
+    ]);
+  },
+  choose: temperament({
+    dry_wind: 'clear_brush',
+    river_rising: 'harvest_early',
+    foreshock: 'brace_homes',
+    ash_warning: 'trade_grain',
+    historian: 'fund',
+    refugees: 'welcome',
+  }),
+  site: () => 2,
+  tradition: pick(['silt_farmers', 'ash_farmers', 'open_hands', 'high_ground']),
+  excavate: bestExcavation,
+};
+
+export const ROUTES: Record<string, Policy> = {
+  engineers,
+  archivists,
+  ecologists,
+  builder,
+  maximizer,
+  steward,
+};
 
 /**
  * The least a player can do that knows the scenario (K-003): one farm, one lumber camp, one Archive out of the
