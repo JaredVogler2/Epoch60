@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { REINFORCE_BONUS, createCampaign, getForecast } from '../../src/engine';
+import { REINFORCE_BONUS, createCampaign, getForecast, runTicks } from '../../src/engine';
+import { findSpot } from '../../src/engine/ai/spots';
 import { createStructure } from '../../src/engine/economy/structures';
+import { loadCodex } from '../../src/game/codex';
 import { bestFor, dailyRun } from '../../src/game/modes';
 import type { RunCard } from '../../src/game/modes';
 import { clearSave, hasSave, loadDailyTag, saveDailyTag } from '../../src/game/persist';
@@ -90,5 +92,33 @@ describe('run cards', () => {
     const spec = { seed: 7, scenario: 'greenvale', difficulty: 'normal' as const };
     expect(bestFor(runs, spec)?.outcome).toBe('defeat');
     expect(bestFor(runs, { ...spec, mode: 'assisted' })?.outcome).toBe('victory');
+  });
+});
+
+describe('codex', () => {
+  it('only a played lineage reaches the Codex — never the demo village behind the title', () => {
+    vi.stubGlobal('localStorage', memoryStorage());
+    store.codex = [];
+    store.initDemo();
+    // The demo really did finish an Archive, so its lineage holds the feat...
+    expect(store.campaign!.lineage.feats.map((f) => f.id)).toContain('archive_built');
+    store.notifyTicks(0);
+    // ...but the title screen is not play.
+    expect(store.codex).toEqual([]);
+
+    store.newGame(6001);
+    const c = store.campaign!;
+    c.civ.res = { food: 90_000, timber: 90_000, stone: 90_000, knowledge: 0 };
+    const spot = findSpot(c, 'archive', { maxDist: 12 })!;
+    store.dispatch({ type: 'build', kind: 'archive', x: spot.x, y: spot.y, rot: spot.rot });
+    store.dispatch({ type: 'beginEpoch' });
+    for (let i = 0; i < 40 && !c.lineage.feats.length; i++) store.notifyTicks(runTicks(c, 10));
+    expect(store.codex.map((e) => e.id)).toEqual(['archive_built']);
+    expect(store.newFeats).toEqual(['archive_built']);
+    expect(store.toast?.text).toContain('Words Kept');
+    expect(loadCodex().map((e) => e.id)).toEqual(['archive_built']);
+    // A second lineage earning the same feat adds nothing new.
+    store.newGame(6002);
+    expect(store.newFeats).toEqual([]);
   });
 });

@@ -305,3 +305,48 @@ Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers,
 - **Motion:** the OS "reduce motion" preference is the default for the in-game setting; with it, the catastrophe card appears at once with the facts and the camera does not shake.
 - **Audio:** procedural Web Audio (no sample files). Created only after a user gesture (one context per page), suspended while paused or hidden, with a master mute (HUD button and
   settings) and independent music/effects volumes. The graph, routing, mute and event→sound mapping are unit-tested with a recording fake; **how it sounds has not been judged by ear**.
+
+## 17. Feats, the Codex and the Atlas of Ages
+
+**Feats** are things a lineage did. The engine awards each one at the moment it happens — when a building is finished, a
+research job ends, a catastrophe's report is written, a ruin is dug up or an age is founded — from the state that event
+produced, and keeps it in `lineage.feats` (`src/engine/legacy/feats.ts`). They are part of the hashed, replayed and saved
+state, so a recorded run always earns exactly the same feats. They change nothing in play.
+
+| Group       | Feat                      | Rule                                                                                                                 |
+| ----------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Knowledge   | Words Kept                | Finish an Archive.                                                                                                   |
+| Knowledge   | Three Kinds of Knowing    | In one lineage, discover a technology of industry, one of ecology and one of resilience.                             |
+| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive built two ages before the people who find it, its tablets still legible.             |
+| Heritage    | The Hearth Endures        | Found a new age in a hearth kept from the age before.                                                                |
+| Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                           |
+| Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                        |
+| Heritage    | Works of the River        | Finish a Bridge or a Dam.                                                                                            |
+| Engineering | The Fire Stopped Here     | The Great Fire reaches your village but takes no home while a Firebreak you built stands.                            |
+| Engineering | The River Held            | The Great Flood takes no lives while a Levee or Dam you built stands.                                                |
+| Engineering | Unshaken                  | The Great Quake reaches your village but brings down none of your buildings, with at least six standing (Greenvale). |
+| Engineering | Full Larders              | No one starves in the Ashen Winter, with at least six people to feed (The Ashen Winter).                             |
+| Engineering | Shored Up                 | A building you reinforced against the coming catastrophe is struck by it and still stands.                           |
+| Stewardship | Not One Field Lost        | Bring at least two farms whole through the Great Flood.                                                              |
+| Stewardship | The Forest Returns        | Plant a Grove on ground the fire burned (fire scar ≥ 100 of 1000 under it).                                          |
+| Stewardship | Light on the Land         | Win a lineage without ever ordering a Quarry (a plan withdrawn before the age began does not count).                 |
+| Endings     | The Cycle Is Broken       | Win a lineage.                                                                                                       |
+| Endings     | Against the Odds          | Win a lineage on Hard.                                                                                               |
+| Endings     | An Age Without Loss       | A catastrophe reaches your village yet takes no lives, and none of at least six buildings is lost or damaged.        |
+
+"Reaches your village" means the hazard touched at least one of your buildings: a catastrophe that missed the village
+entirely proves nothing about how it was built. "Reinforced" means the player's own Reinforce order for that hazard in
+that age (a story decision can set the same bonus; it does not count). Every feat is earned by at least one recorded run
+(`fixtures/feats.md`, `scripts/record-feats.ts`, `tests/engine/feats.test.ts`).
+
+**The Codex** is the device-local list of every feat this browser has seen a lineage earn (`epoch60.codex.v1`). It only
+copies records from played lineages — the title screen's demo village never counts — so nothing appears in it that was
+not played; stored entries naming unknown feats, scenarios or difficulties are dropped on load. Feats earned in play or
+between ages are announced with a toast the first time; those a catastrophe brings are listed in the debrief and the
+ending, marked "new" when this device had never seen them. The Codex unlocks nothing: no power, no content behind it.
+
+**The ending** shows an **Atlas of Ages** — one entry per age from its collapse report: the society and its age, the
+catastrophe, people before and after, the most valuable technology it knew, the landmarks standing afterwards, the
+ecology score and the first line of why it went as it did, plus that age's feats — then the lineage's feats, and two or
+three **ideas for the next lineage**: first what the lineage lacked when the end came (people, a landmark, knowledge),
+then feats this device has not seen that the scenario allows, then another valley or Hard.

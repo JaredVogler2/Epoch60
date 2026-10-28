@@ -1,5 +1,6 @@
 import {
   BUILDINGS,
+  FEATS,
   checkPlacement,
   createCampaign,
   dispatchAction,
@@ -17,11 +18,14 @@ import type {
   BuildingKind,
   Campaign,
   Difficulty,
+  FeatId,
   Forecast,
   GameMode,
   PlacementOk,
   ActionError,
 } from '../engine';
+import { loadCodex, recordFeats } from './codex';
+import type { CodexEntry } from './codex';
 import { createDemoCampaign } from './demo';
 import { cardOf, dailyRun, loadRuns, saveRun } from './modes';
 import type { RunCard } from './modes';
@@ -105,6 +109,12 @@ export class GameStore {
   runDaily: string | null = null;
   /** Finished runs, newest first (local only). */
   runs: RunCard[] = loadRuns();
+  /** Every feat this device has seen a lineage earn (local only). */
+  codex: CodexEntry[] = loadCodex();
+  /** Feats the current lineage brought into the Codex for the first time. */
+  newFeats: FeatId[] = [];
+  /** How many of the current lineage's feats have been copied into the Codex. */
+  private seenFeats = 0;
   /** Cycling list of suggested sites for the building being placed (the keyboard / screen-reader path). */
   suggest: { kind: BuildingKind; key: string; spots: SuggestedSpot[]; i: number } | null = null;
 
@@ -142,6 +152,7 @@ export class GameStore {
     this.afterReplace();
     this.clockResetSeq++;
     this.screen = 'game';
+    this.syncCodex(false);
     this.autosave(true);
     this.emit();
   }
@@ -167,6 +178,7 @@ export class GameStore {
     this.runDaily = loadDailyTag(c.seed, (day) => dailyRun(day).seed);
     this.afterReplace();
     this.screen = 'game';
+    this.syncCodex(false);
     if (c.phase === 'ACTIVE') this.pauseReason = 'reload';
     this.emit();
     return true;
@@ -177,6 +189,7 @@ export class GameStore {
     this.campaign = c;
     this.afterReplace();
     this.screen = 'game';
+    this.syncCodex(false);
     this.emit();
   }
 
@@ -213,6 +226,8 @@ export class GameStore {
     this.lastStructSig = '';
     this.lastPhase = this.campaign?.phase ?? '';
     this.lastSaveTick = -1;
+    this.seenFeats = 0;
+    this.newFeats = [];
     this.refreshRevs();
     this.worldRev++;
     this.structRev++;
@@ -253,6 +268,7 @@ export class GameStore {
       if (c.phase !== this.lastPhase) this.onPhaseChange(c.phase);
       else if (c.tick - this.lastSaveTick >= 50) this.autosave(false);
     }
+    this.syncCodex(true);
     this.emit();
   }
 
@@ -326,8 +342,30 @@ export class GameStore {
     this.refreshRevs();
     if (c.phase !== this.lastPhase) this.onPhaseChange(c.phase);
     else if (r.ok && action.type !== 'setFocus') this.autosave(true);
+    this.syncCodex(true);
     this.emit();
     return r;
+  }
+
+  /**
+   * Copy the lineage's newly earned feats into the Codex. Feats earned in play or between ages are announced with a
+   * toast; those a catastrophe brings are listed by the debrief and the ending instead. The title screen's demo
+   * village never counts.
+   */
+  private syncCodex(announce: boolean): void {
+    const c = this.campaign;
+    if (!c || this.screen !== 'game' || c.lineage.feats.length === this.seenFeats) return;
+    this.seenFeats = c.lineage.feats.length;
+    const r = recordFeats(this.codex, c, this.runDaily, new Date());
+    if (!r.added.length) return;
+    this.codex = r.codex;
+    this.newFeats = [...this.newFeats, ...r.added];
+    if (announce && (c.phase === 'PREPARE' || c.phase === 'ACTIVE' || c.phase === 'INTERREGNUM'))
+      this.toast = {
+        id: ++this.toastSeq,
+        text: `New in your Codex: ${r.added.map((id) => FEATS[id].name).join(', ')}.`,
+        tone: 'good',
+      };
   }
 
   showToast(text: string, tone: Toast['tone'] = 'info'): void {

@@ -116,6 +116,7 @@ export function createCampaign(
       traditions: [],
       interregnum: null,
       score: 0,
+      feats: [],
     },
     queue: [],
     rng: createRngState(seed, 1),

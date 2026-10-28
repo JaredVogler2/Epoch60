@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { hasSave } from '../game/persist';
 import { bestFor, dailyRun, parseShare, seedFromText, utcDate } from '../game/modes';
-import { DIFFICULTY, SCENARIOS, getScenario } from '../engine';
+import { DIFFICULTY, FEAT_IDS, SCENARIOS, getScenario } from '../engine';
 import type { Difficulty } from '../engine';
+import { CodexList } from './Codex';
 import { Icon } from './icons';
 import { useStore } from './useStore';
 
 export function TitleScreen() {
   const s = useStore();
-  const [view, setView] = useState<'main' | 'help' | 'settings'>('main');
+  const [view, setView] = useState<'main' | 'help' | 'settings' | 'codex'>('main');
+  // Each view starts at its top: the card keeps its scroll position otherwise (a long Codex opened mid-list).
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    cardRef.current?.scrollTo?.({ top: 0 });
+  }, [view]);
   const canContinue = hasSave();
   const [badSave, setBadSave] = useState(false);
   const [scenarioId, setScenarioId] = useState(() =>
@@ -29,7 +35,7 @@ export function TitleScreen() {
   const dailyBest = bestFor(s.runs, { ...daily, mode });
   return (
     <div className="title-layer" data-testid="title">
-      <div className="title-card">
+      <div className="title-card" ref={cardRef}>
         <h1 className="logo">EPOCH</h1>
         <p className="tagline">The 60-Second Civilization</p>
         <p className="promise">{scenario.tagline}</p>
@@ -155,6 +161,22 @@ export function TitleScreen() {
               onClick={() => setView('settings')}
             >
               Settings
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              data-testid="open-codex"
+              onClick={() => setView('codex')}
+            >
+              <Icon name="star" size={18} /> Codex {s.codex.length}/{FEAT_IDS.length}
+            </button>
+          </div>
+        )}
+        {view === 'codex' && (
+          <div className="title-sub" data-testid="title-codex">
+            <CodexList codex={s.codex} />
+            <button type="button" className="btn" onClick={() => setView('main')}>
+              Back
             </button>
           </div>
         )}

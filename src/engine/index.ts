@@ -36,6 +36,8 @@ export { housingCapacity, techCost, mods } from './economy/modifiers';
 export { buildSpeedPm, farmFertilityPm } from './economy/economy';
 export { ruinYield } from './legacy/inheritance';
 export { collapseEpoch, LANDMARK_HINT, LANDMARK_LABEL } from './legacy/collapse';
+export { FEATS, FEAT_GROUPS, FEAT_IDS } from './legacy/feats';
+export type { FeatDef, FeatGroup } from './legacy/feats';
 export { generateWorld, validateWorld } from './world/generate';
 export { resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
 export {

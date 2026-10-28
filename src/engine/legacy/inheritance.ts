@@ -23,6 +23,7 @@ import { isStanding } from '../economy/modifiers';
 import { createStructure, levelPad, removeStructure } from '../economy/structures';
 import { quakeIntensityAt, resolveHazard } from '../world/hazards';
 import { cellsOf, clamp, footprintCells, idx, inBounds, reachableSet, slopeSpread } from '../world/query';
+import { featsOnExcavated, featsOnFounded } from './feats';
 
 export const SURVEYS_PER_INTERREGNUM = 2;
 export const EXCAVATIONS_PER_INTERREGNUM = 1;
@@ -456,6 +457,7 @@ export function excavateRuin(c: Campaign, id: number): ActionResult {
   if (inter.excavationsLeft <= 0) return { ok: false, code: 'no_slots', message: 'No excavation slots left' };
   inter.excavationsLeft--;
   const y = ruinYield(s);
+  featsOnExcavated(c, s, y.techs);
   s.excavated = true;
   s.surveyed = true;
   s.burial = 0;
@@ -602,5 +604,6 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   });
   c.lineage.interregnum = null;
   emit(c, { code: 'epoch.founded', msg: `${spec.name} begins`, important: true });
+  featsOnFounded(c, !!onOld);
   return { ok: true };
 }

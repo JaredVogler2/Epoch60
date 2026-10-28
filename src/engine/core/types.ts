@@ -424,6 +424,32 @@ export interface HistoryEntry {
   text: string;
 }
 
+export type FeatId =
+  | 'archive_built'
+  | 'three_branches'
+  | 'grandparents_library'
+  | 'hearth_kept'
+  | 'old_foundations'
+  | 'living_heritage'
+  | 'river_works'
+  | 'fire_contained'
+  | 'flood_held'
+  | 'quake_unshaken'
+  | 'winter_fed'
+  | 'reinforced_stood'
+  | 'every_field'
+  | 'forest_returns'
+  | 'light_footprint'
+  | 'cycle_broken'
+  | 'hard_won'
+  | 'perfect_age';
+
+/** A feat the lineage earned, recorded by the engine at the moment it happened (see `legacy/feats.ts`). */
+export interface FeatRecord {
+  id: FeatId;
+  epoch: number;
+}
+
 export interface Lineage {
   history: HistoryEntry[];
   /** Techs ever discovered, retained or not. */
@@ -437,6 +463,8 @@ export interface Lineage {
   /** Pre-resolved interregnum choices for the current gap. */
   interregnum: Interregnum | null;
   score: number;
+  /** Feats earned so far, in the order earned. Each is awarded once, from the state at the moment it happens. */
+  feats: FeatRecord[];
 }
 
 export interface FoundingSite {

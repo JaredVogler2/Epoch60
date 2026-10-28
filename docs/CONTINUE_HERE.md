@@ -12,12 +12,17 @@ and fixed what a second independent review proved (unreachable traditions, repai
 exact arithmetic in hashed state) with mutation-checked behavioural tests. Visual iteration 3 covered every required viewport (scores 4/5 on the seven criteria
 judged from stills); desktop hover highlights buildings. Session 5 (rules 0.4.0) made Normal need two separate preparations: an Archive carries the
 knowledge but is no longer a landmark, so a win also needs a Hearth a later society kept, a Seed Vault, a Dam or a Bridge — and the planning card says
-so. **251 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+so. Session 6 began Phase 16: **18 feats** awarded by the engine at the moment they happen (`src/engine/legacy/feats.ts`, kept in
+`lineage.feats`, so replays earn exactly the same ones), each earned by at least one recorded run (`fixtures/feats.md`); a device-local
+**Codex** on the title; and on the ending an **Atlas of Ages** (one entry per age) plus two or three **ideas for the next lineage** drawn
+from what the run lacked. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
-`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 11 min; do not run heavy jobs beside it). After any rules/content/bot change:
-`npx vite-node scripts/record-traces.ts` and **read the diff of `fixtures/greenvale-traces.md`** (a route that stopped winning must be understood, not silently re-recorded).
+`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 11 min; do not run heavy jobs beside it). After any rules/content/bot/feat change:
+`npx vite-node scripts/record-traces.ts` and **read the diff of `fixtures/greenvale-traces.md`** (a route that stopped winning must be understood, not silently re-recorded),
+then `npx vite-node scripts/record-feats.ts` (it fails if a feat run stops earning its feat) and update the expected lists in `tests/engine/feats.test.ts`
+from `fixtures/feats.md` — any state change moves every recorded hash, so both scripts must run.
 
 ## Next exact steps (highest value first)
 
@@ -28,9 +33,12 @@ so. **251 unit tests.** Scores per capture iteration: `docs/3D_QUALITY_REPORT.md
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 13 / 14 / 16:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
-   then-vs-now slider, more story decisions; meta-progression.
-5. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
+4. **Phase 16 remainder (K-022):** a ruin inspector (age, purpose, why it fell, what salvaging or rebuilding does now), the Atlas as an interactive
+   book (historical map layers, before/after), branchable saves at an age boundary, endless play, variety unlocks with no power; K-020 (knowledge is
+   almost never lost, so the rediscovery and tablet rules sleep).
+5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
+   then-vs-now slider, more story decisions.
+6. **Phase 18 — deployment** only with the owner's explicit confirmation (nothing is deployed; K-018). A human playtest (K-014) and listening to the audio (K-015)
    are the biggest unmeasured things.
 
 The session-4 visual process (standard, plan, quality report with per-iteration scores) is in `docs/3D_*.md`; `scripts/visual-shots.mjs <tag> --set full` repeats

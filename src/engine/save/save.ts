@@ -64,7 +64,8 @@ function validateShape(c: Campaign): void {
   if (c.mode !== 'standard' && c.mode !== 'assisted') bad('unknown mode');
   if (!PHASES.has(c.phase)) bad('unknown phase');
   if (!Number.isInteger(c.tick) || c.tick < 0 || c.tick > 600) bad('tick out of range');
-  if (!Array.isArray(c.structures) || !c.world || !c.civ) bad('missing state');
+  if (!Array.isArray(c.structures) || !c.world || !c.civ || !Array.isArray(c.lineage?.feats))
+    bad('missing state');
 }
 
 /**
@@ -84,6 +85,7 @@ export function deserialize(text: string): Campaign {
   if (computeHash(c) !== file.hash) throw new SaveError('Save data failed its integrity check');
   c.prompts ??= []; // saves written before story decisions existed
   c.difficulty ??= 'normal'; // ... or before difficulty tiers
+  if (c.lineage) c.lineage.feats ??= []; // ... or before feats
   validateShape(c);
   if (c.phase === 'ACTIVE') c.paused = true;
   return c;

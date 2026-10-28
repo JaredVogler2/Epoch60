@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BUILDINGS,
   DIFFICULTY,
+  FEAT_IDS,
   TECHS,
   TRADITIONS,
   UNIT,
@@ -14,6 +15,7 @@ import {
 import type { HazardKind, Structure, TraditionId } from '../engine';
 import { clearSave } from '../game/persist';
 import { presentation } from '../render/presentation';
+import { AtlasOfAges, FeatChips, nextIdeas } from './Codex';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
@@ -263,6 +265,11 @@ export function DebriefScreen() {
             )}
           </p>
         )}
+        <FeatChips
+          ids={c.lineage.feats.filter((f) => f.epoch === r.epoch).map((f) => f.id)}
+          fresh={s.newFeats}
+          testId="debrief-feats"
+        />
         <div className="score" data-testid="score">
           <span>People {r.score.people}</span>
           <span>Livelihood {r.score.livelihood}</span>
@@ -532,14 +539,27 @@ export function EndScreen() {
             ))}
           </ul>
         )}
-        <h3>Lineage</h3>
-        <ol className="history">
-          {c.lineage.history.map((h, i) => (
-            <li key={i}>
-              <b>{h.title}.</b> {h.text}
+        <h3>Atlas of Ages</h3>
+        <AtlasOfAges c={c} />
+        <h3>
+          Feats of this lineage{' '}
+          <small className="dim" data-testid="end-codex-count">
+            · Codex {s.codex.length}/{FEAT_IDS.length}
+          </small>
+        </h3>
+        {c.lineage.feats.length ? (
+          <FeatChips ids={c.lineage.feats.map((f) => f.id)} fresh={s.newFeats} testId="end-feats" />
+        ) : (
+          <p className="dim">None this time.</p>
+        )}
+        <h3>Ideas for the next lineage</h3>
+        <ul className="ideas" data-testid="next-ideas">
+          {nextIdeas(c, s.codex).map((x) => (
+            <li key={x.head}>
+              <b>{x.head}.</b> {x.body}
             </li>
           ))}
-        </ol>
+        </ul>
         <p className="score-total">
           Lineage score <b>{c.lineage.score}</b> · seed {c.seed} · {getScenario(c.scenario).name} ·{' '}
           {DIFFICULTY[c.difficulty].name}

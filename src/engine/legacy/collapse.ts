@@ -19,6 +19,7 @@ import type {
 import { isStanding } from '../economy/modifiers';
 import { resolveHazard, winterLarder } from '../world/hazards';
 import { cellsOf, idx } from '../world/query';
+import { featsOnCollapse } from './feats';
 
 const SEVERITY: Record<StructureStatus, number> = {
   constructing: 0,
@@ -411,6 +412,7 @@ export function collapseEpoch(c: Campaign): CollapseReport | null {
   c.lineage.reports.push(report);
   c.lineage.score += score.total;
   c.lineage.history.push({ epoch: c.epoch, title: spec.hazard.headline, text: headline });
+  featsOnCollapse(c, report, larder);
   c.collapseResolved = true;
   c.phase = 'COLLAPSING';
   emit(c, { code: 'collapse', msg: headline, important: true });

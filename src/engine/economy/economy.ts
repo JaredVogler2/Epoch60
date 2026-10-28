@@ -4,6 +4,7 @@ import { UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type { Campaign, ResourceKey, Structure } from '../core/types';
 import { RESOURCE_KEYS } from '../core/types';
+import { featsOnCompleted, featsOnResearched } from '../legacy/feats';
 import { footprintCells, idx, inBounds } from '../world/query';
 import { hasTech, housingCapacity, mods } from './modifiers';
 
@@ -100,6 +101,7 @@ export function stepConstruction(c: Campaign): void {
       s.status = 'active';
       s.integrity = 1000;
       c.civ.stats.built++;
+      featsOnCompleted(c, s);
       emit(c, {
         code: 'build.complete',
         msg: `${d.name} finished`,
@@ -417,5 +419,6 @@ export function stepResearch(c: Campaign): void {
     c.civ.research = null;
     c.civ.stats.researched++;
     emit(c, { code: 'research.done', msg: `${TECHS[job.tech].name} discovered`, important: true });
+    featsOnResearched(c);
   }
 }
