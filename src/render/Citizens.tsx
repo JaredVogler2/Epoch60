@@ -72,6 +72,8 @@ const TOOLS: Tool[] = ['mallet', 'axe', 'pick', 'hoe', 'tablet'];
 const HATS: Hat[] = ['brim', 'cap'];
 const SKIN = ['#f1c9a0', '#d9a36f', '#b57a4d', '#8d5a36'];
 const MAX = 40;
+/** Distance fields kept per walkable layout (work sites and recent wander targets). */
+const FIELD_CACHE = 64;
 const STILL = typeof location !== 'undefined' && new URLSearchParams(location.search).has('still');
 
 interface Agent {
@@ -261,6 +263,9 @@ export function Citizens() {
     const fieldFor = (target: number): Int16Array => {
       let f = cc.fields.get(target);
       if (!f) {
+        // Idle people keep choosing new cells to wander to: the cache stays small (a field is cheap to recompute)
+        // instead of keeping one for every cell anyone ever walked to.
+        if (cc.fields.size >= FIELD_CACHE) cc.fields.clear();
         f = distanceField(cc.walk, [target]);
         cc.fields.set(target, f);
       }

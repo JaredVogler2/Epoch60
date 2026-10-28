@@ -750,3 +750,11 @@ before-and-after copies in `docs/review/visual/v7-gate-*.jpg`. Browser, on the f
 passed, 4 skipped, 0 failed** (45.2 min, every phone test tapping through the new framing); the new `e2e/omens.spec.ts`
 (the fire's smoke and embers from 30 s left, nothing before, nothing once it strikes) passes on both profiles and fails
 with the omens removed from the scene.
+
+**After the gate.** The river reflects the sky's gradient, more strongly toward grazing angles, over a slightly deeper
+channel: in stills the far reaches shine and the near water shows its depth (`v7-gate-water.jpg`; not re-scored).
+**K-025 diagnosed:** heap snapshots after 2, 12, 22 and 32 new worlds (22.8 → 24.1 → 24.7 → 24.9 MB, growth per ten
+worlds falling from 1.3 to 0.2 MB) put nearly all of the growth in V8's compiled code (5.2 → 7.1 MB), which levels off,
+plus the browser's capped event-timing buffer; no game object accumulates per world. The villagers' distance-field cache,
+which could have kept one field for every cell an idle villager ever wandered to, is now capped at 64 (it was not what
+the snapshots measured).

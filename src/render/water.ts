@@ -22,6 +22,8 @@ uniform vec3 uShallow;
 uniform vec3 uDeep;
 uniform vec3 uFoam;
 uniform float uFlood;
+uniform vec3 uSkyTop;
+uniform vec3 uSkyLow;
 varying float vDepth;
 #include <fog_pars_fragment>
 ${ATMO_GLSL.common}
@@ -43,12 +45,17 @@ void main() {
   vec3 hv = normalize(uSun + viewDir);
   float spec = pow(max(dot(n, hv), 0.0), 220.0);
   float fres = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
-  float deep = smoothstep(0.02, 0.32, d);
+  float deep = smoothstep(0.02, 0.26, d);
   vec3 col = mix(uShallow, uDeep, deep);
   // Light rolling over the bed in the shallows.
   col *= 0.92 + 0.16 * smoothstep(0.35, 0.8, atmoNoise(p * 3.1 + vec2(t * 0.2, -t * 0.35))) * (1.0 - deep);
   col *= atmoCloud(p);
-  col += vec3(1.0, 0.95, 0.82) * spec * 0.4 * atmoCloud(p) + fres * vec3(0.08, 0.13, 0.16);
+  // The sky in the water (the same gradient as the dome, so a stormy sky darkens the river too), stronger toward
+  // grazing angles: the far reaches shine, the water under the camera shows its depth.
+  vec3 r = reflect(-viewDir, n);
+  vec3 sky = mix(uSkyLow, uSkyTop, smoothstep(0.0, 0.6, r.y));
+  col = mix(col, sky, clamp(0.1 + fres * 0.65, 0.0, 0.7));
+  col += vec3(1.0, 0.95, 0.82) * spec * 0.4 * atmoCloud(p);
   // Foam: a broken, breathing line along the banks.
   float edge = smoothstep(0.035, 0.0, d);
   float broken = smoothstep(0.35, 0.75, atmoNoise(p * 6.0 + vec2(0.0, -t * 0.8)));
@@ -77,7 +84,7 @@ export function makeWaterMaterial(): ShaderMaterial {
       {
         uSun: { value: SUN_DIR.clone() },
         uShallow: { value: new Color('#62b3ad') },
-        uDeep: { value: new Color('#2b6f7e') },
+        uDeep: { value: new Color('#22606f') },
         uFoam: { value: new Color('#f1efe2') },
         uFlood: { value: 0 },
       },
@@ -85,8 +92,11 @@ export function makeWaterMaterial(): ShaderMaterial {
   });
 }
 
-/** The water shares the global clock, wind and clouds by reference (merge() clones, so re-link after creation). */
+/** The water shares the global clock, wind, clouds and sky by reference (merge() clones, so re-link after creation). */
 export function linkWaterAtmosphere(m: ShaderMaterial): ShaderMaterial {
-  Object.assign(m.uniforms, atmo.uniforms);
+  Object.assign(m.uniforms, atmo.uniforms, {
+    uSkyTop: { value: atmo.zenith },
+    uSkyLow: { value: atmo.horizon },
+  });
   return m;
 }

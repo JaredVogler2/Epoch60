@@ -137,7 +137,7 @@ git-ignored (`docs/screenshots/gate/`); compressed copies are in `docs/review/vi
 | HUD restraint          | 4     | The world fills most of every screen; compact top bar, chips and tray; the phone briefing folds to one line. The open desktop briefing is a column of text; the interregnum card covers ~60% of a phone                                                                         |
 | Touch usability        | 4     | 44 px targets measured down to 320 px, a placement bar with Next site, tappable ruins, the phone framing above. Chromium's emulation only: no WebKit, no real device                                                                                                            |
 
-The four core categories (geometry, composition, material shading, lighting) reach 4 on stills. Water, citizen life and
+After the scoring, the river was given the sky's gradient as a reflection, stronger toward grazing angles, over a slightly deeper channel: the far reaches now shine and the near water shows its depth (`v7-gate-water.jpg`; compare `v7-gate-mid.jpg`). Water was not re-scored. The four core categories (geometry, composition, material shading, lighting) reach 4 on stills. Water, citizen life and
 historical progression stay at 3: what would raise them is a deeper, reflective river in stills, larger and more varied
 villagers with personas, and a later era with its own building forms (K-004, K-024). None of this was verified on a real
 GPU or phone, where motion and frame rate decide much of the impression.
