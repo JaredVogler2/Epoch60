@@ -1253,6 +1253,14 @@ h3 {
   font-size: 0.78rem;
   color: var(--dim);
 }
+.chronicle {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+}
 .atlas-pics {
   display: grid;
   grid-template-columns: 1fr 1fr;

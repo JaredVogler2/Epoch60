@@ -20,7 +20,7 @@ from its founding as an unranked branch; a **history lens** on the map (always o
 age's buildings and ruins, where each catastrophe reached (from its report) and the eroded ground; the ending's **legacy** counts only what
 lasted (people, knowledge, works, feats), and since rules 0.4.1 the debrief's livelihood counts standing works, so clearing and rebuilding
 farms nothing; **then and now** pictures of each age, from one viewpoint, compare as a slider between ages and pair up in the Atlas
-(session memory only). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+(session memory only); a **chronicle of works** on the ending retells the most storied buildings' lives from their recorded events. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
@@ -38,8 +38,8 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 16 remainder (K-022):** biographies in the Atlas (the map layers are the history lens; before/after pictures exist for the
-   session), endless play, variety unlocks with no power; K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
+4. **Phase 16 remainder (K-022):** endless play after the capstone and variety unlocks with no power (challenge mutators that
+   are also Phase 13's world modifiers would serve both); K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
 5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
    then-vs-now slider, more story decisions.

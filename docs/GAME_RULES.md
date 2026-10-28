@@ -404,3 +404,10 @@ resolves, and another afterwards: between ages, or at the ending for the last ag
 ages a slider lays the two over each other, "as the minute ended" against "N years later". The ending's Atlas shows each
 age's pair. The pictures live only in this session's memory: a game resumed from a save, or reloaded mid-age, has none
 for the ages it did not see.
+
+**The chronicle of works** on the ending tells the lives of the lineage's three most storied buildings (`src/ui/chronicle.ts`):
+those with the most recorded events, weighted towards landmarks and keepers of knowledge. Each story opens with who raised it
+and in which age, unless its own first record already says so ("The founders lit the first fire here."). Then comes one
+sentence per recorded event, oldest first: every catastrophe it met, how the centuries treated it, who dug it up or restored
+it. Ages are named, not numbered. It closes with the knowledge it keeps and how it stands now. Nothing is invented: apart from
+the opening, the knowledge and the closing, each sentence retells one of the building's provenance lines.

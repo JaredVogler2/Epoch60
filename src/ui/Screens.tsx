@@ -19,6 +19,7 @@ import { presentation } from '../render/presentation';
 import { AtlasOfAges, FeatChips, nextIdeas } from './Codex';
 import { HistoryLegend } from './HistoryLegend';
 import { ThenNow } from './ThenNow';
+import { chronicleOf } from './chronicle';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
@@ -551,6 +552,7 @@ export function EndScreen() {
   const branchAges = s.branchAges();
   const v = c.report?.verdict;
   const legacy = legacyOf(c);
+  const chronicle = chronicleOf(c);
   return (
     <div
       ref={ref}
@@ -595,6 +597,18 @@ export function EndScreen() {
         )}
         <h3>Atlas of Ages</h3>
         <AtlasOfAges c={c} pics={s.snapshots} />
+        {chronicle.length > 0 && (
+          <>
+            <h3>Chronicle of works</h3>
+            <ul className="chronicle" data-testid="chronicle">
+              {chronicle.map((b) => (
+                <li key={b.id} data-testid="chronicle-work">
+                  <b>{b.title}.</b> {b.story.join(' ')}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
         <h3>
           Feats of this lineage{' '}
           <small className="dim" data-testid="end-codex-count">

@@ -68,6 +68,11 @@ for (const [dir, route, legacy] of CASES) {
     await expect(page.getByTestId('legacy-total')).toHaveText(String(legacy));
     await expect(page.getByTestId('legacy').locator('li')).toHaveCount(4);
     await expect(page.getByTestId('legacy-people')).toContainText('came through the last catastrophe');
+    // The chronicle tells the most storied works' lives from what the engine recorded, ending with how each stands.
+    const works = await page.getByTestId('chronicle-work').allInnerTexts();
+    expect(works.length).toBeGreaterThan(0);
+    for (const w of works)
+      expect(w).toMatch(/^The .+ at \(\d+,\d+\)\. .+ It (stands|lies buried|lies in ruins)\.$/);
     await shot(page, info, `victory-${dir}-${route}`);
   });
 }
