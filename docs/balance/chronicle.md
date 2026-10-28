@@ -22,5 +22,5 @@ Later ages: IV The Second Great Fire (strength 363) · V The Second Great Flood 
 | Policy | Won | Lasted (ages: lineages) | Complete | Mean survivors per later age (IV → XII) |
 | --- | --- | --- | --- | --- |
 | engineers | 20/20 | 4: 1, 7: 1, 10: 4, 12: 14 | 14/20 | 7.6 · 12.4 · 11.4 · 8.7 · 11.6 · 11.2 · 4.3 · 10.1 · 5.4 |
-| archivists | 20/20 | 12: 20 | 20/20 | 10.3 · 10.0 · 11.8 · 13.0 · 11.1 · 11.6 · 13.9 · 12.1 · 11.2 |
+| archivists | 20/20 | 12: 20 | 20/20 | 10.3 · 10.1 · 11.8 · 13.0 · 11.2 · 11.5 · 13.9 · 12.1 · 11.2 |
 

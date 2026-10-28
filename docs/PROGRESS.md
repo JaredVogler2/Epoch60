@@ -581,3 +581,34 @@ in vain for a picture while a screenshot browser of mine ran beside it). On the 
 (now twenty feats) and chronicle specs on both profiles passed, except that desktop then-and-now timeout once more,
 alone; it then passed 6 times running (alone, and after the chronicle and Codex specs). Its cause is not found (K-011).
 
+**Review fixes (PR #10, `fbcdada`).** An independent review of the branch found nine things, all fixed:
+
+- **The bots planned against the wrong catastrophes in later ages.** A policy that sites its Archive clear of "the flood
+  and the quake" (`avoidEpochs`) avoided their first comings at authored strength, not their next and fiercer returns.
+  `avoidedAge` (`src/engine/ai/spots.ts`) now maps each to its next return at or after the current age (none past the
+  twelfth). Re-measured over the same 20 seeds (`docs/balance/chronicle.md`), every lineage ended exactly as before: the
+  Archivists complete 20/20 and 20/20, the Engineers 8 of 19 and 14 of 20. Only the Ashen Archivists' mean survivors
+  moved, by 0.1 at three ages. The blind spot was not what wore the Engineers down; the fiercer fires are.
+- **Harm could pass total.** A later age's damage was scaled after its 0–1000 scale was applied, so at age XII a fully
+  exposed building without resistance could read "damage 190%" in the reasons, and the bots' loss estimate, which
+  treats damage as a permille, was skewed. It is now capped at 1000: a return can at most destroy a building.
+- **Five Generations** now needs a chronicle carried on, as The Twelfth Age does (a scenario with five authored ages would
+  have awarded it in ordinary play).
+- **Saves** refuse a long chronicle in an age before the scenario's last. A tampered save could otherwise play unjudged
+  from age I.
+- **Branch points are budgeted as stored.** Inside the stored list each save is escaped once more: at age XII 645,035
+  characters against 571,021 raw (13% more), so the list could pass the 2 million it claimed to keep. Now it never does.
+- **One model per architecture.** Ages IV–XII build the same Age of Spires models, but the model cache was keyed by age,
+  so a twelve-age lineage built up to nine identical copies of each. It is now keyed by architecture (`eraOf`), as is the
+  placement ghost.
+- **One formula for how much fiercer an age is** (`chronicleStepPm`). Strength, harm and defences, and the briefing's
+  percentage, each wrote it out.
+- A later age's catastrophe cycles as `epoch % n` everywhere, and the scripts import `ROMAN` instead of copying it.
+
+**Verified (review fixes):** typecheck, lint, **368 Vitest tests** (39 files). New or rewritten: foresight mapped to each
+catastrophe's next return; the branch budget fitting exactly the newest three points, and only two at one character
+less; the twelfth age's fire capped at 1000; a save beginning the chronicle in age II refused. Each of these four fails
+against the code it replaces (four mutations). The long-chronicle feat run was re-recorded: its hash moved, its feats
+did not. Every route trace re-recorded unchanged. Browser: `e2e/chronicle.spec.ts` on both profiles, **2 passed**
+(1.6 min). A capture of the same buildings raised in age III and in age VII (ages the shared models now serve) was
+inspected: copper roofs, spires, turrets and the granary's cupola, as in the age IV capture.

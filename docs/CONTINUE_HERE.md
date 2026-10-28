@@ -33,7 +33,7 @@ can be **carried on** as **the long chronicle** (endless play after the capstone
 `src/engine/legacy/endless.ts`, `epochSpec` in `content/scenario.ts`): each later age brings back one of the scenario's
 catastrophes, 10% fiercer per age in reach, harm and every building's resistance; later ages are not judged, the chronicle
 ends when fewer than three survive or after age XII, or is rested at a debrief, and gets its own unranked card. Over 20 seeds
-the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+the Archivists live all twelve ages every time and the Engineers fall on about half (`docs/balance/chronicle.md`, K-024). A code review of PR #10 found nine things (the bots' foresight aimed at first comings, uncapped harm, a feat and saves checked too loosely, the branch budget undercounting stored size, duplicated models and formulas), all fixed with mutation-checked tests; the re-measured chronicle ended every lineage as before. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
