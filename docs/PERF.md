@@ -39,3 +39,7 @@ Scene: the Age showcase village (16 building kinds, citizens, roads, foliage), c
   and the CPU work is one loop over those instances per frame. The low tier draws 60% of the embers and rain. The
   building surface pass adds no draw call (the same material with cloud shadows, contact shading and a roof finish in its
   shader); the outskirts gain one instanced mesh of bushes (on about a quarter of the open cells within 12 of the board). Unmeasured on a real GPU (K-009).
+- Session 7's later additions, measured with the same probe after them (showcase scene, not re-recorded in the table
+  above): 87 / 87 / 90 draw calls (one more: the outskirts' bushes) and 723,030 / 976,474 / 1,210,013 triangles at low /
+  medium / high (+12k, +22k, +35k, about 2–3%), mostly the Age of Iron's two-storey houses and their masonry, and the
+  bushes.

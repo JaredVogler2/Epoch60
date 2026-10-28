@@ -166,3 +166,18 @@ full account (method, before and after, scores) is in `docs/ADVERSARIAL_REVIEW.m
 **Scores (1–5, judged on the final captures):** geometry 4, scene composition 4, material shading 4 (3 before this pass),
 lighting 4, foliage 4, water 3, citizen life 3, historical progression 3, HUD restraint 4, touch usability 4. Motion,
 real GPUs and phones remain unjudged (K-009).
+
+### Session 7 — the Ages of Bronze and Iron build their own forms (`v7-ages-forms.jpg`, `v7-spires-storeys.jpg`)
+
+Prompt 19 asks whether later eras are more than recoloured identical buildings. Until now Ages I–III shared every form
+and only re-roofed (thatch, tile, slate). Now (`src/render/models/buildings.ts`):
+
+| Building    | Age of Thatch                    | Age of Bronze                                                         | Age of Iron (and the Age of Spires)                                                                                               |
+| ----------- | -------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Cottage     | longhouse, round hut, framed hut | the same with a tiled porch over the door; the round hut a stone drum | two storeys: a stone ground floor, a jettied timber-framed floor above, a chimney through both; the round hut a stone tower-house |
+| Stone house | (needs Masonry)                  | one storey of ashlar                                                  | two storeys with a string course and a second row of lit windows                                                                  |
+| Granary     | thatched stone drum              | tiled                                                                 | taller, with a loft door and a hoist beam                                                                                         |
+
+Captured with `scripts/showcase-ages.js` (the same buildings raised in each age) from 8 and 14 cells: a thatched hut, a
+stone-drum hut under tile and a two-storey slate house now read as three stages of one village; the Age of Spires keeps
+its copper and spires on the taller forms. Cost: about 2–3% more triangles in the probe's showcase scene (`docs/PERF.md`).

@@ -758,3 +758,10 @@ worlds falling from 1.3 to 0.2 MB) put nearly all of the growth in V8's compiled
 plus the browser's capped event-timing buffer; no game object accumulates per world. The villagers' distance-field cache,
 which could have kept one field for every cell an idle villager ever wandered to, is now capped at 64 (it was not what
 the snapshots measured).
+
+**Later ages build their own forms.** Prompt 19 asks whether later eras are more than recoloured buildings; Ages I–III
+only re-roofed. Now the Age of Bronze adds tiled porches and turns the round hut into a stone drum, and the Age of Iron
+raises houses a storey (a stone ground floor under a jettied timber-framed floor, a chimney through both), gives the
+stone house a second storey and the granary a loft door and hoist; the Age of Spires keeps its copper and spires on the
+taller forms (`docs/3D_QUALITY_REPORT.md`, `v7-ages-forms.jpg`). Inspected in close and village captures; the probe's
+showcase scene costs one more draw call and 2–3% more triangles (`docs/PERF.md`).
