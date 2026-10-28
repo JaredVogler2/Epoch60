@@ -476,6 +476,13 @@ costs, the Rich Vein's map; +1 expedition test over 300 seeds of both scenarios:
 Crop Rotation, founders knowing nothing, forest not thinned, the knoll left). Browser: `e2e/challenges.spec.ts` (now also an
 expedition drawing only open challenges) **6 passed**, the modes and Codex specs **10 passed**, both profiles. The title with
 twelve challenges captured on desktop and phone and inspected.
+**Measured over 40 seeds** (`docs/balance/challenges.md`, from `scripts/challenges.ts`: each challenge alone, both scenarios,
+the two route bots and the steward). Every challenge moves the catastrophes it names: the flood reaches 560–578 cells instead of
+484–497 under Fertile Floodplain and Storm Front, 429–446 in Dry Summers; the first fire 171–232 cells in Thin Woods against
+249–402, up to 485 when Overgrown or in Dry Summers; the quake 595 cells on Soft Rock and 747 on the Fractured Fault against 527.
+The tuned routes barely notice most of them (Archivists 39–40/40 everywhere; Engineers lowest under Blight, 34/40, and Dry
+Summers, 36/40). The Buried Library is mostly a gift: it lifts the steward from 4 to 20 of 40 on Greenvale. Elders' Lore changes
+almost nothing for the bots. Bots do not read challenges, so this is what a challenge does to a fixed plan, not how hard it is.
 **Watching a lineage again (Phase 13's replay viewer).** The ending offers "Watch this lineage": the finished lineage
 replayed from its first day through the same engine (`GameStore.watchLineage`, driven by the clock): each accepted action is
 applied at the tick it was logged, before that tick runs, exactly as `replayCampaign` does, while the minute runs at 1×, 2×

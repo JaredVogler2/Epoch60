@@ -462,6 +462,15 @@ keep a lineage's challenges; the briefing lists them every age, the ending names
 and Copy link includes them. Clearing or building over an Archive that was never dug up warns that any tablets inside are
 lost with it (what it holds stays unknown until it is surveyed).
 
+**Measured, not promised** (`docs/balance/challenges.md`: `scripts/challenges.ts`, seeds 1–40, Normal, each challenge alone,
+the route bots and the steward, which do not read challenges). Every challenge moves what it says: the second age's flood
+reaches 560–578 cells instead of 484–497 under Fertile Floodplain and Storm Front, and 429–446 in Dry Summers; the first fire
+171–232 cells in Thin Woods against 249–402, and 309–485 when Overgrown or in Dry Summers; the quake 595 cells on Soft Rock and
+747 on the Fractured Fault against 527. The tuned routes barely notice most of them: the Archivists win 39–40 of 40 under every
+challenge, and the Engineers drop furthest under Blight (34/40) and Dry Summers (36/40). The Buried Library is mostly a gift:
+it lifts the steward from 4 to 20 of 40 on Greenvale (the bots dig it on 17–29 of 40 seeds). Elders' Lore changes almost nothing
+for the bots, whose plans never use early Masonry. None of this measures a player who reads the challenge and plans for it.
+
 **Expeditions.** An expedition is a random valley (a random seed, drawn in the UI layer, shown and shareable like any other)
 with one to three challenges drawn from the open ones by that seed: the same seed always draws the same challenges, and only
 ones that suit the scenario and fit together. It is then an ordinary lineage with challenges: ranked against the same seed and
