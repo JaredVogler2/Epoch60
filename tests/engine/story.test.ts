@@ -113,9 +113,16 @@ describe('story decisions arise from real state', () => {
 });
 
 describe('choices change the end state', () => {
-  it('clearing brush costs timber and shrinks the predicted burn', () => {
+  it('clearing brush around a scrub-choked hearth costs timber and shrinks the burn by what it reports', () => {
     const c = stage(0);
     firePath(c);
+    // Thick scrub right up to the hearth: the forecast fire reaches it.
+    const { hearth } = c.world.anchors;
+    for (let dy = -4; dy <= 4; dy++)
+      for (let dx = -4; dx <= 4; dx++) {
+        const k = (hearth.y + dy) * c.world.w + hearth.x + dx;
+        if (!c.world.water[k] && c.world.occ[k] === -1) c.world.forest[k] = Math.max(c.world.forest[k]!, 900);
+      }
     begin(c);
     runTicks(c, 200);
     const p = promptOf(c, 'dry_wind')!;
@@ -127,8 +134,23 @@ describe('choices change the end state', () => {
     expect(p.chosen).toBe('clear_brush');
     expect(p.auto).toBe(false);
     expect(c.civ.res.timber).toBeLessThan(timber);
-    expect(resolveHazard(c).area).toBeLessThanOrEqual(burnBefore);
-    expect(p.outcome).toMatch(/cells/);
+    const shrank = burnBefore - resolveHazard(c).area;
+    expect(shrank).toBeGreaterThan(0);
+    expect(p.outcome).toContain(`shrank by ${shrank} cells`);
+  });
+
+  it('when the fire’s path lies elsewhere, clearing brush says the burn is unchanged, not that it shrank by 0', () => {
+    const c = stage(0);
+    firePath(c);
+    begin(c);
+    runTicks(c, 200);
+    const p = promptOf(c, 'dry_wind')!;
+    const burnBefore = resolveHazard(c).area;
+    expect(dispatchAction(c, { type: 'choose', prompt: p.seq, option: 'clear_brush' }).ok).toBe(true);
+    runTicks(c, 1);
+    expect(resolveHazard(c).area).toBe(burnBefore);
+    expect(p.outcome).toContain('unchanged');
+    expect(p.outcome).not.toMatch(/shrank by 0/);
   });
 
   it('sandbagging raises flood resistance of homes near the hearth', () => {

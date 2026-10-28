@@ -28,12 +28,17 @@ test('a decision arises from the forecast, can be answered with a tap, and chang
   const after = await campaign(
     page,
     (c) =>
-      (c as unknown as { prompts: { story: string; chosen: string; status: string; auto: boolean }[] })
-        .prompts[0],
+      (
+        c as unknown as {
+          prompts: { story: string; chosen: string; status: string; auto: boolean; outcome: string }[];
+        }
+      ).prompts[0],
   );
   expect(after).toMatchObject({ story: 'dry_wind', chosen: 'clear_brush', status: 'resolved', auto: false });
   expect(await campaign(page, (c) => c.civ.res.timber)).toBeLessThan(before);
-  await expect(page.getByTestId('toast')).toContainText(/cells/);
+  // The toast reports what the clearing measurably did to the forecast — never "shrank by 0".
+  await expect(page.getByTestId('toast')).toContainText(after!.outcome);
+  await expect(page.getByTestId('toast')).not.toContainText('shrank by 0');
 });
 
 test('an unanswered decision never blocks play: its free default applies at the deadline', async ({

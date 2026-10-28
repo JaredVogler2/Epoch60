@@ -242,7 +242,7 @@ Answering is a normal timed action (`choose`), validated when sent and re-valida
 | A historian (≥ tick 120)                      | an Archive is standing and sound                 | Fund her (6 timber, 4 food): +8 knowledge · Decline                                                                                                             |
 | The dam is seeping (flood age, ≥ tick 200)    | a sound Dam or Levee exists                      | Patch it (6 stone) · Leave it: it becomes **damaged** (a levee holds half as much)                                                                              |
 
-The outcome line states the measured result ("the predicted burn shrank by 18 cells") and appears in the debrief's important events.
+The outcome line states the measured result ("the predicted burn shrank by 18 cells", or that it is unchanged when the cleared scrub lies off the fire's path) and appears in the debrief's important events.
 Impossible decisions are never offered (no dam leak without a dam, no refugees without beds). Covered by `tests/engine/story.test.ts` and `e2e/story.spec.ts`.
 
 ## 13. Ashfall winter (the fourth disaster) and the Ashen Winter scenario

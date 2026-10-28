@@ -239,8 +239,13 @@ Bridge or a Dam). Two first drafts were too easy — a quake or catastrophe that
 variants of the route policies recorded by `scripts/record-feats.ts` (minimal recipe with a Seed Vault, Archivists on Hard, an
 Archive raised in the fire's path, levees and a grove in the river age, a Dam) — earn the other eight. `fixtures/feats.md` lists who
 earns what, in which age.
-**Also fixed:** the title card returns to its top when switching views (the Codex opened mid-list on a 320 px phone).
-**Verified:** typecheck, lint, **290 Vitest tests** (28 files; new: 27 feat tests replaying all thirteen recorded runs plus rule-edge
+**Also fixed:** the title card returns to its top when switching views (the Codex opened mid-list on a 320 px phone). The
+clear-the-brush story reported "the predicted burn shrank by 0 cells" when the cleared scrub lay off the fire's path (it does on
+seed 6001: the Engineers pay 4 timber for nothing there); it now says the burn is unchanged. Its unit test had asserted only "≤" and
+the word "cells", so it passed on a scenario where nothing shrank: it is now two tests — a scrub-choked hearth whose burn really shrinks
+by the number reported, and one off the fire's path that must say "unchanged" — and the browser test checks the toast against the
+measured outcome.
+**Verified:** typecheck, lint, **291 Vitest tests** (28 files; new: 27 feat tests replaying all thirteen recorded runs plus rule-edge
 tests, 6 Codex storage tests, 5 next-lineage-idea tests, 1 store test), build. Twelve one-line mutations of the feat rules (dropping
 "reaches the village", counting a withdrawn quarry plan, counting a story decision's brace as reinforcement, a one-age-old library, any
 grove, a restoration without excavation, flood deaths ignored, one farm enough, a later-age landmark, any difficulty for Hard, two tech
@@ -248,5 +253,9 @@ branches, no firebreak) each fail at least one test; so does letting the demo vi
 both profiles (a fresh device shows 0 of 18; the Engineers' recorded win, played through the browser's store, lists exactly its feats
 in the debrief and the ending, fills the Codex with them, and the Codex survives a reload). Captures of the title Codex at 1366×768,
 390×664, 320×568 and 844×390 (no horizontal overflow; the Codex button is 44 px tall) and of the debrief and ending on both profiles
-were inspected; the phone's Atlas header wrapped badly and the 320 px Codex opened mid-list, both fixed and re-captured.
+were inspected; the phone's Atlas header wrapped badly and the 320 px Codex opened mid-list, both fixed and re-captured (review copy:
+`docs/review/visual/v6-codex.jpg`). The **full Playwright suite** on the feats build (`c1eb079`): **61 passed, 3 skipped**
+(desktop-only), 0 failed, 18.6 min. After the story wording fix: the story, Codex and victory specs on both profiles, 14 passed (the
+fixture hashes did not move: an age's story prompts are cleared when the next age is founded). The old story wording fails the new
+story test.
 **Not verified:** a human playtest of whether the feats invite another lineage; WebKit; a real iPhone.

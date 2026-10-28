@@ -125,8 +125,10 @@ const DRY_WIND: StoryDef = {
           }
         }
       }
-      const after = resolveHazard(c).area;
-      return `The scrub around the hearth is gone. The predicted burn shrank by ${Math.max(0, before - after)} cells.`;
+      const shrank = Math.max(0, before - resolveHazard(c).area);
+      return shrank > 0
+        ? `The scrub around the hearth is gone. The predicted burn shrank by ${shrank} cell${shrank === 1 ? '' : 's'}.`
+        : 'The scrub around the hearth is gone, but the predicted burn is unchanged: the fire’s path lies elsewhere.';
     }
     if (option === 'gather_timber') {
       c.civ.res.timber += 8 * UNIT;
