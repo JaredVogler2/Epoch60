@@ -1,5 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
 import { TECHS } from '../content/techs';
+import { addMods, modifierMods } from '../content/modifiers';
 import { sumModifiers, type Modifiers } from '../content/traditions';
 import { UNIT } from '../core/constants';
 import type { Campaign, Resources, Structure, TechId } from '../core/types';
@@ -8,8 +9,10 @@ export function hasTech(c: Campaign, t: TechId): boolean {
   return c.civ.techs.includes(t);
 }
 
+/** Every rate and resistance modifier in force: the traditions adopted, and the lineage's challenges. */
 export function mods(c: Campaign): Modifiers {
-  return sumModifiers(c.civ.traditions);
+  const m = sumModifiers(c.civ.traditions);
+  return c.modifiers ? addMods(m, modifierMods(c)) : m;
 }
 
 /** Knowledge cost of a tech right now (whole-unit authored cost → fixed point). */

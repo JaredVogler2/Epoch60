@@ -405,3 +405,31 @@ jump causes can itself pass 2.5 s under software GL, so it now forgives the next
 build: **69 passed, 3 skipped, 0 failed** (27.2 min).
 
 **Not verified:** a human playtest of whether the feats invite another lineage; WebKit; a real iPhone.
+
+### Session 7 — Challenges: Phase 13's world modifiers as Phase 16's challenge mutators
+
+**Engine (first milestone).** A lineage can begin with up to three **challenges** (`src/engine/content/modifiers.ts`), each
+changing the world, a catastrophe or the people for the whole lineage, never the clock or the rules of play: Fertile Floodplain
+(richer soil within six cells of the river, floods ×1.30), Dry Summers (fire ×1.30, floods ×0.80, food −15%), Soft Rock
+(deposits ×1.5, quarries +25%, quake ×1.20), Fractured Fault (the quake's epicentre beside the first hearth), Overcrowded
+Refuge (+4 people and −10 food at the start of every age) and Buried Library (an Archive older than the founders, buried west of
+the first hearth, holding Writing and Hydrology). They are stored on the campaign in canonical order, hashed, saved and carried
+by transcripts. A standard lineage has no challenge field at all, so every recorded hash and save is unchanged. Strength now has
+one scaling function (`hazardStrength`: difficulty, then challenges); mapping the code first found that founding-site risk
+scaled the quake by hand in a second place, which now calls it too. Starting people were never taken from the modifier bundle at
+creation; they are now (no change for a standard lineage). The Grandparents' Library now asks for an Archive the lineage built,
+so the Buried Library's older people do not hand it out.
+**Measured on seed 6001** (both route bots, each challenge alone): every challenge changes what it says (the flood reaches 575
+cells instead of 495 on the Fertile Floodplain, the fire 421 instead of 372 for the Archivists in Dry Summers, the quake 752
+cells instead of 536 on the Fractured Fault, though both bots found their third age away from it), both routes still win every
+one on both scenarios, and every run replays to its recorded hash. Overcrowded Refuge starves: 14 people on 20 food come through
+the first fire as 7 or 8, not 9 or 10. Both bots dig the Buried Library up in the first interregnum; the Engineers spend their
+one excavation on it and come through the flood worse (2 deaths and 4 buildings lost, against none and 2).
+**Verified (engine):** typecheck, lint, **337 Vitest tests** (35 files; +14 in `tests/engine/modifiers.test.ts`: allowed sets
+and canonical order; no field and an unchanged hash for a standard lineage; each challenge's exact effect on the world, the
+strengths and the rates; the refugees at the start and at a founding; the library's site, its tablets reaching the next age and
+no Grandparents' Library; room for the library on seeds 1–120; the forecast, the resolution and the founding sites using the
+challenged strength; transcripts and saves keeping challenges, and forged sets refused). Ten mutations, one per hook, each fail
+them: strength ignoring challenges, founding-site risk unscaled, rates ignoring challenges, foundings ignoring their extras, the
+refugees not added at the start, the world not modified, a library without tablets, the library counted as grandparents, saves
+not checked, transcripts dropping challenges. `scripts/record-feats.ts` re-run: only the Grandparents' Library rule text moved.

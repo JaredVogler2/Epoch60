@@ -300,7 +300,7 @@ Difficulty changes what the world does and what winning asks for — never the r
 | Normal | ×1.00           | 8         | 1                   | 3                     |
 | Hard   | ×1.15           | 10        | 1                   | 4                     |
 
-Strength is applied once, inside `resolveHazard`, so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
+Strength is applied once, through `hazardStrength` (the difficulty, then a lineage's challenges, §18), so the forecast, the resolution, founding-site risk scores and the bots' foresight always agree.
 
 **Measured, not promised** (`docs/BALANCE_REPORT.md`, `docs/balance/`; scripted bots on seeds 1–40 or 1–100, never humans): under rules 0.4.0 both tuned routes win
 Greenvale/Normal on 98–100 of 100 seeds and every Ashen/Normal seed sampled, and on Hard the Engineers win 39/40 on both scenarios and the Archivists 40/40 on
@@ -325,7 +325,9 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
   after it is played again. The lineage is then a **branch**: the briefing and the ending say so, its run card is marked, its
   feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages.
 
-Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers, a replay viewer.
+- **Challenges** — up to three optional twists on the world, its catastrophes or its people, chosen when a lineage begins (§18).
+
+Not built yet: 8–12-epoch campaigns, the other six of the twelve world modifiers Phase 13 asks for, expeditions, a replay viewer.
 
 ## 16. Accessibility and audio
 
@@ -348,7 +350,7 @@ state, so a recorded run always earns exactly the same feats. They change nothin
 | ----------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Knowledge   | Words Kept                | Finish an Archive.                                                                                                                                                            |
 | Knowledge   | Three Kinds of Knowing    | In one lineage, know a technology of industry, one of ecology and one of resilience (researched, or read from dug-up tablets).                                                |
-| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive built two ages before the people who find it, its tablets still legible.                                                                      |
+| Knowledge   | The Grandparents' Library | Between ages, dig up an Archive your lineage built two ages before the people who find it, its tablets still legible.                                                         |
 | Heritage    | The Hearth Endures        | Found a new age in a hearth kept from the age before.                                                                                                                         |
 | Heritage    | On Old Foundations        | Excavate a ruin left by an earlier age, then repair it into working order.                                                                                                    |
 | Heritage    | Living Heritage           | Keep a landmark built in the first age standing through the last catastrophe.                                                                                                 |
@@ -411,3 +413,29 @@ and in which age, unless its own first record already says so ("The founders lit
 sentence per recorded event, oldest first: every catastrophe it met, how the centuries treated it, who dug it up or restored
 it. Ages are named, not numbered. It closes with the knowledge it keeps and how it stands now. Nothing is invented: apart from
 the opening, the knowledge and the closing, each sentence retells one of the building's provenance lines.
+
+## 18. Challenges (world modifiers)
+
+A lineage can begin with up to three **challenges** (`content/modifiers.ts`). Each changes the world, a catastrophe or the people
+for the whole lineage, never the clock or the rules of play, and lists exactly what it changes. They are part of the campaign:
+stored in canonical order, hashed, saved and replayed (a transcript carries them). A standard lineage has no challenge field at
+all, so it hashes exactly as before challenges existed. A save naming a challenge this build does not know, an empty list, an
+unknown order, a clash or a challenge that does not suit the scenario is refused, never trimmed (trimming would change the
+simulation).
+
+| Challenge          | What changes                                                                                                                        | Scenarios | Not with           |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| Fertile Floodplain | Fertility +250 (of 1000, at most 950) on land within 6 cells of the river's centre line; flood strength ×1.30.                      | all       | Dry Summers        |
+| Dry Summers        | Fire strength ×1.30; flood strength ×0.80; food production −15%.                                                                    | all       | Fertile Floodplain |
+| Soft Rock          | Every stone deposit ×1.5; quarry output +25%; quake strength ×1.20.                                                                 | Greenvale | —                  |
+| Fractured Fault    | The quake's epicentre is 3 cells east and 3 north of the first hearth (instead of 8 and 8). Founding-site risk shows it.            | Greenvale | —                  |
+| Overcrowded Refuge | +4 people and −10 food when the lineage begins and at every founding (people at most 16 after a founding, as always).               | all       | —                  |
+| Buried Library     | An Archive older than the founders lies buried (depth 3) about seven cells west of the first hearth, holding Writing and Hydrology. | all       | —                  |
+
+Strength deltas add up and multiply the difficulty-scaled strength (Hard and Dry Summers: fire ×1.15 then ×1.30). Rate and
+start deltas add to the traditions' (`mods`). The quake challenges do not suit The Ashen Winter, where no quake comes.
+
+The Buried Library is an ordinary ruin from the founders' first day: no catastrophe strikes it, it can be surveyed and dug up
+between ages (its tablets then reach the next age like any other dug-up tablets, with 6 knowledge), restored once excavated,
+cleared, or built over, which destroys it. Its people are older than the lineage: digging it up does not earn The
+Grandparents' Library, which asks for an Archive the lineage itself built.

@@ -55,7 +55,7 @@ export const FEATS: Record<FeatId, FeatDef> = {
     id: 'grandparents_library',
     group: 'knowledge',
     name: "The Grandparents' Library",
-    how: 'Between ages, dig up an Archive built two ages before the people who find it, its tablets still legible.',
+    how: 'Between ages, dig up an Archive your lineage built two ages before the people who find it, its tablets still legible.',
     lesson:
       'An Archive that falls keeps its tablets, and the next ages can dig them up: knowledge outlasts the hall that held it.',
   },
@@ -291,8 +291,9 @@ export function featsOnCollapse(
 
 /** A ruin was just excavated between ages; `techs` are the technologies its tablets held. */
 export function featsOnExcavated(c: Campaign, s: Structure, techs: TechId[]): void {
-  // The diggers are the next society (epoch + 1): the builders were at least two ages before them.
-  if (s.kind === 'archive' && techs.length > 0 && s.originEpoch + 2 <= c.epoch + 1)
+  // The diggers are the next society (epoch + 1): the builders were at least two ages before them, and of this
+  // lineage (a Buried Library's people, older than the founders, are not its grandparents).
+  if (s.kind === 'archive' && techs.length > 0 && s.originEpoch >= 0 && s.originEpoch + 2 <= c.epoch + 1)
     award(c, 'grandparents_library');
 }
 

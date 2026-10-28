@@ -1,7 +1,8 @@
 import { CONTENT_VERSION, RULES_VERSION, SCHEMA_VERSION } from '../core/constants';
 import { hashValue } from '../core/hash';
-import type { Action, Campaign, Difficulty, LoggedAction } from '../core/types';
+import type { Action, Campaign, Difficulty, LoggedAction, ModifierId } from '../core/types';
 import { advanceFixedTick, createCampaign, dispatchAction } from '../campaign';
+import { checkModifiers } from '../content/modifiers';
 import { DIFFICULTY, SCENARIOS } from '../content/scenario';
 import { FEATS } from '../legacy/feats';
 
@@ -62,6 +63,12 @@ function validateShape(c: Campaign): void {
   const epochs = SCENARIOS[c.scenario]!.epochs.length;
   if (!Number.isInteger(c.epoch) || c.epoch < 0 || c.epoch >= epochs) bad('epoch out of range');
   if (!own(DIFFICULTY, c.difficulty)) bad('unknown difficulty');
+  // Challenges change the simulation, so a set this build cannot run as written is refused, never trimmed.
+  if (c.modifiers !== undefined) {
+    const chk =
+      Array.isArray(c.modifiers) && c.modifiers.length ? checkModifiers(c.modifiers, c.scenario) : null;
+    if (!chk?.ok || chk.ids.join() !== c.modifiers.join()) bad('unknown or invalid challenges');
+  }
   if (c.mode !== 'standard' && c.mode !== 'assisted') bad('unknown mode');
   if (!PHASES.has(c.phase)) bad('unknown phase');
   if (!Number.isInteger(c.tick) || c.tick < 0 || c.tick > 600) bad('tick out of range');
@@ -111,6 +118,8 @@ export interface Transcript {
   scenario: string;
   mode: 'standard' | 'assisted';
   difficulty?: Difficulty;
+  /** Absent for a standard lineage. */
+  modifiers?: ModifierId[];
   actions: LoggedAction[];
   /** Total active ticks played; the replay ends here. */
   totalTicks: number;
@@ -126,6 +135,7 @@ export function transcriptOf(c: Campaign): Transcript {
     scenario: c.scenario,
     mode: c.mode,
     difficulty: c.difficulty,
+    ...(c.modifiers ? { modifiers: [...c.modifiers] } : {}),
     actions: c.actionLog.map((a) => ({ ...a })),
     totalTicks: c.totalTicks,
     finalHash: computeHash(c),
@@ -134,7 +144,7 @@ export function transcriptOf(c: Campaign): Transcript {
 
 /** Rebuild a campaign from a seed and its accepted-action log, ticking in between actions. */
 export function replayCampaign(t: Transcript): Campaign {
-  const c = createCampaign(t.seed, t.mode, t.scenario, t.difficulty ?? 'normal');
+  const c = createCampaign(t.seed, t.mode, t.scenario, t.difficulty ?? 'normal', t.modifiers ?? []);
   const apply = (a: Action) => dispatchAction(c, a);
   for (const entry of t.actions) {
     while (c.phase === 'ACTIVE' && c.tick < entry.tick) {

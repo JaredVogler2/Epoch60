@@ -3,8 +3,10 @@
 ```
 src/engine/      Plain TypeScript, no React/DOM, no Math.random/Date.now (lint-enforced). Authoritative.
   core/          constants (incl. RULES/CONTENT/SCHEMA versions), types, seeded PRNG (sfc32), stable hash, event log
-  content/       BuildingDef, TechDef, TraditionDef, Scenario/Epoch/Hazard data and difficulty tiers
-  world/         generate (valley + validation), hazards (fire, flood, quake, ash), query helpers
+  content/       BuildingDef, TechDef, TraditionDef, Scenario/Epoch/Hazard data, difficulty tiers, challenges (modifiers.ts:
+                 world, hazard-strength and rate deltas; hazardStrength is the one place strength is scaled)
+  world/         generate (valley + validation), modify (a lineage's challenges applied to the new valley, the Buried
+                 Library), hazards (fire, flood, quake, ash), query helpers
   economy/       placement, labor, production, population, research, structure helpers, site suggestions
   events/        story decisions (state-derived prompts with a free default at the deadline)
   legacy/        collapse (resolve once, casualties, retention, report, verdict), inheritance (time-skip, archaeology,
@@ -51,6 +53,6 @@ fixtures/        recorded transcripts of the scripted routes and of the feat run
 
 ## Public API (`src/engine/index.ts`)
 
-`createCampaign(seed, mode, scenario, difficulty)` · `dispatchAction(c, action)` · `advanceFixedTick(c)` · `runTicks(c, n)` ·
+`createCampaign(seed, mode, scenario, difficulty, modifiers?)` · `dispatchAction(c, action)` · `advanceFixedTick(c)` · `runTicks(c, n)` ·
 `setPaused(c, bool)` · `getCatalog(c)` · `getForecast(c)` · `checkPlacement(c, kind, x, y, rot)` · `repairBlocked(c, s)` / `repairCost(s)` ·
 `collapseEpoch(c)` · `computeHash(c)` · `serialize/deserialize` · `transcriptOf(c)` / `replayCampaign(t)` · `cloneCampaign(c)`.

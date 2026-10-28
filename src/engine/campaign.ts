@@ -1,7 +1,7 @@
 import { BUILDINGS, costOf, getDef } from './content/buildings';
+import { checkModifiers, modifierMods } from './content/modifiers';
 import { getScenario } from './content/scenario';
 import { TECHS } from './content/techs';
-import { sumModifiers } from './content/traditions';
 import {
   CONTENT_VERSION,
   EPOCH_TICKS,
@@ -24,6 +24,7 @@ import type {
   Forecast,
   Difficulty,
   GameMode,
+  ModifierId,
   Resources,
   Structure,
 } from './core/types';
@@ -42,6 +43,7 @@ import { enterInterregnum, excavateRuin, foundNextEpoch, surveyRuin } from './le
 import { applyChoice, checkChoice, stepStories } from './events/story';
 import { generateWorld } from './world/generate';
 import { resolveHazard } from './world/hazards';
+import { applyWorldModifiers, placeBuriedLibrary } from './world/modify';
 
 function err(code: ErrorCode, message: string, hint?: ActionError['hint']): ActionError {
   return { ok: false, code, message, hint };
@@ -56,11 +58,15 @@ export function createCampaign(
   mode: GameMode = 'standard',
   scenarioId = 'greenvale',
   difficulty: Difficulty = 'normal',
+  modifiers: readonly ModifierId[] = [],
 ): Campaign {
   const scenario = getScenario(scenarioId);
   const spec = scenario.epochs[0]!;
+  const chosen = checkModifiers(modifiers, scenarioId);
+  if (!chosen.ok) throw new Error(`Invalid challenges: ${chosen.why}`);
   const world = generateWorld(seed);
-  const m = sumModifiers([]);
+  const m = modifierMods({ modifiers: chosen.ids });
+  const pop = spec.startPop + m.startPop;
   const c: Campaign = {
     schema: SCHEMA_VERSION,
     rules: RULES_VERSION,
@@ -69,6 +75,8 @@ export function createCampaign(
     scenario: scenarioId,
     mode,
     difficulty,
+    // Only a lineage with challenges carries the field, so a standard one hashes as it always did.
+    ...(chosen.ids.length ? { modifiers: chosen.ids } : {}),
     phase: 'PREPARE',
     paused: false,
     epoch: 0,
@@ -80,12 +88,12 @@ export function createCampaign(
     structures: [],
     civ: {
       res: {
-        food: (spec.start.food + m.startFood) * UNIT,
-        timber: (spec.start.timber + m.startTimber) * UNIT,
-        stone: (spec.start.stone + m.startStone) * UNIT,
+        food: Math.max(0, (spec.start.food + m.startFood) * UNIT),
+        timber: Math.max(0, (spec.start.timber + m.startTimber) * UNIT),
+        stone: Math.max(0, (spec.start.stone + m.startStone) * UNIT),
         knowledge: spec.start.knowledge * UNIT,
       },
-      pop: spec.startPop,
+      pop,
       morale: 700,
       techs: [],
       research: null,
@@ -102,11 +110,11 @@ export function createCampaign(
         decisions: 0,
         born: 0,
         starved: 0,
-        peakPop: spec.startPop,
+        peakPop: pop,
       },
       popClock: 0,
       starveClock: 0,
-      labor: { total: spec.startPop, builders: 0, idle: spec.startPop },
+      labor: { total: pop, builders: 0, idle: pop },
     },
     lineage: {
       history: [],
@@ -127,9 +135,11 @@ export function createCampaign(
     report: null,
     forecastLevel: 0,
   };
+  applyWorldModifiers(c);
   const h = createStructure(c, 'hearth', world.anchors.hearth.x, world.anchors.hearth.y, 0, 'active');
   levelPad(c, h);
   h.provenance.push('The founders lit the first fire here.');
+  placeBuriedLibrary(c);
   c.lineage.history.push({ epoch: 0, title: spec.name, text: spec.brief });
   return c;
 }

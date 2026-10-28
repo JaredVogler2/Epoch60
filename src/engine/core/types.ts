@@ -511,6 +511,15 @@ export type GameMode = 'standard' | 'assisted';
 /** Scales every hazard's strength and the victory thresholds (see `content/scenario.ts`). */
 export type Difficulty = 'gentle' | 'normal' | 'hard';
 
+/** Challenges a lineage can begin with (see `content/modifiers.ts`). */
+export type ModifierId =
+  | 'fertile_floodplain'
+  | 'dry_summers'
+  | 'soft_rock'
+  | 'fractured_fault'
+  | 'overcrowded_refuge'
+  | 'buried_library';
+
 export interface Campaign {
   schema: number;
   rules: string;
@@ -519,6 +528,11 @@ export interface Campaign {
   scenario: string;
   mode: GameMode;
   difficulty: Difficulty;
+  /**
+   * The challenges the lineage began with, in canonical order. Absent for a standard lineage (never an empty list),
+   * so standard campaigns hash exactly as they did before challenges existed.
+   */
+  modifiers?: ModifierId[];
   phase: Phase;
   /** Paused is orthogonal to phase. A saved ACTIVE game always reloads paused. */
   paused: boolean;

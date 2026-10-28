@@ -1,5 +1,6 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario, scaledStrength } from '../content/scenario';
+import { addMods, hazardStrength, modifierMods } from '../content/modifiers';
+import { getScenario } from '../content/scenario';
 import { TECHS } from '../content/techs';
 import { TRADITIONS, sumModifiers } from '../content/traditions';
 import { UNIT } from '../core/constants';
@@ -207,7 +208,8 @@ function lastHearth(c: Campaign): { x: number; y: number; standing: boolean } {
   return { x: c.world.anchors.hearth.x, y: c.world.anchors.hearth.y, standing: false };
 }
 
-function findSites(c: Campaign): FoundingSite[] {
+/** The places the next age could be founded, each with its exposure to the next catastrophe. */
+export function findSites(c: Campaign): FoundingSite[] {
   const scenario = getScenario(c.scenario);
   const next = scenario.epochs[c.epoch + 1];
   if (!next) return [];
@@ -221,7 +223,7 @@ function findSites(c: Campaign): FoundingSite[] {
     for (let dy = 0; dy < 2; dy++)
       for (let dx = 0; dx < 2; dx++) r = Math.max(r, riskAt.get(idx(x + dx, y + dy, c.world.w)) ?? 0);
     if (riskKind === 'quake')
-      r = Math.max(r, quakeIntensityAt(c, x, y, scaledStrength(c.difficulty, next.hazard.strength)));
+      r = Math.max(r, quakeIntensityAt(c, x, y, hazardStrength(probe, riskKind, next.hazard.strength)));
     return r;
   };
 
@@ -542,7 +544,7 @@ export function foundNextEpoch(c: Campaign, siteIndex: number, tradition: Tradit
   // Cultural inheritance.
   c.lineage.traditions.push(tradition);
   const traditions = [...c.lineage.traditions];
-  const m = sumModifiers(traditions);
+  const m = addMods(sumModifiers(traditions), modifierMods(c));
 
   // Knowledge inheritance: only what a valid carrier preserved or the dig recovered.
   const techs: TechId[] = [...report.retainedTechs];

@@ -4,6 +4,8 @@ export { BUILDINGS, BUILDING_KINDS, costOf, footprint, getDef } from './content/
 export type { BuildingDef } from './content/buildings';
 export { TECHS, TECH_IDS } from './content/techs';
 export { TRADITIONS, sumModifiers } from './content/traditions';
+export { MAX_MODIFIERS, MODIFIERS, checkModifiers, hazardStrength } from './content/modifiers';
+export type { ModifierCheck, ModifierDef } from './content/modifiers';
 export {
   ASHEN,
   DIFFICULTY,

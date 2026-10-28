@@ -23,7 +23,9 @@ farms nothing; **then and now** pictures of each age, from one viewpoint, compar
 (session memory only); a **chronicle of works** on the ending retells the most storied buildings' lives from their recorded events. A code review of
 that work found nine real defects (run cards stamped with the current rules, two feats checked too loosely or too rarely, a worn building lightly
 struck counted as damaged and mended, unknown feats able to crash the ending, a building under construction called a ruin), all fixed with
-mutation-checked tests (`docs/PROGRESS.md`, session 6). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+mutation-checked tests (`docs/PROGRESS.md`, session 6). **Session 7 (in progress)** adds **challenges**, Phase 13's world modifiers
+as Phase 16's challenge mutators: six are in the engine (`src/engine/content/modifiers.ts`, `world/modify.ts`), absent from
+standard lineages so no recorded hash moved; the title picker, share links, run cards and the briefing's list are next. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
