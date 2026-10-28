@@ -3,7 +3,7 @@ import { hashValue } from '../core/hash';
 import type { Action, Campaign, Difficulty, LoggedAction, ModifierId } from '../core/types';
 import { advanceFixedTick, createCampaign, dispatchAction } from '../campaign';
 import { checkModifiers } from '../content/modifiers';
-import { DIFFICULTY, SCENARIOS } from '../content/scenario';
+import { DIFFICULTY, MAX_AGES, SCENARIOS } from '../content/scenario';
 import { FEATS } from '../legacy/feats';
 
 export interface SaveFile {
@@ -60,7 +60,10 @@ function validateShape(c: Campaign): void {
     throw new SaveError(`Save data is not a campaign this version can run (${why})`);
   };
   if (!own(SCENARIOS, c.scenario)) bad('unknown scenario');
-  const epochs = SCENARIOS[c.scenario]!.epochs.length;
+  if (c.endless !== undefined && (!c.endless || typeof c.endless.rested !== 'boolean'))
+    bad('malformed long chronicle');
+  // The long chronicle runs past the scenario's ages, to MAX_AGES at most.
+  const epochs = c.endless ? MAX_AGES : SCENARIOS[c.scenario]!.epochs.length;
   if (!Number.isInteger(c.epoch) || c.epoch < 0 || c.epoch >= epochs) bad('epoch out of range');
   if (!own(DIFFICULTY, c.difficulty)) bad('unknown difficulty');
   // Challenges change the simulation, so a set this build cannot run as written is refused, never trimmed.

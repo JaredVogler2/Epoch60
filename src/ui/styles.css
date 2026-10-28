@@ -1266,6 +1266,34 @@ h3 {
   flex-direction: column;
   gap: 4px;
 }
+/* The debrief's choices: going on, and (in the long chronicle) resting it there. */
+.debrief-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+/* Replaying one of many ages: the choice and its button stay together. */
+.replay-pick {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.replay-pick select {
+  min-height: 44px;
+  border-radius: 10px;
+  background: var(--panel-solid);
+  color: inherit;
+  border: 1px solid var(--line);
+  padding: 0 8px;
+}
+.chronicle-ages {
+  margin: 4px 0 0;
+}
+.chronicle-ages b {
+  font-size: 1.25em;
+}
 .met {
   color: var(--good);
 }

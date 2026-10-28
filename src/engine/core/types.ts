@@ -211,7 +211,11 @@ export type Action =
   | { type: 'continue' }
   | { type: 'survey'; id: number }
   | { type: 'excavate'; id: number }
-  | { type: 'found'; site: number; tradition: TraditionId };
+  | { type: 'found'; site: number; tradition: TraditionId }
+  /** From a victory: carry the chronicle on past the scenario's last age (the long chronicle). */
+  | { type: 'endure' }
+  /** From the debrief of an age of the long chronicle: end it there, as a victory. */
+  | { type: 'rest' };
 
 export type ActionType = Action['type'];
 
@@ -539,6 +543,11 @@ export interface Campaign {
    * so standard campaigns hash exactly as they did before challenges existed.
    */
   modifiers?: ModifierId[];
+  /**
+   * Present once a victorious lineage carries its chronicle on past the scenario's last age (at most `MAX_AGES` ages
+   * in all); `rested` when the player ended it at a debrief. Absent otherwise, so every other lineage hashes as before.
+   */
+  endless?: { rested: boolean };
   phase: Phase;
   /** Paused is orthogonal to phase. A saved ACTIVE game always reloads paused. */
   paused: boolean;

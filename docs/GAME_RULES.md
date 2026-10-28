@@ -22,7 +22,8 @@ No `Math.random`, `Date.now`, `performance.now` or frame rate in `src/engine` (E
 
 ### Phase machine
 
-`PREPARE → ACTIVE → COLLAPSE_PENDING → COLLAPSING → DEBRIEF → INTERREGNUM → PREPARE (next epoch)`; terminal `VICTORY` / `DEFEAT`.
+`PREPARE → ACTIVE → COLLAPSE_PENDING → COLLAPSING → DEBRIEF → INTERREGNUM → PREPARE (next epoch)`; terminal `VICTORY` / `DEFEAT`
+(a `VICTORY` in the last age can be carried on with `endure`, which leads to `INTERREGNUM`: the long chronicle, §20).
 `COLLAPSE_PENDING` is transient inside `collapseEpoch` (hazard resolved exactly once, guarded by `collapseResolved`).
 `COLLAPSING` is the read-only presentation window; `continue` moves it to `DEBRIEF` and then onward.
 `paused` is orthogonal. A saved ACTIVE game always reloads paused.
@@ -57,6 +58,8 @@ Changing this order changes state hashes; do it only with a deliberate fixture u
 | `continue`           | COLLAPSING, DEBRIEF          | Advance the presentation / apply verdict or begin the interregnum.                                                        |
 | `survey`, `excavate` | INTERREGNUM                  | Bounded archaeology (below).                                                                                              |
 | `found`              | INTERREGNUM                  | Choose a founding site and a tradition; starts the next epoch.                                                            |
+| `endure`             | VICTORY (last authored age)  | Carry the chronicle on (§20): the centuries pass and a later age can be founded.                                          |
+| `rest`               | DEBRIEF (a later age)        | End the long chronicle there, as a victory (§20).                                                                         |
 
 Plan slots: **3** orders may be queued in PREPARE. ACTIVE queue is bounded at **16**. Queued orders reserve their cost
 against what you own (you cannot over-plan). Failed actions never charge. Rejected-on-apply actions emit an `action.rejected.*` event.
@@ -487,3 +490,36 @@ of wall time (700 ms while planning, 4 s for the debrief and 1.5 s between ages,
 can be selected, and nothing is saved, carded, branched or added to the Codex. When it ends, the ending says whether it reached
 exactly the lineage's final state (the state hash): it always should, and a test replays recorded lineages through the clock at
 several speeds and frame rates to prove it. Stop, or Back to the ending, returns to the finished lineage as it was.
+
+## 20. The long chronicle (endless play after a victory)
+
+A lineage that wins its scenario's last age may **carry the chronicle on** (`endure`, offered on the ending): the
+centuries pass as after any other age (400 years, `CHRONICLE_YEARS`), and later ages can be founded, up to **twelve
+ages** in all (`MAX_AGES`, which the eleven traditions also bound: each founding adopts one, never twice). The victory
+already won stands and keeps its own run card.
+
+- **What each later age brings** (`epochSpec`, `src/engine/content/scenario.ts`): the scenario's catastrophes return in
+  their order (Greenvale: fire, flood, quake, then again; The Ashen Winter: fire, flood, ash), each return **10 % fiercer
+  per age past the last authored one** (`CHRONICLE_STEP_PM`: age IV ×1.1 … age XII ×1.9), twice over: its strength (how far
+  it reaches; difficulty and challenges then scale it as usual), and the harm it does to every building it reaches
+  (`chronicleSeverityPm`, applied to each building's damage before it is classified; the forecast shows the same). Harm
+  had to grow too: a quake's intensity is capped per cell and a fire's harm is the share of a footprint it burns, so
+  strength alone only widened catastrophes that a reinforced stone village had already outbuilt. Its headline counts the returns ("The Second Great Fire", … "The Fourth
+  Great Quake"); the settlers bring the provisions of the age whose catastrophe returns and build with the last age's
+  architecture; each later age has its own people ("The Ember Folk", "The High-Water Folk", …).
+- **Not judged.** A later age has no verdict. At its debrief the chronicle **ends by itself** when fewer than 3 came
+  through (`MIN_FOUNDERS`: "The chronicle ends") or when the twelfth age has passed ("The chronicle is complete");
+  otherwise the player chooses: let the centuries pass, or **rest the chronicle** there (`rest`: "The chronicle rests").
+  Every ending of a long chronicle is a `VICTORY`, since the cycle was already broken.
+- **What it keeps.** Everything carries on as between any two ages: ruins, scars, regrowth, archaeology, traditions,
+  knowledge and its carriers, feats (a later age can earn a feat not yet earned; the victory feats were earned at the
+  victory). The legacy (§9) is read after the last catastrophe, as always.
+- **Cards and ranking.** When a long chronicle ends it gets a second run card, marked with the ages it lasted. It is
+  **never ranked**: more ages mean more legacy, so it is not compared with lineages of the scenario's length.
+- **Replays, saves, branches.** `endure` and `rest` are logged actions, so a transcript replays a long chronicle exactly,
+  and Watch this lineage pauses on the victory (4 s at 1×) before carrying it on. Saves accept an age past the
+  scenario's last only for a lineage carrying its chronicle on (`Campaign.endless`, absent otherwise, so no other
+  lineage's state hash moved). Each later age's founding is a branch point like any other.
+- **Bots.** The route policies meet a returning catastrophe with the plan they made for its first coming (`planAge` in
+  `src/engine/ai/routes.ts`); `playCampaign(…, { ages })` carries a victory on and rests it after that many ages.
+  `scripts/chronicle.ts` measures how long each policy's lineages last (`docs/balance/chronicle.md`).

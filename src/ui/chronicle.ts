@@ -1,4 +1,4 @@
-import { BUILDINGS, TECHS, getScenario } from '../engine';
+import { BUILDINGS, TECHS, epochSpec } from '../engine';
 import type { Campaign, Structure } from '../engine';
 import { ROMAN } from './format';
 
@@ -17,7 +17,7 @@ export interface Biography {
 }
 
 function ageName(c: Campaign, epoch: number): string {
-  return getScenario(c.scenario).epochs[epoch]?.ageName ?? `age ${ROMAN[epoch] ?? epoch + 1}`;
+  return epoch >= 0 ? epochSpec(c, epoch).ageName : `age ${ROMAN[epoch] ?? epoch + 1}`;
 }
 
 /** One provenance line as a sentence of the building's own story. */
@@ -49,7 +49,6 @@ function weight(s: Structure): number {
 
 /** The `max` works with the longest stories (at least three recorded events each), most storied first. */
 export function chronicleOf(c: Campaign, max = 3): Biography[] {
-  const scenario = getScenario(c.scenario);
   return c.structures
     .filter((s) => s.provenance.length >= 3)
     .sort((a, b) => weight(b) - weight(a) || a.id - b.id)
@@ -59,7 +58,7 @@ export function chronicleOf(c: Campaign, max = 3): Biography[] {
       // A hearth's own first line already says who lit it ("The founders lit the first fire here."), and a work older
       // than the lineage says who raised it.
       const founded = /^(The founders lit|Founded in|Raised by)/.test(s.provenance[0] ?? '');
-      const society = scenario.epochs[s.originEpoch]?.name ?? 'an earlier people';
+      const society = s.originEpoch >= 0 ? epochSpec(c, s.originEpoch).name : 'an earlier people';
       const story = founded ? lines : [`Raised by ${society} in the ${ageName(c, s.originEpoch)}.`, ...lines];
       if (s.storedTechs.length)
         story.push(`Knowledge kept here: ${s.storedTechs.map((t) => TECHS[t].name).join(', ')}.`);

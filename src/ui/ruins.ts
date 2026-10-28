@@ -1,4 +1,4 @@
-import { BUILDINGS, UNIT, getScenario, repairBlocked, repairCost } from '../engine';
+import { BUILDINGS, UNIT, epochSpec, repairBlocked, repairCost } from '../engine';
 import type { Campaign, Structure } from '../engine';
 import { ROMAN } from './format';
 
@@ -35,7 +35,7 @@ function price(n: number, what: string): string {
 
 export function ruinFacts(c: Campaign, s: Structure): RuinFacts {
   const d = BUILDINGS[s.kind];
-  const spec = getScenario(c.scenario).epochs[s.originEpoch];
+  const spec = s.originEpoch >= 0 ? epochSpec(c, s.originEpoch) : undefined;
   const built =
     s.originEpoch < 0
       ? 'Built before the founders came, by a people no record names.'

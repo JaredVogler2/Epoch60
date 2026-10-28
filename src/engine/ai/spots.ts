@@ -1,5 +1,5 @@
 import { footprint } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { MAX_AGES, epochSpec, getScenario } from '../content/scenario';
 import type { BuildingKind, Campaign } from '../core/types';
 import { checkPlacement, isPlacementOk } from '../economy/placement';
 import { resolveHazard } from '../world/hazards';
@@ -55,9 +55,9 @@ function futureHazardCells(c: Campaign, epochs: number[]): Set<number> {
   if (hit) return hit;
   perCampaign.clear();
   const out = new Set<number>();
-  const scenario = getScenario(c.scenario);
+  const ages = c.endless ? MAX_AGES : getScenario(c.scenario).epochs.length;
   for (const e of epochs) {
-    const hz = scenario.epochs[e]?.hazard;
+    const hz = e < ages ? epochSpec(c, e).hazard : null;
     if (!hz) continue;
     for (const h of resolveHazard(c, hz.kind, hz.strength).cells) {
       if (hz.kind === 'quake' && h.intensity < 420) continue;

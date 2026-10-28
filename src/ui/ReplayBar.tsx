@@ -9,6 +9,7 @@ const PHASE: Record<string, string> = {
   COLLAPSING: 'the catastrophe',
   DEBRIEF: 'the debrief',
   INTERREGNUM: 'between ages',
+  VICTORY: 'the victory',
 };
 const SPEEDS: Replay['speed'][] = [1, 2, 4];
 

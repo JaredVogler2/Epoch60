@@ -501,3 +501,32 @@ always reported, the save overwritten, a run card written, a branch point saved,
 the second age, ends with "Replayed exactly" and the same title, and Back returns to the finished lineage's ending), 1 passed
 each (4.8–5.5 min on desktop and 3.1–3.2 min on the phone, while the challenge measurement ran beside them). Captures of the
 replay mid-way and of its result inspected on both profiles (review copy `docs/review/visual/v7-replay.jpg`).
+**The long chronicle (Phase 16's endless play after the capstone, bounded at twelve ages).** A lineage that wins its
+scenario's last age can carry its chronicle on (`endure`): centuries pass as after any age, and each later age brings
+back one of the scenario's catastrophes in their order, 10% fiercer per age past the last authored one in both reach
+(strength) and harm to every building it reaches (`chronicleSeverityPm`), up to age XII. Later ages carry no verdict:
+the chronicle ends by itself at a debrief that leaves fewer than three people or after the twelfth age, or the player
+rests it there (`rest`); every ending is a victory with its own unranked run card. `epochSpec(c, epoch)` replaced every
+`scenario.epochs[i]` lookup (engine, UI, render), so the long chronicle's ages have names, peoples ("The Ember Folk"),
+headlines ("The Second Great Fire"), provisions and the last age's architecture. `endure` and `rest` are logged actions,
+so transcripts and the replay viewer (which now waits on a victory before carrying it on) reproduce a long chronicle;
+`Campaign.endless` is absent otherwise, so no recorded hash moved. Route policies meet a returning catastrophe with the
+plan they made for its first coming (`planAge`); `playCampaign(…, { ages })` carries a victory on and rests it. Branch
+points keep only the newest that fit 2 million characters: a long chronicle's save reaches 0.57 million characters by
+age XII (measured on the recorded Archivists' and Engineers' lineages carried on), and all of them together would crowd
+the save itself out of the browser's storage. The ending offers one choice of age to replay from when there are more than
+three, and the history lens has a colour for each of twelve ages.
+**Why harm grows, not only reach:** with strength alone, every winning Engineers lineage on seeds 1–15 (14 of 14) lived
+all twelve ages: a quake's intensity is capped per cell and a fire's harm is the share of a footprint it burns, so a
+reinforced stone village had outbuilt every later catastrophe.
+**Verified so far:** typecheck, lint, **366 Vitest tests** (39 files; +6 in `tests/engine/endless.test.ts`: the
+scenario's own ages untouched and later ages cycling their catastrophes with stepped strength, headlines, peoples and
+provisions; harm scaled for every building a later age reaches; a tradition for every founding up to the twelfth age;
+the Archivists' recorded win carried into a fourth age, the Second Great Fire unjudged, the chronicle replayed exactly and
+saved; resting only at a later age's debrief, ending by itself when too few survive or after the last age; saves
+refusing a malformed chronicle or an age past the last; +3 in `tests/game/endless.test.ts`: the chronicle's own unranked
+card, the store carrying a victory on and carding the chronicle when rested, the replay viewer passing through the
+victory to the chronicle's end with the same hash; +1 branch test: the storage budget keeps the newest points). Every
+recorded trace and feat hash is unchanged. The browser test (`e2e/chronicle.spec.ts`) and the measurement over many
+seeds come next.
+

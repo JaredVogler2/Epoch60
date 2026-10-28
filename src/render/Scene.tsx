@@ -13,7 +13,7 @@ import {
   SRGBColorSpace,
 } from 'three';
 import type { ToneMapping } from 'three';
-import { getScenario } from '../engine';
+import { epochSpec } from '../engine';
 import { store } from '../game/store';
 import { Foliage, crownMaterial } from './Foliage';
 import { Outskirts } from './Outskirts';
@@ -164,10 +164,7 @@ function Lights({ shadowMap }: { shadowMap: number }) {
       if (c.phase === 'ACTIVE') u = Math.min(1, Math.max(0, (c.tick - 300) / 300));
       else if (c.phase === 'COLLAPSING') u = 1;
     }
-    const kind =
-      presentation.report?.hazard ??
-      (c ? getScenario(c.scenario).epochs[c.epoch]?.hazard.kind : undefined) ??
-      'fire';
+    const kind = presentation.report?.hazard ?? (c ? epochSpec(c, c.epoch).hazard.kind : undefined) ?? 'fire';
     const m = MOODS[kind] ?? MOODS.fire!;
     l.color.copy(SUN_CALM).lerp(m.sun, u * 0.7);
     l.intensity = 2.5 * (1 - m.dim * u);

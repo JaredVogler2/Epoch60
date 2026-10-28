@@ -8,13 +8,19 @@ export { MAX_MODIFIERS, MODIFIERS, checkModifiers, hazardStrength } from './cont
 export type { ModifierCheck, ModifierDef } from './content/modifiers';
 export {
   ASHEN,
+  CHRONICLE_STEP_PM,
+  CHRONICLE_YEARS,
   DIFFICULTY,
   GREENVALE,
+  MAX_AGES,
   SCENARIOS,
+  epochSpec,
   getScenario,
+  nextEpochSpec,
   scaledStrength,
   victoryFor,
 } from './content/scenario';
+export type { EpochSpec, HazardSpec, ScenarioSpec } from './content/scenario';
 export {
   advanceFixedTick,
   canAdvance,
@@ -37,13 +43,21 @@ export type { PlacementOk } from './economy/placement';
 export { housingCapacity, techCost, mods } from './economy/modifiers';
 export { buildSpeedPm, farmFertilityPm } from './economy/economy';
 export { ruinYield } from './legacy/inheritance';
-export { collapseEpoch, LANDMARK_HINT, LANDMARK_LABEL } from './legacy/collapse';
+export {
+  collapseEpoch,
+  earlierLandmarks,
+  LANDMARK_HINT,
+  LANDMARK_LABEL,
+  MIN_FOUNDERS,
+} from './legacy/collapse';
+export { canEndure, capstoneEpoch, chronicleEnding, chronicleOver } from './legacy/endless';
+export type { ChronicleEnding } from './legacy/endless';
 export { FEATS, FEAT_GROUPS, FEAT_IDS } from './legacy/feats';
 export type { FeatDef, FeatGroup } from './legacy/feats';
 export { LEGACY_POINTS, legacyOf } from './legacy/score';
 export type { Legacy, LegacyKey, LegacyPart } from './legacy/score';
 export { generateWorld, validateWorld } from './world/generate';
-export { resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
+export { chronicleSeverityPm, resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
 export {
   cloneCampaign,
   computeHash,

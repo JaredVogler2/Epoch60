@@ -4,14 +4,16 @@
 src/engine/      Plain TypeScript, no React/DOM, no Math.random/Date.now (lint-enforced). Authoritative.
   core/          constants (incl. RULES/CONTENT/SCHEMA versions), types, seeded PRNG (sfc32), stable hash, event log
   content/       BuildingDef, TechDef, TraditionDef, Scenario/Epoch/Hazard data, difficulty tiers, challenges (modifiers.ts:
-                 world, hazard-strength and rate deltas; hazardStrength is the one place strength is scaled)
+                 world, hazard-strength and rate deltas; hazardStrength is the one place strength is scaled); epochSpec
+                 (scenario.ts) is the spec of any age, the long chronicle's later ages included: read it, never epochs[i]
   world/         generate (valley + validation), modify (a lineage's challenges applied to the new valley, the Buried
                  Library), hazards (fire, flood, quake, ash), query helpers
   economy/       placement, labor, production, population, research, structure helpers, site suggestions
   events/        story decisions (state-derived prompts with a free default at the deadline)
   legacy/        collapse (resolve once, casualties, retention, report, verdict), inheritance (time-skip, archaeology,
                  sites and traditions, founding), feats (awarded at the moment they happen, kept in lineage.feats),
-                 score (the legacy: what lasted, read from the state, never stored)
+                 score (the legacy: what lasted, read from the state, never stored), endless (the long chronicle: when a
+                 victory can be carried on, when it must end, how it ended)
   ai/            findSpot, priority-list bot framework, baseline policies and the scripted routes (Engineers, Archivists)
   save/          computeHash, serialize/deserialize (integrity hash + shape validation), transcript + replay
   campaign.ts    createCampaign, dispatchAction, advanceFixedTick, getCatalog, getForecast, repairBlocked

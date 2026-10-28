@@ -10,7 +10,7 @@ import {
   techCost,
 } from '../engine';
 import type { HazardKind, LaborFocus, ResourceKey, Structure, TechId } from '../engine';
-import { currentSpec, getScenario } from '../engine';
+import { currentSpec, epochSpec } from '../engine';
 import { Icon, RESOURCE_ICON, hazardIcon } from './icons';
 import { ROMAN, units } from './format';
 import { ruinFacts } from './ruins';
@@ -142,7 +142,7 @@ export function Inspector() {
                 <Icon name="layers" size={14} />{' '}
                 {st.originEpoch < 0
                   ? 'Built before the founders came'
-                  : `Built in the ${getScenario(c.scenario).epochs[st.originEpoch]?.ageName} (age ${ROMAN[st.originEpoch]})`}
+                  : `Built in the ${epochSpec(c, st.originEpoch).ageName} (age ${ROMAN[st.originEpoch]})`}
               </li>
             )}
             <li>

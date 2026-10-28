@@ -62,12 +62,17 @@ function store(points: BranchPoint[]): void {
   }
 }
 
+/**
+ * Points are whole saves, and a long chronicle's grow past half a million characters each: only the newest points that
+ * fit in this many characters are kept, so the lineage's own save always has room in the browser's storage.
+ */
+export const BRANCH_BUDGET = 2_000_000;
+
 /** Remember the lineage as it stands at the start of this age (a later age replaces nothing earlier). */
-export function saveBranchPoint(c: Campaign): void {
+export function saveBranchPoint(c: Campaign, budget = BRANCH_BUDGET): void {
   if (c.phase !== 'PREPARE' || c.epoch < 1) return;
-  const kept = load().filter((p) => sameLineage(p, c) && p.epoch !== c.epoch);
-  store([
-    ...kept,
+  const points = [
+    ...load().filter((p) => sameLineage(p, c) && p.epoch !== c.epoch),
     {
       seed: c.seed,
       scenario: c.scenario,
@@ -77,7 +82,11 @@ export function saveBranchPoint(c: Campaign): void {
       epoch: c.epoch,
       save: serialize(c),
     },
-  ]);
+  ].sort((a, b) => a.epoch - b.epoch);
+  // The oldest go first; the newest point is always kept.
+  let size = points.reduce((n, p) => n + p.save.length, 0);
+  while (points.length > 1 && size > budget) size -= points.shift()!.save.length;
+  store(points);
 }
 
 /** The ages this lineage can be replayed from, earliest first. */

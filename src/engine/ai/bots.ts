@@ -14,6 +14,7 @@ import type {
 } from '../core/types';
 import { advanceFixedTick, dispatchAction } from '../campaign';
 import { ruinYield } from '../legacy/inheritance';
+import { canEndure, chronicleOver } from '../legacy/endless';
 import { openPrompts } from '../events/story';
 import { findSpot, sumField, type SpotOptions } from './spots';
 import { mitigationSpot } from './mitigate';
@@ -196,16 +197,27 @@ export interface BotRun {
   }[];
 }
 
-/** Drive a whole campaign with a policy. `think` runs every `step` ticks. */
+/**
+ * Drive a whole campaign with a policy. `think` runs every `step` ticks. With `ages`, a victory is carried on into the
+ * long chronicle until that many ages have been lived (or it ends sooner), and then rested.
+ */
 export function playCampaign(
   c: Campaign,
   p: Policy,
-  opts: { step?: number; maxEpochs?: number; onTick?: (c: Campaign) => void } = {},
+  opts: { step?: number; maxEpochs?: number; ages?: number; onTick?: (c: Campaign) => void } = {},
 ): BotRun {
   const step = opts.step ?? 5;
   const run: BotRun = { campaign: c, epochs: [] };
+  const ages = opts.ages ?? 0;
   let guard = 0;
-  while (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT' && guard++ < 50_000) {
+  while (guard++ < 50_000) {
+    if (c.phase === 'VICTORY' || c.phase === 'DEFEAT') {
+      if (c.epoch + 1 < ages && canEndure(c)) {
+        dispatchAction(c, { type: 'endure' });
+        continue;
+      }
+      break;
+    }
     if (c.phase === 'PREPARE') {
       dispatchAction(c, { type: 'setFocus', focus: p.focus(c) });
       // Opening plan slots: the first wants that are legal at tick 0.
@@ -259,7 +271,8 @@ export function playCampaign(
       });
       dispatchAction(c, { type: 'continue' });
     } else if (c.phase === 'DEBRIEF') {
-      dispatchAction(c, { type: 'continue' });
+      const rest = !!c.endless && c.epoch + 1 >= ages && !chronicleOver(c);
+      dispatchAction(c, { type: rest ? 'rest' : 'continue' });
     } else if (c.phase === 'INTERREGNUM') {
       playInterregnum(c, p);
     } else {

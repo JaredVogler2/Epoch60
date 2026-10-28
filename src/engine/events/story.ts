@@ -1,5 +1,5 @@
 import { BUILDINGS } from '../content/buildings';
-import { getScenario } from '../content/scenario';
+import { epochSpec } from '../content/scenario';
 import { UNIT } from '../core/constants';
 import { emit } from '../core/events';
 import type {
@@ -76,7 +76,7 @@ function endangered(c: Campaign): Structure[] {
   return village(c).filter((s) => ids.has(s.id));
 }
 
-const epochHazard = (c: Campaign) => getScenario(c.scenario).epochs[c.epoch]!.hazard.kind;
+const epochHazard = (c: Campaign) => epochSpec(c, c.epoch).hazard.kind;
 
 /* ------------------------------------------------------------------ */
 /* The stories                                                         */
