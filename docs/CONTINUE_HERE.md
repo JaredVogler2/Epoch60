@@ -19,11 +19,12 @@ from what the run lacked. Pressing a ruin tells its age, purpose, how it fell an
 from its founding as an unranked branch; a **history lens** on the map (always on between ages, `H` or a button while planning) shows each
 age's buildings and ruins, where each catastrophe reached (from its report) and the eroded ground; the ending's **legacy** counts only what
 lasted (people, knowledge, works, feats), and since rules 0.4.1 the debrief's livelihood counts standing works, so clearing and rebuilding
-farms nothing. Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
+farms nothing; **then and now** pictures of each age, from one viewpoint, compare as a slider between ages and pair up in the Atlas
+(session memory only). Scores per capture iteration: `docs/3D_QUALITY_REPORT.md`; what is still open: `docs/KNOWN_ISSUES.md`.
 
 ## Pre-push gate (mandatory, no pipes)
 
-`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 11 min; do not run heavy jobs beside it). After any rules/content/bot/feat change:
+`npm run typecheck && npm run lint && npm test && npm run build` — then `npx playwright test` for UI changes (≈ 21 min for 70+ cases; do not run heavy jobs beside it). After any rules/content/bot/feat change:
 `npx vite-node scripts/record-traces.ts` and **read the diff of `fixtures/greenvale-traces.md`** (a route that stopped winning must be understood, not silently re-recorded),
 then `npx vite-node scripts/record-feats.ts` (it fails if a feat run stops earning its feat) and update the expected lists in `tests/engine/feats.test.ts`
 from `fixtures/feats.md` — any state change moves every recorded hash, so both scripts must run.
@@ -37,8 +38,8 @@ from `fixtures/feats.md` — any state change moves every recorded hash, so both
 2. **Real devices.** WebKit when available (`EPOCH_WEBKIT=1`), a physical iPhone and a real-GPU desktop for frame times (K-001, K-009); the frame-time governor and
    the stall guard are tuned on software GL only.
 3. **Phase 17 remainder:** a manual screen-reader pass (K-016); top-bar icons under 341 px wide are 40 px (K-008).
-4. **Phase 16 remainder (K-022):** the rest of an interactive Atlas (before/after snapshots, biographies; the map layers are the history
-   lens), endless play, variety unlocks with no power; K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
+4. **Phase 16 remainder (K-022):** biographies in the Atlas (the map layers are the history lens; before/after pictures exist for the
+   session), endless play, variety unlocks with no power; K-023 (the land keeps no lasting mark of its use, so the legacy has no land part);
    K-020 (knowledge is almost never lost, so the rediscovery and tablet rules sleep).
 5. **Phase 13 / 14:** 8–12-epoch campaigns, ≥ 12 modifiers, expeditions, sandbox, replay viewer (K-004); villager personas and interiors, Age III skyline, a
    then-vs-now slider, more story decisions.

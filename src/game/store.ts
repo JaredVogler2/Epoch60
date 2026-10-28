@@ -1,6 +1,10 @@
 import {
   BUILDINGS,
+  EPOCH_TICKS,
   FEATS,
+  GRID_H,
+  GRID_W,
+  TICKS_PER_SECOND,
   checkPlacement,
   createCampaign,
   dispatchAction,
@@ -9,6 +13,7 @@ import {
   getForecast,
   setPaused,
 } from '../engine';
+import { isStanding } from '../engine/economy/modifiers';
 import { suggestSpots } from '../engine/economy/suggest';
 import type { SuggestedSpot } from '../engine/economy/suggest';
 import type { CatalogEntry } from '../engine';
@@ -68,6 +73,28 @@ export interface Toast {
 }
 
 export const CANON_SEED = 6001;
+
+/** Pictures of the valley from one fixed viewpoint: as an age's minute ended, and afterwards (JPEG data URLs). */
+export interface AgeSnapshots {
+  focus: { x: number; z: number };
+  then?: string;
+  after?: string;
+}
+export interface SnapshotRequest {
+  epoch: number;
+  kind: 'then' | 'after';
+  focus: { x: number; z: number };
+}
+/** "Then" is taken in the last seconds of the minute, before the catastrophe resolves. */
+export const THEN_TICK = EPOCH_TICKS - 3 * TICKS_PER_SECOND;
+
+/** The village to frame: the hearth of the age being played (the newest one standing). */
+function villageFocus(c: Campaign): { x: number; z: number } {
+  let h: Campaign['structures'][number] | undefined;
+  for (const s of c.structures)
+    if (s.kind === 'hearth' && isStanding(s) && (!h || s.originEpoch > h.originEpoch)) h = s;
+  return h ? { x: h.x + h.w / 2, z: h.y + h.h / 2 } : { x: GRID_W / 2, z: GRID_H / 2 };
+}
 
 /**
  * Runtime holder for the one authoritative Campaign plus all UI state. The campaign is mutated in place by
@@ -129,6 +156,8 @@ export class GameStore {
   branch: number | null = null;
   /** Cycling list of suggested sites for the building being placed (the keyboard / screen-reader path). */
   suggest: { kind: BuildingKind; key: string; spots: SuggestedSpot[]; i: number } | null = null;
+  /** Then-and-now pictures per age of this lineage, taken by the render layer. Session memory only: never saved. */
+  snapshots: Record<number, AgeSnapshots> = {};
 
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);
@@ -237,10 +266,13 @@ export class GameStore {
     if (!c) return false;
     const restored = takeBranch(c, epoch);
     if (!restored) return false;
+    // The ages before the branch point were lived once: their pictures stay; the later ones are being replayed.
+    const kept = Object.fromEntries(Object.entries(this.snapshots).filter(([e]) => Number(e) < epoch));
     this.campaign = restored;
     this.branch = epoch;
     saveBranchTag(restored.seed, epoch);
     this.afterReplace();
+    this.snapshots = kept;
     this.clockResetSeq++;
     this.screen = 'game';
     this.syncCodex(false);
@@ -271,6 +303,7 @@ export class GameStore {
     this.lastSaveTick = -1;
     this.seenFeats = 0;
     this.newFeats = [];
+    this.snapshots = {};
     this.refreshRevs();
     this.worldRev++;
     this.structRev++;
@@ -465,6 +498,28 @@ export class GameStore {
 
   toggleHistory(): void {
     this.showHistory = !this.showHistory;
+    this.emit();
+  }
+
+  /**
+   * The picture the render layer should take now, if any: "then" in the last seconds of a minute, "after" once the
+   * catastrophe and the centuries have passed (between ages, or at the ending for the last age). Only in a played
+   * lineage, never behind the title.
+   */
+  snapshotWanted(): SnapshotRequest | null {
+    const c = this.campaign;
+    if (!c || this.screen !== 'game') return null;
+    const s = this.snapshots[c.epoch];
+    if (c.phase === 'ACTIVE' && c.tick >= THEN_TICK && !s?.then)
+      return { epoch: c.epoch, kind: 'then', focus: s?.focus ?? villageFocus(c) };
+    const afterwards = c.phase === 'INTERREGNUM' || c.phase === 'VICTORY' || c.phase === 'DEFEAT';
+    if (afterwards && s?.then && !s.after) return { epoch: c.epoch, kind: 'after', focus: s.focus };
+    return null;
+  }
+
+  recordSnapshot(r: SnapshotRequest, url: string): void {
+    const prev = this.snapshots[r.epoch] ?? { focus: r.focus };
+    this.snapshots = { ...this.snapshots, [r.epoch]: { ...prev, [r.kind]: url } };
     this.emit();
   }
 

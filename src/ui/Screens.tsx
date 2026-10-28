@@ -18,6 +18,7 @@ import { clearSave } from '../game/persist';
 import { presentation } from '../render/presentation';
 import { AtlasOfAges, FeatChips, nextIdeas } from './Codex';
 import { HistoryLegend } from './HistoryLegend';
+import { ThenNow } from './ThenNow';
 import { Icon, hazardIcon } from './icons';
 import { ROMAN } from './format';
 import { shareQuery } from '../game/modes';
@@ -425,12 +426,21 @@ export function InterregnumScreen() {
   );
   const tradition = (s.inter.tradition ?? inter.traditions[0]!.id) as TraditionId;
   const nextSpec = getScenario(c.scenario).epochs[c.epoch + 1];
+  const pics = s.snapshots[c.epoch];
   return (
     <aside ref={interRef} className="interregnum" data-testid="interregnum" aria-label="Between ages">
       <header>
         <p className="eyebrow">{inter.years} years pass</p>
         <h2>The valley sleeps</h2>
       </header>
+      {pics?.then && pics.after && (
+        <ThenNow
+          then={pics.then}
+          after={pics.after}
+          thenLabel="As the minute ended"
+          afterLabel={`${inter.years} years later`}
+        />
+      )}
       <ul className="inter-log">
         {inter.summary.map((l, i) => (
           <li key={i}>{l}</li>
@@ -584,7 +594,7 @@ export function EndScreen() {
           </section>
         )}
         <h3>Atlas of Ages</h3>
-        <AtlasOfAges c={c} />
+        <AtlasOfAges c={c} pics={s.snapshots} />
         <h3>
           Feats of this lineage{' '}
           <small className="dim" data-testid="end-codex-count">

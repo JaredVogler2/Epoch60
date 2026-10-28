@@ -76,7 +76,7 @@ export function Sky() {
     gl.setClearColor(atmo.haze, 1);
   });
   return (
-    <mesh ref={dome} material={mat} renderOrder={-10} frustumCulled={false}>
+    <mesh ref={dome} name="sky-dome" material={mat} renderOrder={-10} frustumCulled={false}>
       <sphereGeometry args={[220, 32, 16]} />
     </mesh>
   );

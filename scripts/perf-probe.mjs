@@ -81,6 +81,9 @@ ${rows
 - Session 6's history lens is not in this scene: it is drawn only between ages and, on request, while planning an inherited age. It costs
   one draw call per catastrophe so far, one for eroded ground and one per age and state (standing or ruin) of the buildings, at most 8 in a
   three-age lineage, and nothing while hidden. The probe does not measure it.
+- Session 6's then-and-now pictures are not in this scene either: twice per age the game draws one extra frame of the valley into a
+  480×270 corner of the canvas (from a fixed viewpoint, overlays hidden) and reads it back, then redraws the normal view. The probe does not
+  measure it.
 `;
   writeFileSync(reportPath, md);
   console.log('wrote', reportPath);

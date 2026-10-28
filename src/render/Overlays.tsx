@@ -141,6 +141,9 @@ function useRevs(): string {
   return useSyncExternalStore(store.subscribe, () => `${store.version}`);
 }
 
+/** Marks a map overlay, which the then-and-now snapshots hide (see Snapshot.tsx). */
+const OVERLAY = { overlay: true };
+
 /* ------------------------------------------------------------------ */
 /* Hazard forecast on the terrain                                      */
 /* ------------------------------------------------------------------ */
@@ -286,7 +289,7 @@ export function ForecastOverlay() {
     mat.uniforms.uAlpha!.value = 0.8 + 0.5 * urgent;
   });
   if (!geom || !f) return null;
-  return <mesh geometry={geom} material={mat} renderOrder={3} frustumCulled={false} />;
+  return <mesh geometry={geom} material={mat} renderOrder={3} frustumCulled={false} userData={OVERLAY} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -382,7 +385,7 @@ export function PlacementGhost() {
   const { w, h } = footprint(p.kind, p.rot);
   const ok = !!g && g.ok;
   return (
-    <group>
+    <group userData={OVERLAY}>
       <GhostBuilding
         kind={p.kind}
         rot={p.rot}
@@ -403,7 +406,7 @@ export function PlannedMarkers() {
   if (!c) return null;
   const items = c.queue.filter((q) => q.action.type === 'build');
   return (
-    <group>
+    <group userData={OVERLAY}>
       {items.map((q) => {
         if (q.action.type !== 'build') return null;
         const { w, h } = footprint(q.action.kind, q.action.rot);
@@ -433,7 +436,9 @@ export function SelectionRing() {
     c && store.selectedId !== null ? c.structures.find((st) => st.id === store.selectedId) : undefined;
   if (!s) return null;
   return (
-    <Decal x={s.x - 0.1} y={s.y - 0.1} w={s.w + 0.2} h={s.h + 0.2} color="#ffd25a" mode={3} lift={0.09} />
+    <group userData={OVERLAY}>
+      <Decal x={s.x - 0.1} y={s.y - 0.1} w={s.w + 0.2} h={s.h + 0.2} color="#ffd25a" mode={3} lift={0.09} />
+    </group>
   );
 }
 
@@ -466,7 +471,16 @@ export function HoverRing() {
     }
     m.visible = ring.geom !== null;
   });
-  return <mesh ref={mesh} material={mat} renderOrder={5} frustumCulled={false} visible={false} />;
+  return (
+    <mesh
+      ref={mesh}
+      material={mat}
+      renderOrder={5}
+      frustumCulled={false}
+      visible={false}
+      userData={OVERLAY}
+    />
+  );
 }
 
 /** Pulsing markers on buildings the coming hazard will damage or destroy. */
@@ -485,7 +499,7 @@ export function RiskMarkers() {
     (i) => i.after !== 'active' && !!c!.structures.find((s) => s.id === i.id),
   );
   return (
-    <group>
+    <group userData={OVERLAY}>
       {at.map((i) => {
         const s = c!.structures.find((st) => st.id === i.id)!;
         const d = BUILDINGS[s.kind];
@@ -599,7 +613,7 @@ export function HistoryLens() {
   );
   if (!parts.length) return null;
   return (
-    <group name="history-lens">
+    <group name="history-lens" userData={OVERLAY}>
       {parts.map((p) => (
         <mesh key={p.key} geometry={p.geom} material={p.mat} renderOrder={6} frustumCulled={false} />
       ))}

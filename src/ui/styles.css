@@ -1208,6 +1208,71 @@ h3 {
   font-size: 0.9rem;
   color: var(--dim);
 }
+/* Then and now: two pictures from one viewpoint, the earlier clipped at the slider. */
+.then-now {
+  margin: 8px 0 10px;
+}
+.then-now-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+}
+.then-now-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+.then-now-frame img.then {
+  clip-path: inset(0 calc(100% - var(--split)) 0 0);
+}
+.then-now-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--split);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--gold);
+  pointer-events: none;
+}
+.then-now input[type='range'] {
+  width: 100%;
+  margin: 6px 0 0;
+  accent-color: var(--gold);
+}
+.then-now figcaption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+.atlas-pics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+.atlas-pics figure {
+  margin: 0;
+}
+.atlas-pics img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+.atlas-pics figcaption {
+  font-size: 0.74rem;
+  color: var(--dim);
+}
 .ruin-list,
 .site-list,
 .trad-list {

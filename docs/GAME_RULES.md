@@ -397,3 +397,10 @@ is when the player chooses what to dig and where to found. While planning an inh
 It reads the record and the world as they are now. It is drawn over the canopy, because a regrown forest would otherwise
 hide the history it grew over, and the hazard forecast steps aside while it is shown. It changes nothing in play. The first
 age has no history, so a toggle left on by an earlier lineage does not apply there.
+
+**Then and now.** The game photographs the valley from one fixed viewpoint, the default framing centred on the age's
+hearth (`src/render/Snapshot.tsx`). It takes one picture in the last three seconds of each minute, before the catastrophe
+resolves, and another afterwards: between ages, or at the ending for the last age. Overlays are left out of both. Between
+ages a slider lays the two over each other, "as the minute ended" against "N years later". The ending's Atlas shows each
+age's pair. The pictures live only in this session's memory: a game resumed from a save, or reloaded mid-age, has none
+for the ages it did not see.

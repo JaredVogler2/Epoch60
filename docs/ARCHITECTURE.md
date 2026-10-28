@@ -21,7 +21,8 @@ src/render/      React Three Fiber scene — a READ-ONLY projection of engine st
                  into materials), Sky, terrain + water, Foliage + Outskirts + models/, Structures, SmokeField, Birds,
                  Citizens, CollapseFx + FrontFx + presentation (the collapse cinematic, render-only), Overlays (forecast,
                  placement, the history lens drawn from history.ts: each age's works, each catastrophe's recorded reach,
-                 eroded ground), CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
+                 eroded ground), Snapshot (then-and-now pictures from a fixed viewpoint, session memory only),
+                 CameraRig, Post (high-tier tilt-shift + grade), quality tiers + frame-time governor
 src/ui/          DOM HUD, tray, inspector and panels (ruins.ts: a ruin's story and worth), debrief, interregnum, ending
                  (Atlas of Ages, feats, ideas for the next lineage), HistoryLegend, title (incl. the Codex); useDialog (modal
                  focus); Fallback (error boundary, no-WebGL screen)

@@ -10,6 +10,7 @@ import {
 } from '../engine';
 import type { Campaign, FeatGroup, FeatId } from '../engine';
 import type { CodexEntry } from '../game/codex';
+import type { AgeSnapshots } from '../game/store';
 import { ROMAN } from './format';
 import { Icon, hazardIcon } from './icons';
 
@@ -94,7 +95,11 @@ function bestInvention(techs: string[]): string | null {
 }
 
 /** One entry per age, from the collapse reports the lineage kept: who lived, what struck, what stood, why. */
-export function AtlasOfAges({ c }: { c: Campaign }) {
+/**
+ * One entry per age. With `pics` (this session's then-and-now pictures), an age seen both as its minute ended and
+ * afterwards shows the two side by side.
+ */
+export function AtlasOfAges({ c, pics = {} }: { c: Campaign; pics?: Record<number, AgeSnapshots> }) {
   const scenario = getScenario(c.scenario);
   return (
     <ol className="atlas" data-testid="atlas">
@@ -134,6 +139,18 @@ export function AtlasOfAges({ c }: { c: Campaign }) {
             </p>
             <p className="atlas-cause">{r.causes[0]}</p>
             {feats.length > 0 && <p className="atlas-feats">Feats: {feats.join(', ')}</p>}
+            {pics[r.epoch]?.then && pics[r.epoch]?.after && (
+              <div className="atlas-pics" data-testid="atlas-pics">
+                <figure>
+                  <img src={pics[r.epoch]!.then} alt={`${spec?.name ?? 'This age'} as its minute ended`} />
+                  <figcaption>As the minute ended</figcaption>
+                </figure>
+                <figure>
+                  <img src={pics[r.epoch]!.after} alt={`${spec?.name ?? 'This age'} afterwards`} />
+                  <figcaption>Afterwards</figcaption>
+                </figure>
+              </div>
+            )}
           </li>
         );
       })}
