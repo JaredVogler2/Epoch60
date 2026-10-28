@@ -579,5 +579,5 @@ naming the Age of Spires); two mutations (either new feat awarded at any later a
 the long-chronicle build (`19664d0`): **78 passed, 3 skipped, 1 failed** (44.9 min; the desktop then-and-now spec waiting
 in vain for a picture while a screenshot browser of mine ran beside it). On the final build: the then-and-now, Codex
 (now twenty feats) and chronicle specs on both profiles passed, except that desktop then-and-now timeout once more,
-alone; it then passed 14 times running (alone, and after the chronicle and Codex specs). Its cause is not found (K-011).
+alone; it then passed 6 times running (alone, and after the chronicle and Codex specs). Its cause is not found (K-011).
 
