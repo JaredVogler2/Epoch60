@@ -158,7 +158,7 @@ export function PrepareCard() {
               <li>
                 <Icon name={hazardIcon(spec.hazard.kind)} size={14} /> {spec.hazard.headline} comes back{' '}
                 {((c.epoch - capstoneEpoch(c)) * CHRONICLE_STEP_PM) / 10}% fiercer than its first coming: it
-                reaches further and does more harm
+                reaches further, does more harm, and walls, reinforcement and traditions hold less against it
               </li>
               <li>
                 <Icon name="people" size={14} /> The chronicle ends if fewer than {MIN_FOUNDERS} survive it

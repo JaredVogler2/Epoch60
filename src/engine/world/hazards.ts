@@ -372,14 +372,14 @@ const KIND_NAME: Record<BuildingKind, string> = Object.fromEntries(
 ) as Record<BuildingKind, string>;
 
 function describe(
-  c: Campaign,
   s: Structure,
   hazard: HazardKind,
+  resist: number,
   exposure: number,
   damage: number,
   after: StructureStatus,
 ): string {
-  const res = Math.round(resistanceOf(c, s, hazard) / 10);
+  const res = Math.round(resist / 10);
   const nm = KIND_NAME[s.kind];
   const what =
     hazard === 'fire'
@@ -394,12 +394,26 @@ function describe(
 }
 
 /**
- * In the long chronicle a returning catastrophe also strikes harder, not only further: its harm to every building it
- * reaches grows by the same step per age past the scenario's last as its strength (permille; 1000 in every other age).
+ * In the long chronicle a returning catastrophe is fiercer in every way, by the same step per age past the scenario's
+ * last as its strength (permille; 1000 in every other age): it reaches further (strength), harms every building it
+ * reaches more, and old defences hold less against it (`effectiveResistance`). Harm alone was not enough: a late
+ * village's resistances reach their cap (traditions stack every age), so multiplying its tiny vulnerability changed
+ * nothing, and every winning bot lineage lived all twelve ages.
  */
 export function chronicleSeverityPm(c: Pick<Campaign, 'scenario' | 'endless' | 'epoch'>): number {
   const later = c.epoch - (getScenario(c.scenario).epochs.length - 1);
   return c.endless && later > 0 ? 1000 + CHRONICLE_STEP_PM * later : 1000;
+}
+
+/** A building's resistance as this age's catastrophe meets it: in the long chronicle, divided by its severity. */
+export function effectiveResistance(
+  c: Campaign,
+  s: Structure,
+  hazard: HazardKind,
+  severity = chronicleSeverityPm(c),
+): number {
+  const r = resistanceOf(c, s, hazard);
+  return severity === 1000 ? r : Math.round((r * 1000) / severity);
 }
 
 /**
@@ -441,7 +455,7 @@ export function resolveHazard(
       depthSum += hc.intensity / 4;
     }
     if (hit === 0) continue;
-    const resist = resistanceOf(c, s, kind);
+    const resist = effectiveResistance(c, s, kind, severity);
     let exposure: number;
     let damage: number;
     if (kind === 'fire') {
@@ -472,7 +486,7 @@ export function resolveHazard(
       after,
       exposure,
       damage,
-      reason: describe(c, s, kind, exposure, damage, after),
+      reason: describe(s, kind, resist, exposure, damage, after),
     });
   }
   let span = 0;

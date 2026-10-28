@@ -16,6 +16,8 @@ test('a victory is carried on into a fourth age and the chronicle is rested', as
   await replayTranscript(page, t);
   await expect.poll(() => phase(page)).toBe('VICTORY');
   await expect(page.getByTestId('endure-note')).toContainText('up to 12 ages');
+  await page.getByTestId('endure').scrollIntoViewIfNeeded();
+  await shot(page, info, 'chronicle-offer');
   await page.getByTestId('endure').click();
 
   await expect(page.getByTestId('interregnum')).toBeVisible();
@@ -28,7 +30,7 @@ test('a victory is carried on into a fourth age and the chronicle is rested', as
   expect(await campaign(page, (c) => [c.phase, c.epoch])).toEqual(['PREPARE', 3]);
   await expect(page.getByTestId('chronicle-goals')).toContainText('age IV of at most XII');
   await expect(page.getByTestId('chronicle-goals')).toContainText(
-    'The Second Great Fire comes back 10% fiercer than its first coming: it reaches further and does more harm',
+    'The Second Great Fire comes back 10% fiercer than its first coming: it reaches further, does more harm, and walls, reinforcement and traditions hold less against it',
   );
   await expect(page.getByTestId('victory-goals')).toHaveCount(0);
   await shot(page, info, 'chronicle-briefing');

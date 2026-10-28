@@ -500,11 +500,15 @@ already won stands and keeps its own run card.
 
 - **What each later age brings** (`epochSpec`, `src/engine/content/scenario.ts`): the scenario's catastrophes return in
   their order (Greenvale: fire, flood, quake, then again; The Ashen Winter: fire, flood, ash), each return **10 % fiercer
-  per age past the last authored one** (`CHRONICLE_STEP_PM`: age IV ×1.1 … age XII ×1.9), twice over: its strength (how far
-  it reaches; difficulty and challenges then scale it as usual), and the harm it does to every building it reaches
-  (`chronicleSeverityPm`, applied to each building's damage before it is classified; the forecast shows the same). Harm
-  had to grow too: a quake's intensity is capped per cell and a fire's harm is the share of a footprint it burns, so
-  strength alone only widened catastrophes that a reinforced stone village had already outbuilt. Its headline counts the returns ("The Second Great Fire", … "The Fourth
+  per age past the last authored one** (`CHRONICLE_STEP_PM`: age IV ×1.1 … age XII ×1.9), three ways at once: its
+  strength (how far it reaches; difficulty and challenges then scale it as usual), the harm it does to every building
+  it reaches (`chronicleSeverityPm`, applied to each building's damage before it is classified), and every building's
+  resistance against it, divided by the same factor (`effectiveResistance`: walls, reinforcement, materials and
+  traditions alike). The forecast shows exactly this, and its "resistance %" is the divided one. All three were needed:
+  with strength alone, and then with strength and harm, every winning bot lineage measured lived all twelve ages,
+  because a quake's intensity is capped per cell, a fire's harm is the share of a footprint it burns, and a late
+  village's resistances sit at their cap (traditions stack every age), so multiplying its tiny vulnerability changed
+  nothing. With resistance divided too, defences age out while living out of harm's way still works (measured below). Its headline counts the returns ("The Second Great Fire", … "The Fourth
   Great Quake"); the settlers bring the provisions of the age whose catastrophe returns and build with the last age's
   architecture; each later age has its own people ("The Ember Folk", "The High-Water Folk", …).
 - **Not judged.** A later age has no verdict. At its debrief the chronicle **ends by itself** when fewer than 3 came

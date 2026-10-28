@@ -11,6 +11,7 @@ import {
   canEndure,
   chronicleEnding,
   chronicleSeverityPm,
+  effectiveResistance,
   chronicleOver,
   cloneCampaign,
   computeHash,
@@ -19,6 +20,7 @@ import {
   epochSpec,
   nextEpochSpec,
   replayCampaign,
+  resistanceOf,
   resolveHazard,
   serialize,
   transcriptOf,
@@ -79,7 +81,7 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     expect(nextEpochSpec({ ...g, epoch: MAX_AGES - 1 })).toBeNull();
   });
 
-  it('strikes harder as well as further: a later age scales the harm to every building it reaches', () => {
+  it('is fiercer three ways in a later age: further, harder, and against weaker defences', () => {
     const c = replayCampaign(load('greenvale/archivists'));
     dispatchAction(c, { type: 'endure' });
     dispatchAction(c, { type: 'found', site: 0, tradition: c.lineage.interregnum!.traditions[0]!.id });
@@ -88,16 +90,27 @@ describe('the long chronicle: ages past the scenario’s last', () => {
     expect(chronicleSeverityPm({ ...c, epoch: MAX_AGES - 1 })).toBe(1000 + CHRONICLE_STEP_PM * 9);
     expect(chronicleSeverityPm({ ...c, epoch: 2 })).toBe(1000);
     expect(chronicleSeverityPm({ ...c, endless: undefined })).toBe(1000);
-    // The same quake on the same village: the same ground shakes, and every building reached takes 10% more harm.
+    // Every building's defences hold less against it: its resistance divided by the age's severity.
+    const standing = c.structures.filter((s) => s.status === 'active');
+    expect(standing.length).toBeGreaterThan(0);
+    for (const s of standing) {
+      expect(effectiveResistance(c, s, 'quake')).toBe(
+        Math.round((resistanceOf(c, s, 'quake') * 1000) / 1100),
+      );
+      expect(effectiveResistance({ ...c, endless: undefined }, s, 'quake')).toBe(resistanceOf(c, s, 'quake'));
+    }
+    // The same quake on the same village: the same ground shakes, and every building reached comes off worse, as the
+    // forecast's own words say (its resistance is the weakened one).
     const harder = resolveHazard(c, 'quake', 940);
     const plain = resolveHazard({ ...c, endless: undefined }, 'quake', 940);
     expect(harder.cells).toEqual(plain.cells);
     expect(harder.impacts.length).toBeGreaterThan(0);
-    for (const i of harder.impacts)
-      expect(i.damage).toBe(Math.round((plain.impacts.find((j) => j.id === i.id)!.damage * 1100) / 1000));
-    expect(harder.impacts.some((i) => i.damage > plain.impacts.find((j) => j.id === i.id)!.damage)).toBe(
-      true,
-    );
+    const before = (id: number) => plain.impacts.find((j) => j.id === id)!.damage;
+    expect(harder.impacts.every((i) => i.damage >= before(i.id))).toBe(true);
+    expect(harder.impacts.some((i) => i.damage > Math.round((before(i.id) * 1100) / 1000))).toBe(true);
+    const first = harder.impacts[0]!;
+    const s0 = c.structures.find((s) => s.id === first.id)!;
+    expect(first.reason).toContain(`resistance ${Math.round(effectiveResistance(c, s0, 'quake') / 10)}%`);
   });
 
   it('has a tradition to adopt at every founding up to the twelfth age', () => {

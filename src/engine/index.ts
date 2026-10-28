@@ -57,7 +57,15 @@ export type { FeatDef, FeatGroup } from './legacy/feats';
 export { LEGACY_POINTS, legacyOf } from './legacy/score';
 export type { Legacy, LegacyKey, LegacyPart } from './legacy/score';
 export { generateWorld, validateWorld } from './world/generate';
-export { chronicleSeverityPm, resolveHazard, fuelMap, floodPeak, quakeIntensityAt } from './world/hazards';
+export {
+  chronicleSeverityPm,
+  effectiveResistance,
+  resolveHazard,
+  fuelMap,
+  floodPeak,
+  quakeIntensityAt,
+  resistanceOf,
+} from './world/hazards';
 export {
   cloneCampaign,
   computeHash,

@@ -69,15 +69,15 @@ describe('the long chronicle in the game layer', () => {
     expect(store.watchLineage()).toBe(true);
     store.setReplaySpeed(4);
     const clock = new EpochClock(store);
-    const phases = new Set<string>();
+    let onVictory = 0;
     for (let i = 0; i < 200_000 && store.replay!.matched === null; i++) {
       clock.step(100);
-      if (store.campaign!.epoch === 2) phases.add(store.campaign!.phase);
+      if (store.campaign!.epoch === 2 && store.campaign!.phase === 'VICTORY') onVictory++;
     }
     expect(store.replay!.matched).toBe(true);
     expect(computeHash(store.campaign!)).toBe(hash);
-    // It paused on the victory before carrying the chronicle on.
-    expect(phases.has('VICTORY')).toBe(true);
+    // It showed the victory for its wait (4 s at 1×: ten 100 ms frames at 4×) before carrying the chronicle on.
+    expect(onVictory).toBeGreaterThanOrEqual(9);
     expect(store.campaign!.epoch).toBe(3);
   });
 });
