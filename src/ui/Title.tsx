@@ -4,6 +4,7 @@ import { bestFor, dailyRun, parseShare, seedFromText, utcDate } from '../game/mo
 import { DIFFICULTY, FEAT_IDS, SCENARIOS, getScenario } from '../engine';
 import type { Difficulty } from '../engine';
 import { CodexList } from './Codex';
+import { ROMAN } from './format';
 import { Icon } from './icons';
 import { useStore } from './useStore';
 
@@ -294,6 +295,7 @@ export function TitleScreen() {
               {r.difficulty}
               {r.mode === 'assisted' ? ' · assisted' : ''} · seed {r.seed} · {r.survivors} survivors
               {r.daily ? ` · daily ${r.daily}` : ''}
+              {r.branch ? ` · branch from age ${ROMAN[r.branch]}` : ''}
             </li>
           ))}
         </ul>

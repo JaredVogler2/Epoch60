@@ -24,6 +24,14 @@ import type {
   PlacementOk,
   ActionError,
 } from '../engine';
+import {
+  branchPoints,
+  clearBranchPoints,
+  loadBranchTag,
+  saveBranchPoint,
+  saveBranchTag,
+  takeBranch,
+} from './branches';
 import { loadCodex, recordFeats } from './codex';
 import type { CodexEntry } from './codex';
 import { createDemoCampaign } from './demo';
@@ -115,6 +123,8 @@ export class GameStore {
   newFeats: FeatId[] = [];
   /** How many of the current lineage's feats have been copied into the Codex. */
   private seenFeats = 0;
+  /** The age this lineage was last replayed from (null: a straight lineage). Branches play normally but are never ranked. */
+  branch: number | null = null;
   /** Cycling list of suggested sites for the building being placed (the keyboard / screen-reader path). */
   suggest: { kind: BuildingKind; key: string; spots: SuggestedSpot[]; i: number } | null = null;
 
@@ -149,6 +159,9 @@ export class GameStore {
     const m: GameMode = mode ?? (this.settings.assisted ? 'assisted' : 'standard');
     this.campaign = createCampaign(seed, m, scenarioId, difficulty);
     saveDailyTag(seed, this.runDaily);
+    // A new lineage: the old one's branch points and branch mark go with it.
+    this.branch = null;
+    clearBranchPoints();
     this.afterReplace();
     this.clockResetSeq++;
     this.screen = 'game';
@@ -176,6 +189,7 @@ export class GameStore {
     if (!c) return false;
     this.campaign = c;
     this.runDaily = loadDailyTag(c.seed, (day) => dailyRun(day).seed);
+    this.branch = loadBranchTag(c.seed);
     this.afterReplace();
     this.screen = 'game';
     this.syncCodex(false);
@@ -187,6 +201,7 @@ export class GameStore {
   /** Adopt an existing campaign (used by tests and the browser debug hooks). */
   adopt(c: Campaign): void {
     this.campaign = c;
+    this.branch = null;
     this.afterReplace();
     this.screen = 'game';
     this.syncCodex(false);
@@ -204,6 +219,32 @@ export class GameStore {
     this.placing = null;
     this.panel = null;
     this.emit();
+  }
+
+  /** The ages this lineage can be replayed from. */
+  branchAges(): number[] {
+    return this.campaign && this.screen === 'game' ? branchPoints(this.campaign) : [];
+  }
+
+  /**
+   * Go back to the start of an earlier age of this lineage and play on from there: a branch, marked as such on its
+   * run card and never ranked. Returns false when that point is not available.
+   */
+  branchFrom(epoch: number): boolean {
+    const c = this.campaign;
+    if (!c) return false;
+    const restored = takeBranch(c, epoch);
+    if (!restored) return false;
+    this.campaign = restored;
+    this.branch = epoch;
+    saveBranchTag(restored.seed, epoch);
+    this.afterReplace();
+    this.clockResetSeq++;
+    this.screen = 'game';
+    this.syncCodex(false);
+    this.autosave(true);
+    this.emit();
+    return true;
   }
 
   abandonSave(): void {
@@ -276,9 +317,13 @@ export class GameStore {
     this.lastPhase = phase;
     this.skipRequested = false;
     if (phase === 'VICTORY' || phase === 'DEFEAT') {
-      const card = this.campaign ? cardOf(this.campaign, this.runDaily ?? undefined, new Date()) : null;
+      const card = this.campaign
+        ? cardOf(this.campaign, this.runDaily ?? undefined, new Date(), this.branch)
+        : null;
       if (card) this.runs = saveRun(card);
     }
+    // Each later age's founding is a point the player can come back to.
+    if (phase === 'PREPARE' && this.campaign && this.screen === 'game') saveBranchPoint(this.campaign);
     if (phase !== 'ACTIVE') {
       this.placing = null;
       this.ghost = null;

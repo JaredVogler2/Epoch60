@@ -302,6 +302,11 @@ nothing on Normal or Hard; the steward wins 7 % of Greenvale/Normal. What Normal
 - **Assisted** — a setting, combinable with any tier (Gentle is the gentlest pairing): the same 60 simulated seconds at half speed. Assisted runs are marked on their run cards
   and ranked only against other Assisted runs ("best for this valley").
 
+- **Replay an age** — the ending offers "Replay from Age II / III": the lineage as it stood when that age was founded (kept in
+  the browser for the current lineage only; a new lineage clears it, and a damaged or foreign point is ignored). Everything
+  after it is played again. The lineage is then a **branch**: the briefing and the ending say so, its run card is marked, its
+  feats count, and it is never ranked — "best for this valley" (Daily Ruins included) only counts straight lineages.
+
 Not built yet: 8–12-epoch campaigns, the 12 strategy-changing world modifiers, a replay viewer.
 
 ## 16. Accessibility and audio

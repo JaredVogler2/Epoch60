@@ -132,6 +132,12 @@ export function PrepareCard() {
         </div>
         <p className="dim small">
           {scenario.name} · epoch {c.epoch + 1} of {scenario.epochs.length} · preparing takes no time.
+          {s.branch !== null && (
+            <span data-testid="branch-mark">
+              {' '}
+              A branch replayed from Age {ROMAN[s.branch]}: its feats count, but it is never ranked.
+            </span>
+          )}
         </p>
       </div>
       <button
@@ -517,6 +523,7 @@ export function EndScreen() {
   useDialog(ref, undefined, true, c.phase === 'VICTORY' || c.phase === 'DEFEAT');
   if (c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') return null;
   const win = c.phase === 'VICTORY';
+  const branchAges = s.branchAges();
   const v = c.report?.verdict;
   return (
     <div
@@ -565,7 +572,16 @@ export function EndScreen() {
           Lineage score <b>{c.lineage.score}</b> · seed {c.seed} · {getScenario(c.scenario).name} ·{' '}
           {DIFFICULTY[c.difficulty].name}
           {s.runDaily ? ` · Daily Ruins ${s.runDaily}` : ''}
+          {s.branch !== null && (
+            <span data-testid="branch-mark"> · a branch from Age {ROMAN[s.branch]}, not ranked</span>
+          )}
         </p>
+        {branchAges.length > 0 && (
+          <p className="dim small" data-testid="replay-note">
+            Replaying an age starts a branch from its founding: everything after it is played again. Its feats
+            count; it is never ranked against straight lineages.
+          </p>
+        )}
         <div className="end-actions">
           <button
             type="button"
@@ -579,6 +595,17 @@ export function EndScreen() {
           >
             Play again
           </button>
+          {branchAges.map((e) => (
+            <button
+              key={e}
+              type="button"
+              className="btn"
+              data-testid={`replay-age-${e}`}
+              onClick={() => s.branchFrom(e)}
+            >
+              Replay from Age {ROMAN[e]}
+            </button>
+          ))}
           <button
             type="button"
             className="btn"

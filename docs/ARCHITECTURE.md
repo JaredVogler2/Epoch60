@@ -14,7 +14,7 @@ src/engine/      Plain TypeScript, no React/DOM, no Math.random/Date.now (lint-e
   campaign.ts    createCampaign, dispatchAction, advanceFixedTick, getCatalog, getForecast, repairBlocked
 src/game/        Browser-side state around the engine: store (one mutable campaign + revisions), clock (frames → ticks,
                  stall/visibility pauses), persist (save, settings, Daily tag), modes (seeds, share links, run cards),
-                 codex (device-local copy of earned feats), audio
+                 codex (device-local copy of earned feats), branches (points to replay an age from), audio
 src/render/      React Three Fiber scene — a READ-ONLY projection of engine state:
                  Scene (canvas, lights, tone mapping, context-loss recovery), atmosphere (shared clock/wind/clouds injected
                  into materials), Sky, terrain + water, Foliage + Outskirts + models/, Structures, SmokeField, Birds,

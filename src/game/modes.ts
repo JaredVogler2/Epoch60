@@ -83,6 +83,8 @@ export interface RunCard extends RunSpec {
   hash: string;
   /** Present for Assisted runs, which are ranked apart from standard ones (absent = standard). */
   mode?: GameMode;
+  /** The age a branched lineage was last replayed from (absent = a straight lineage). Branches are never ranked. */
+  branch?: number;
 }
 
 const RUNS_KEY = 'epoch60.runs.v1';
@@ -122,12 +124,18 @@ function isCard(x: unknown): x is RunCard {
       (typeof c.difficulty === 'string' && Object.prototype.hasOwnProperty.call(DIFFICULTY, c.difficulty))) &&
     (c.outcome === 'victory' || c.outcome === 'defeat') &&
     finite(c.survivors) &&
-    (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted')
+    (c.mode === undefined || c.mode === 'standard' || c.mode === 'assisted') &&
+    (c.branch === undefined || (Number.isInteger(c.branch) && (c.branch as number) >= 1))
   );
 }
 
 /** Build a card from a finished campaign, or null while it is still going. */
-export function cardOf(c: Campaign, daily: string | undefined, at: Date): RunCard | null {
+export function cardOf(
+  c: Campaign,
+  daily: string | undefined,
+  at: Date,
+  branch: number | null = null,
+): RunCard | null {
   if ((c.phase !== 'VICTORY' && c.phase !== 'DEFEAT') || !c.report?.verdict) return null;
   const v = c.report.verdict;
   const by = (i: number) => v.conditions[i]?.have ?? 0;
@@ -145,6 +153,7 @@ export function cardOf(c: Campaign, daily: string | undefined, at: Date): RunCar
     epochs: c.lineage.reports.length,
     hash: hashString(JSON.stringify([c.seed, c.scenario, c.difficulty, c.totalTicks, c.actionLog.length])),
     ...(c.mode === 'assisted' ? { mode: 'assisted' as const } : {}),
+    ...(branch !== null ? { branch } : {}),
   };
 }
 
@@ -159,7 +168,10 @@ export function saveRun(card: RunCard): RunCard[] {
   return all;
 }
 
-/** The best local result for a spec: victories beat defeats, then more survivors. Assisted runs rank only among themselves. */
+/**
+ * The best local result for a spec: victories beat defeats, then more survivors. Assisted runs rank only among
+ * themselves; a branch (an age replayed from its start) is never ranked.
+ */
 export function bestFor(
   runs: RunCard[],
   spec: Pick<RunSpec, 'seed' | 'scenario' | 'difficulty'> & { mode?: GameMode },
@@ -170,7 +182,8 @@ export function bestFor(
       r.seed === spec.seed &&
       r.scenario === spec.scenario &&
       r.difficulty === spec.difficulty &&
-      (r.mode ?? 'standard') === mode,
+      (r.mode ?? 'standard') === mode &&
+      r.branch === undefined,
   );
   mine.sort(
     (a, b) => Number(b.outcome === 'victory') - Number(a.outcome === 'victory') || b.survivors - a.survivors,
